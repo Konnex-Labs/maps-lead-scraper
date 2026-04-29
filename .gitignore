@@ -149,3 +149,9 @@ tests/playwright/.bing-carousel-chrome-profile/
 tests/playwright/run-log.csv
 tests/playwright/node_modules/
 screenshots/
+
+# Build artifacts and local work files
+*.zip
+reports/
+.playwright-mcp/
+"## Strip webhook signing secret key.md"
