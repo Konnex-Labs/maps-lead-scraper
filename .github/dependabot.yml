@@ -1,0 +1,36 @@
+# Managed by konnex-shared-workflows pattern — see Enterprise CI/CD Overhaul sprint contract
+# Chrome-extension repo: no root package.json. Dependabot tracks the Playwright test deps + GH Actions.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/tests/playwright"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Australia/Sydney"
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "deps(playwright)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Australia/Sydney"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "ci"
+      - "automated"
