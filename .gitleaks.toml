@@ -1,0 +1,17 @@
+# gitleaks config for google-maps-scraper
+# Allowlist generated from Phase 1 secret history audit (2026-05-14).
+# See sprint-contract-cicd-overhaul.md (Phase 1 item 5) for triage detail.
+
+title = "google-maps-scraper"
+
+[extend]
+useDefault = true
+
+# Keygen account IDs are PUBLIC by design — they appear in the API URL
+# path used by clients to validate licenses. Chrome profile files were
+# committed in v3.0.0 before being added to .gitignore.
+[allowlist]
+description = "Keygen public account ID and Chrome profile test artifacts (committed to v3.0.0, since gitignored)"
+regexes = ['''441053a9-f19b-48e3-8d8d-502a96974848''']
+regexTarget = "secret"
+paths = ['''tests/playwright/\.carousel-chrome-profile/''']
