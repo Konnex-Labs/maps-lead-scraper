@@ -1,72 +1,44 @@
 ---
 task_id: 3912300f-2ecb-814a-88f7-d05a8e41dd56
 agent: jack
-session_id: 2026-07-03T14Z-cortex-queue-plus-dfs-ingest-bug
+session_id: 2026-07-03T15Z-dfs-coord-health-writeup-cx5c-start
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-03T14:36:00Z
+last_updated: 2026-07-03T15:05:00Z
 context_needed:
   files:
     - /home/jack/projects/google-maps-scraper/PROGRESS.md
+    - /home/jack/projects/google-maps-scraper/SCHEMA-STANDARDS-HEALTH.md
+    - /home/jack/projects/ops/shared-bin/konnex-memory-query
+    - /home/jack/projects/ops/shared-bin/test/konnex-memory-query.test.js
+    - /home/jack/projects/ops/shared-bin/test/konnex-memory-query-ck1-integration.test.js
   branches: []
   collaborators: ["matt", "rajesh", "grace"]
 ---
 
-# Cortex queue ordered (Matt-confirmed) + DFS ingest trade-attribution bug found/confirmed → label fix GO'd, paid re-post HELD
-
-Mid-work context-exit at ~71% (Rajesh flagged). NOT agent-offline — auto-relaunch continues.
-Rajesh remains ONLINE and holds the fort. Grace also context-exited 14:34Z (owns the DFS fix, relaunching).
+# Context-exit at 74% (3rd exit today, auto-relaunch armed). DFS coord done + health write-up delivered + A/B/C tickets filed + CX-5c STARTED (investigation complete, not yet built)
 
 ## Done (this session)
-- **Session-start reconcile**: resumed from repo PROGRESS.md (prior task 38d2300f UUID rollout = COMPLETE, all
-  4 PRs merged). Ignored stale injected CX-7 context + old memory.json. Sent Matt status gate.
-- **Cortex queue prioritized + Matt-CONFIRMED order**: CX-5c → CX-7 → CX-4 → CK-2; **CK-3 PARKED** (blocked_by
-  ORG-3, Matt agreed not to pull ORG-3 forward). CX-7 already approved (sig 827b64da). CX-4 = 1212-row corpus
-  migration, GO routed to Matt. Order sigs: Matt c638c6fd (1→4 + park CK-3).
-- **DFS ingest trade-attribution BUG — discovered by Grace, INDEPENDENTLY CONFIRMED by me in DB**:
-  - Evidence (my queries, market_intelligence DB): industry `nsw-trades_au` = 18,445 rows today / **0 pre-today**
-    (bogus new bucket). `carpenter_au` today = 15,044 rows but only 867 (~6%) are real carpenters by maps_category
-    (rest: 9,217 other / 2,530 plumber / 2,430 electrician). `electrician_au` + `plumber_au` = **0** correct new rows.
-  - Root cause (Grace, confirmed): retrieveByIdSweep passes ONE global `--trade=nsw-trades` across all 3 crawl_ids
-    → industry stamped = trade+'_au'; never derived per-business/crawl_id. Silent global default.
-  - Convention check (my query): `industry` = SEARCH-TRADE, not maps_category (existing electrician_au is ~70%
-    non-electrician maps_category). So fix = attribute by search-trade, NOT re-derive from maps_category.
-- **Matt decisions (all VALID sigs)**: converted DFS re-post GO → HOLD (2e591ea0); **GO'd the label fix** (fe97649c);
-  re-post re-sequences AFTER fix (his ~USD60.9 / Week-1-envelope approval stands). Wants "good naming/structure".
-- **Ledger facts (verified)**: crawl 6387/6388/6389 = electrician/plumber/carpenter. 116,250 tasks (3,875 localities
-  ×3 ×10 pages). retrieved 14,744 (dfs 20000) / not_created 101,460 (dfs **40401** phantom, interleaved across the
-  42-min post burst, cost USD0) / failed 46 (40102). Re-post = 101,460 × USD0.0006 ≈ USD60.9. Charged to date USD8.87.
-  Existing NSW E+P+C: 27,526 rows (20,666 active), data_source=google → true universe proxy ~25-30k.
+- Session-start: online, state grounded, briefing, Cortex confirm, Matt gate.
+- **DFS trade-attribution fix** coordination: Grace audit confirmed (34,902 biz / 49,543 snaps; 3,504 multi-trade collapsed = re-split; 451 pre-existing overlaps). Relayed 4 architect guards + Matt's rate-limiting add-on. Grace relaunched 14:59Z, scope-locked (ack 6b07075a), building the re-split + fail-loud/rate-limited runner. Re-post HELD, USD0.
+- **Schema/standards HEALTH assessment** DELIVERED: SCHEMA-STANDARDS-HEALTH.md + Telegram. Ground-truthed live (industry has NO CHECK/enum though data_source does; dedup UNIQUE idx_businesses_dedup on (industry,lower(name),address...); crawl_snapshots UNIQUE (place_id,industry,crawl_id); 143 distinct industries incl bogus nsw-trades_au). Verdict: NOT flaky at schema level.
+- **Matt GO (sig f191f9f37e9a52e0): Plan 1-4 + CX-4.** Hardening shape GO'd (sig 5e3499391f75583b). **A/B/C tickets FILED** on Sprint Boards (Sprint 17, Owner Jack/Reviewer Rajesh): A=3922300f-2ecb-81ce (industry_catalog allowlist+FK), B=3922300f-2ecb-81ea (doc SEARCH-TRADE convention), C=3922300f-2ecb-8124 (canonical-entity design review). A/B mine, C joint Jack-led w/ Grace.
+- **Matt directed (sig 16ccc478): work the Cortex queue in parallel** (don't idle through the several-hour re-post). Order confirmed: CX-5c -> CX-7 -> CX-4 -> CK-2 (CK-3 parked on ORG-3).
 
 ## In Progress
-- Nothing building by me (architect-review + coordination role). CX-5c NOT started (Matt paused, DFS took priority).
+- **CX-5c investigation COMPLETE, build NOT started.** Ticket 3922300f-2ecb-81d1 (High/Bug, Owner Jack/Reviewer Rajesh, est 2-3). It is a Tier-2 ranking-semantics change to a shared prod tool → contract-first Rajesh QA + Matt GO before deploy.
+  - **Regression diagnosed:** in `rankConfirm` (konnex-memory-query lines 288-314) the CX-5b within-tier FTS lift is comparator STEP 2 — ABOVE source_type (step 4) and recency*similarity (step 5). So within a provenance tier an FTS-matched row ALWAYS outranks a non-FTS row, even a higher-similarity human-curated one. Breaks CK-1 AC3.1 (curated human pipeline_knowledge doc must outrank FTS-matched git_commit when both land in the `direct` tier and the human doc is not FTS-matched).
+  - **Floor context:** classifyProvenanceWithFloor (lines 336-341) clamps FTS-matched cosine up to PROVENANCE_INDIRECT_FLOOR=0.35 → admits exact-token docs to `indirect` (not `direct`, since direct needs >=0.4). CX-5b intent = RECALL (don't bury exact-token docs); must be preserved (AC1 seed doc must stay in top-5).
+  - **Verification gate:** CK-1 integration test AC3.2 topology probe (konnex-memory-query-ck1-integration.test.js, queries "what is the konnex data pipeline topology" / "what does a healthy pipeline run look like"), RUN_DB_TESTS=1 + MARKET_INTEL_DB_URI. Existing CX-5b lift unit tests: konnex-memory-query.test.js lines 481-528 (must not regress; AC6 byte-stability line ~530).
 
 ## Remaining
-1. **DFS label fix** — Grace OWNS (relaunching). Design locked (my architect review, sig 06e843e3 to Grace):
-   attribute by crawl_id→trade (source `SELECT DISTINCT crawl_id,trade FROM dataforseo_task_ledger`, NOT hardcoded);
-   crawl_snapshots = authoritative per-trade membership (crawl_id right, industry wrong); it's a **RE-SPLIT not a
-   flat UPDATE** (multi-trade rows collapsed → reconstruct per-trade via dedup/merge + collision handling); labels
-   `{trade}_au`, KILL `nsw-trades_au`; GUARD = no default fallback (fail loud); DECOUPLE maps_category noise-filter
-   (separate DQ decision → tee to Matt); backup before delete; USD0 (no new DFS). PR → Jack + Rajesh QA.
-2. **My next actions on relaunch**: (a) re-sync w/ Grace on relaunch, architect-review her fix PR; (b) show Matt
-   corrected structure BEFORE the paid re-post fires (he wants a look / standing GO); (c) after re-post clears,
-   START CX-5c (first in Cortex queue).
-3. **Paid ~USD60.9 re-post** — HELD until fix built + Rajesh QA-clears. Throttled + monitored (Matt's terms).
-4. **CX-4 corpus migration GO** — still pending Matt (routed, not answered).
-5. Housekeeping: 2 dup flow-violation tickets on DFS mi-010 in Rajesh's queue (holding for Matt).
-6. **OWED to Matt (relaunch deliverable): full written SCHEMA/STANDARDS HEALTH assessment.** Matt asked
-   (sig b31f1ce4) if we're on "flaky ground" needing schema/table/naming redesign. My preliminary answer sent:
-   NOT flaky at schema level (today's bug = ingest-code global-default, not schema); core tables sound, data real.
-   But 3 hardening items to scope as a short serial review (like Cortex), NON-blocking:
-   (a) no CHECK/enum guard on valid `industry` values (how bogus nsw-trades_au slipped in) + naming standard;
-   (b) document the industry=SEARCH-TRADE convention (buckets include adjacent cats) + optional noise-filter;
-   (c) businesses key (industry,name,address) forces per-industry row duplication for multi-trade businesses —
-       examine vs canonical+membership model (ties to Grace's dedup-lineage flag [[project_dedup_no_lineage_verified_data_loss]]).
-   Deliver the full write-up on relaunch. (NB: team-chat-send content must NOT use backticks — shell runs them.)
+1. **DFS: architect-review Grace's dry-run diff** when it lands (next DFS checkpoint) → Rajesh QA → Matt structure look → re-post (HELD, ~USD60.9, throttled). Do NOT fire re-post on any prior GO.
+2. **CX-5c NEXT STEP = write the fix spec/contract** (short, like other CX contracts) with the exact comparator change + AC, send to Rajesh for contract-first QA BEFORE building. Candidate fix direction (VALIDATE, don't blind-implement): bound the FTS lift so it does not outrank a non-FTS row of higher source_type-priority AND/OR higher similarity within the same provenance tier — i.e. subordinate step 2 to the human-curated case. Must keep AC1 recall + AC6 byte-stability. Then build + unit test + run CK-1 gate under RUN_DB_TESTS=1. Tier-2 → Matt GO before deploy to /home/shared/bin.
+3. CX queue after CX-5c: CX-7 -> CX-4 (GO'd) -> CK-2. CK-3 parked on ORG-3.
+4. Schema hardening A (fast-follow after clean re-post), B (doc), C (joint design review) — all sequenced AFTER re-post.
 
 ## Resume notes
-- Do NOT re-issue the DFS re-post GO — it's HELD pending the label fix + Rajesh QA. Matt's ~USD60.9 stands for AFTER.
-- Do NOT build the label fix yourself — Grace's pipeline lane; you are architect-review only.
-- Rajesh is oriented for QA (per-trade re-split, decoupled filter). He held the fort during the dual exit.
-- Correct the record if anyone says "re-derive from maps_category" — that misroutes; the fix is crawl_id→trade re-split.
-- Cortex order to resume once DFS clears: CX-5c → CX-7 → CX-4 → CK-2 (CK-3 parked on ORG-3).
+- Do NOT fire the DFS re-post — HELD pending fix + Rajesh QA + Matt look. Do NOT build Grace's label fix (her lane).
+- CX-5c is contract-first (Rajesh) + Matt-GO-before-deploy (Tier-2 ranking change). Do the SPEC next, not code.
+- Work happens in /home/jack/projects/ops (shared-bin); deploy to /home/shared/bin is a separate gated step. No ops code changed yet this session (reads only) — nothing uncommitted there.
+- Rajesh ONLINE holding continuity on both DFS + CX-5c. Re-sync with him on relaunch.
