@@ -1,44 +1,50 @@
 ---
-task_id: 3912300f-2ecb-814a-88f7-d05a8e41dd56
+task_id: dfs-repull-live-ownership
 agent: jack
-session_id: 2026-07-03T15Z-dfs-coord-health-writeup-cx5c-start
+session_id: 2026-07-03T16Z-dfs-repull-ownership
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-03T15:05:00Z
+last_updated: 2026-07-03T16:15:00Z
 context_needed:
   files:
-    - /home/jack/projects/google-maps-scraper/PROGRESS.md
-    - /home/jack/projects/google-maps-scraper/SCHEMA-STANDARDS-HEALTH.md
-    - /home/jack/projects/ops/shared-bin/konnex-memory-query
-    - /home/jack/projects/ops/shared-bin/test/konnex-memory-query.test.js
-    - /home/jack/projects/ops/shared-bin/test/konnex-memory-query-ck1-integration.test.js
-  branches: []
+    - /home/shared/prod-merges/reviews/141cd6f-relabel-attribution-arch-review.md
+    - /home/jack/projects/market-intelligence/svi/relabel-trade-attribution.js
+    - /home/jack/projects/market-intelligence/svi/nsw-trades-ingest-runner.js
+    - /home/jack/projects/market-intelligence/svi/dfs-repost-runbook.md (Grace, pending)
+  branches:
+    - "market-intelligence @ origin/contract/dataforseo-nsw-trades (Grace, commit 141cd6f)"
   collaborators: ["matt", "rajesh", "grace"]
 ---
 
-# Context-exit at 74% (3rd exit today, auto-relaunch armed). DFS coord done + health write-up delivered + A/B/C tickets filed + CX-5c STARTED (investigation complete, not yet built)
+# DFS re-pull: own getting it live + running (Matt-delegated). Arch-review done; holding for Grace's F1/F2 revision.
 
 ## Done (this session)
-- Session-start: online, state grounded, briefing, Cortex confirm, Matt gate.
-- **DFS trade-attribution fix** coordination: Grace audit confirmed (34,902 biz / 49,543 snaps; 3,504 multi-trade collapsed = re-split; 451 pre-existing overlaps). Relayed 4 architect guards + Matt's rate-limiting add-on. Grace relaunched 14:59Z, scope-locked (ack 6b07075a), building the re-split + fail-loud/rate-limited runner. Re-post HELD, USD0.
-- **Schema/standards HEALTH assessment** DELIVERED: SCHEMA-STANDARDS-HEALTH.md + Telegram. Ground-truthed live (industry has NO CHECK/enum though data_source does; dedup UNIQUE idx_businesses_dedup on (industry,lower(name),address...); crawl_snapshots UNIQUE (place_id,industry,crawl_id); 143 distinct industries incl bogus nsw-trades_au). Verdict: NOT flaky at schema level.
-- **Matt GO (sig f191f9f37e9a52e0): Plan 1-4 + CX-4.** Hardening shape GO'd (sig 5e3499391f75583b). **A/B/C tickets FILED** on Sprint Boards (Sprint 17, Owner Jack/Reviewer Rajesh): A=3922300f-2ecb-81ce (industry_catalog allowlist+FK), B=3922300f-2ecb-81ea (doc SEARCH-TRADE convention), C=3922300f-2ecb-8124 (canonical-entity design review). A/B mine, C joint Jack-led w/ Grace.
-- **Matt directed (sig 16ccc478): work the Cortex queue in parallel** (don't idle through the several-hour re-post). Order confirmed: CX-5c -> CX-7 -> CX-4 -> CK-2 (CK-3 parked on ORG-3).
+- Session-start ground-truthed. **CX-5c SHIPPED**: PR #127 merged 15:47Z by Matt (quenito) + deployed live to /home/shared/bin/konnex-memory-query (md5 c1e8f39 == merged main). Ticket auto-closed. CK-1 AC3.2-topology closure condition SATISFIED. Prior "holding for Matt GO" state is resolved.
+- **Matt spend GO**: USD69.0, sig 241a4ebc VALID — CONDITIONAL (fires only after readiness gates green).
+- **Matt ownership grant**: sig 0bd9192a, then NARROWED by sig e8358a8 = "approve PRs for merge + deploy to carry the DFS re-pull to completion; executing as normal." NOT general authority (no ad-hoc schema DDL).
+- **Arch-review of Grace's 141cd6f COMPLETE** (doc: /home/shared/prod-merges/reviews/141cd6f-relabel-attribution-arch-review.md):
+  - Fix 1 (runner recurrence-prevention): APPROVED as-is (buildCrawlTradeMap ledger-sourced + fail-loud, carpenter default removed).
+  - Fix 2 (re-split DML): 2 BLOCKERS before --live. F1 = backup guard existence-only (must assert full-row parity + materialize full-row DB backup from CSV). F2 = idExpr/idMatch lower()+coalesce city/state but idx_businesses_dedup keeps them RAW; measured 228 wrongly-merged businesses + Step C non-determinism → align to index.
+  - F3 CLOSED by me: all 4 FKs referencing businesses(id) (business_events, business_merges canonical+loser, crawl_snapshots) are ON DELETE SET NULL; 0 of 33,489 created-today scoped rows are in merge lineage or have events → Step D won't abort or null real lineage.
+- **Owner decisions**: (1) AMOUNT = treat 69.0 as HARD TOTAL cap → forward re-post capped USD60.13 (69.0-8.87 sunk); runner resumable, stops+reports if hit; offered Matt a nudge to ~69.8 for one-shot. (2) INDEX = OPTION B batched delete (Matt's grant doesn't cover ad-hoc schema DDL); idx_crawl_snapshots_business_id deferred to a separate normal migration ticket. (3) TRIGGER = Grace single-hand, fires only on Jack explicit go after all gates green.
+- Grace confirmed **Gate-1 backup DONE**: full-row CSV (biz 34,902 / snaps 49,543) in svi/relabel-backup-20260703T144045Z/; nsw-trades_au still 18,445 (no re-split has run).
+- Re-grounded Rajesh (stale auto-relaunch checkpoint) → CX-5c shipped, QA gate on 141cd6f standing by, 2 stale DFS flow-violation reviews disposed.
 
 ## In Progress
-- **CX-5c investigation COMPLETE, build NOT started.** Ticket 3922300f-2ecb-81d1 (High/Bug, Owner Jack/Reviewer Rajesh, est 2-3). It is a Tier-2 ranking-semantics change to a shared prod tool → contract-first Rajesh QA + Matt GO before deploy.
-  - **Regression diagnosed:** in `rankConfirm` (konnex-memory-query lines 288-314) the CX-5b within-tier FTS lift is comparator STEP 2 — ABOVE source_type (step 4) and recency*similarity (step 5). So within a provenance tier an FTS-matched row ALWAYS outranks a non-FTS row, even a higher-similarity human-curated one. Breaks CK-1 AC3.1 (curated human pipeline_knowledge doc must outrank FTS-matched git_commit when both land in the `direct` tier and the human doc is not FTS-matched).
-  - **Floor context:** classifyProvenanceWithFloor (lines 336-341) clamps FTS-matched cosine up to PROVENANCE_INDIRECT_FLOOR=0.35 → admits exact-token docs to `indirect` (not `direct`, since direct needs >=0.4). CX-5b intent = RECALL (don't bury exact-token docs); must be preserved (AC1 seed doc must stay in top-5).
-  - **Verification gate:** CK-1 integration test AC3.2 topology probe (konnex-memory-query-ck1-integration.test.js, queries "what is the konnex data pipeline topology" / "what does a healthy pipeline run look like"), RUN_DB_TESTS=1 + MARKET_INTEL_DB_URI. Existing CX-5b lift unit tests: konnex-memory-query.test.js lines 481-528 (must not regress; AC6 byte-stability line ~530).
+- **Grace revising 141cd6f** for F1 + F2 → fresh dry-run → my re-review → Rajesh QA. My arch-review VERDICT IS COMPLETE (2 blockers, doc in /home/shared/prod-merges/reviews/). Ball is in GRACE's court — no revised commit has landed (branch tip still 141cd6f as of 16:14Z).
+- **Grace context-exited + relaunched STALE** (16:13Z): her resume PROGRESS.md predated my review, so she regressed to "141cd6f delivered, awaiting Jack arch-review" and lost the F1/F2 context. I re-grounded her (sig 4afdc175) pointing at the review doc with the exact F1/F2 + Option-B + F3-cleared + 60.13 scope. Watch for the same drift on any further relaunch — the review doc is the durable spec.
+- **I (Jack) am context-exiting at 70%** (this exit). Auto-relaunch armed. Nothing fired.
 
 ## Remaining
-1. **DFS: architect-review Grace's dry-run diff** when it lands (next DFS checkpoint) → Rajesh QA → Matt structure look → re-post (HELD, ~USD60.9, throttled). Do NOT fire re-post on any prior GO.
-2. **CX-5c NEXT STEP = write the fix spec/contract** (short, like other CX contracts) with the exact comparator change + AC, send to Rajesh for contract-first QA BEFORE building. Candidate fix direction (VALIDATE, don't blind-implement): bound the FTS lift so it does not outrank a non-FTS row of higher source_type-priority AND/OR higher similarity within the same provenance tier — i.e. subordinate step 2 to the human-curated case. Must keep AC1 recall + AC6 byte-stability. Then build + unit test + run CK-1 gate under RUN_DB_TESTS=1. Tier-2 → Matt GO before deploy to /home/shared/bin.
-3. CX queue after CX-5c: CX-7 -> CX-4 (GO'd) -> CK-2. CK-3 parked on ORG-3.
-4. Schema hardening A (fast-follow after clean re-post), B (doc), C (joint design review) — all sequenced AFTER re-post.
+1. **ON RELAUNCH FIRST:** check if Grace pushed her F1/F2 revision (git fetch origin contract/dataforseo-nsw-trades; if tip != 141cd6f, re-review it). Verify 228-divergence gone (re-run the 34,568-vs-34,796 identity check → should be equal), backup guard asserts full-row parity, Step D is batched (no index).
+2. Hand revised 141cd6f to Rajesh for QA PASS (his gate, NOT delegated).
+3. Gates green → I approve/merge/deploy Grace's PR + Grace fires re-post at USD60.13 cap, firing-now heads-up to Matt+Rajesh before spend.
+4. File idx_crawl_snapshots_business_id as a separate normal reviewed migration (deferred index).
+5. Flow-violation ticket closure (I own): assign Reviewer + reissue waiver (stale, DFS delivery merged a575fa6). Cosmetic.
+6. CX queue after DFS: CX-7 (Grafana Cortex-recall) → CX-4 → CK-2.
 
 ## Resume notes
-- Do NOT fire the DFS re-post — HELD pending fix + Rajesh QA + Matt look. Do NOT build Grace's label fix (her lane).
-- CX-5c is contract-first (Rajesh) + Matt-GO-before-deploy (Tier-2 ranking change). Do the SPEC next, not code.
-- Work happens in /home/jack/projects/ops (shared-bin); deploy to /home/shared/bin is a separate gated step. No ops code changed yet this session (reads only) — nothing uncommitted there.
-- Rajesh ONLINE holding continuity on both DFS + CX-5c. Re-sync with him on relaunch.
+- I am ACTIVE (in_progress), NOT exiting. Nothing has fired — no spend, no live DB writes, no re-post, no index.
+- Do NOT fire anything: --live re-split + re-post are HELD until F1/F2 fixed → my re-review → Rajesh QA PASS → my explicit go. Grace is single hand on trigger.
+- INDEX = Option B (batched delete), NOT Option A. Amount cap = USD60.13 forward (total ≤69.0).
+- All Matt/Rajesh/Grace sigs this session verified VALID.
