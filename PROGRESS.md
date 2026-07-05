@@ -1,24 +1,18 @@
 ---
 task_id: v2-phase-0-safety-spine
 agent: jack
-session_id: 2026-07-05T09Z-phase0-start
+session_id: 2026-07-05T09Z-phase0-spec
 model: claude-opus-4-8
-status: context-exit
-last_updated: 2026-07-05T09:18:00Z
+status: blocked
+last_updated: 2026-07-05T09:40:00Z
 notion_task_id: null
 context_needed:
-  files:
-    - /home/jack/projects/google-maps-scraper/V2-FOUNDATION-SYNTHESIS.md
-    - Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (§10 Phase roadmap = Phase 0 def)
-    - /home/jack/projects/konnex-data-pipeline/schema.sql (canonical market_intelligence schema)
-    - /home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh
-    - /home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js
-    - /home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js
+  files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-0-SAFETY-SPINE-SPEC.md", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (arch doc, Phase 0 def)", "/home/jack/projects/konnex-data-pipeline/schema.sql", "/home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js"]
   branches: []
   collaborators: [matt, rajesh, grace]
 ---
 
-# NEXT-SESSION TASK = WRITE the Phase 0 safety-spine SPEC from the recon below, then Matt review + Rajesh QA BEFORE any prod-touching execution. Recon is DONE (read-only) — do NOT re-run it. No prod infra was touched this session.
+# CURRENT STATE = Phase 0 spec DRAFTED + pushed (maps-lead-scraper main 17fb4db, PHASE-0-SAFETY-SPINE-SPEC.md). BLOCKED awaiting Matt review + Q1-Q4 answers + Rajesh QA before any prod-touching execution. Recon is DONE (read-only) — do NOT re-run it. No prod infra touched.
 
 ## Done (this session — all VERIFIED)
 - **Suburb backfill (thread d) CLOSED.** Grace ran LIVE (4c1752c) 08:39Z: net prod writes = 0; all 2,008 matched rows hit 23505 dedup-skip (safe, non-destructive); 233 no-geo-match. Grace + Rajesh both cross-checked at 0 writes. Coord-repost arc fully closed. Residual 2,008 NULL-suburb rows are dedup-BLOCKED → only closeable via dedup remediation (ticket 3932300f-2ecb-8197).
@@ -40,10 +34,19 @@ Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data,
 - **Migrations:** home-grown (no sqitch/flyway). konnex-data-pipeline/migrations/ (001-013) + pipeline-orchestrator/migrations/ (001-022, `npm run migrate`). Canonical schema: konnex-data-pipeline/schema.sql.
 - **CAVEAT:** commit 4c1752c is NOT in pushed konnex-data-pipeline history (Grace's local/unpushed worktree). Backfill DID run live + forward-path is merged; not a Phase 0 blocker, but don't cite 4c1752c as pushed.
 
-## Remaining (NEXT SESSION)
-1. **WRITE Phase 0 spec** (sprint contract — infra Tier ~2) from the recon above. Cover: (i) staging hardening + sampled-data seeding plan; (ii) generalize safety-envelope into a shared module (add pre-image + collision pre-check + VACUUM to the existing dry-run/batch/reversibility blocks); (iii) PITR from scratch (WAL archiving + automated snapshots + documented restore drill). Add Session estimate to Notion Notes per protocol. Sequence PITR first (it's the safety net the whole clean-cut depends on).
-2. Present spec → Matt review + Rajesh QA. NO prod-touching execution until both sign off (I promised Matt: flag before anything writes to prod infra).
-3. After Phase 0 lands → **dedup remediation** (queued fast-follow, ticket 3932300f-2ecb-8197): identify ~492 dup place_id groups → survivor selection → merge attrs incl. suburb → delete/tombstone dups (FK-safe) → re-attribute suburbs on survivors. Needs spec + dry-run + pre-image + Rajesh QA. Blocked-by Phase 0.
+## Done (this session — spec)
+- **Phase 0 spec WRITTEN** from recon → `PHASE-0-SAFETY-SPINE-SPEC.md`, committed + pushed (maps-lead-scraper main **17fb4db**). Sprint contract, infra Tier 2, Session estimate 4+. 3 workstreams w/ per-workstream ACs (§4.3 PITR / §5.3 envelope module / §6.3 staging). PITR-first sequencing. Execution-gate section (Matt GO + per-workstream Rajesh QA before any prod-touch).
+- Read the 2 envelope source scripts to ground §5.1 gap table: merge-lineage.js (dry-run default, per-batch txn, reversibility-log-before-write, idempotency skip-set) + au-suburb-mapping.js (keyset batching BATCH_SIZE=1000, resumable checkpoint, reactive 23505). Confirmed the 3 real gaps: generalized pre-image, PROACTIVE collision pre-check, VACUUM (in zero scripts).
+- Matt notified w/ spec summary + 4 open questions; Rajesh handoff-notified (spec in review, 2 Qs tagged for him).
+
+## In Progress
+- Awaiting Matt review of `PHASE-0-SAFETY-SPINE-SPEC.md` + answers to Q1-Q4, and Rajesh per-workstream QA. No build work in flight — spec-gate hold. (Both notified 09:40Z.)
+
+## Remaining (BLOCKED on Matt/Rajesh)
+1. **Matt review** of spec + answers to Q1-Q4 (§9): Q1 pgBackRest vs WAL-G; Q2 backup repo target local-first vs off-box day-one; Q3 restore-drill re-runnable QA artifact vs one-time; Q4 sampled-seed size ~50-100k vs larger. Then explicit GO on EXECUTION.
+2. **Rajesh QA** — per-workstream sign-off against the ACs (not one blanket sign-off).
+3. On GO → build in PITR-first order. Add Session estimate to Notion task Notes before build (notion_task_id still null — may need a Phase 0 Notion task created). NO prod-touch beyond additive PITR config until both gates pass; flag Matt before anything writes to prod infra.
+4. After Phase 0 lands → **dedup remediation** (queued fast-follow, ticket 3932300f-2ecb-8197): ~492 dup place_id groups → survivor selection → merge attrs incl. suburb → delete/tombstone (FK-safe) → re-attribute suburbs. Needs spec + dry-run + pre-image + Rajesh QA. Blocked-by Phase 0.
 
 ## Resume notes
 - Recon subagent is resumable: SendMessage to agent id `a36df81df1efa758e` for deeper infra digs.

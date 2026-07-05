@@ -1,6 +1,6 @@
 # Phase 0 — Safety Spine (Sprint Contract)
 
-> **Status:** DRAFT for review — Matt (product/GO) + Rajesh (QA).
+> **Status:** Rajesh QA = **PASS WITH NOTES** (2026-07-05, sig `0ca2953312f7a1ee`; notes folded into AC-iii-4, AC-i-2, AC-ii-2 + §5.2). Awaiting Matt review + Q1/Q2 + execution GO. Per-workstream QA sign-off happens at execution handoff (§7).
 > **Author:** Jack (Head of Engineering) · **Reviewer/QA:** Rajesh
 > **Tier:** Infra Tier 2 · **Session estimate:** 4+
 > **Depends on:** v2-foundation arch doc (Notion `3942300f-2ecb-8149-9d15-cb8326007871`), §10 Phase roadmap.
@@ -87,10 +87,15 @@ ad-hoc `pg_dump` runbook step (`konnex-data-pipeline/TIER3-AU-TRADES-SCOPE-REDUC
 - **AC-iii-2:** A full backup completes and is logged; `pgbackrest info` shows it.
 - **AC-iii-3:** WAL segments are being archived continuously (verify `pg_stat_archiver`:
   `archived_count` increasing, `failed_count` = 0).
-- **AC-iii-4 (THE ONE THAT MATTERS):** **Documented restore drill executed against
-  STAGING, not prod** — restore prod's latest backup + replay to a chosen `--type=time`
-  point on the staging box, and prove row counts/checksums match the target timestamp.
-  This proves recoverability without risking prod.
+- **AC-iii-4 (THE ONE THAT MATTERS):** **Re-runnable, scripted restore drill executed
+  against STAGING, not prod** — a documented, repeatable script (NOT a one-time proof) that
+  restores prod's latest backup + replays to a chosen `--type=time` point on the staging box.
+  Must be re-runnable on demand so we can re-verify recoverability *immediately before* Phase 2
+  execution (a one-time proof goes stale the moment pgBackRest config drifts or staging
+  diverges — Rajesh QA). Proof requirements: (a) row counts/checksums match the target
+  timestamp, AND (b) at least one **named-row spot-check** — probe a specific known row's
+  value at the target time (aggregate counts can match even under corruption; a named-row
+  probe makes the drill non-trivially correct — Rajesh QA).
 - **AC-iii-5:** Runbook written: how to trigger PITR, expected RTO/RPO, who authorizes it.
 - **AC-iii-6:** Scheduled snapshot survives a simulated reboot of the timer (durability).
 
@@ -135,9 +140,13 @@ runEnvelope({
 Defaults and guarantees:
 - **Dry-run by DEFAULT** (`live: false`) — the safe default from source A becomes the module default.
 - **Per-row PRE-IMAGE capture (NEW, generalized):** before each write, `SELECT` the current
-  row state via `preImageSelect` and append it to a JSONL reversibility log **before** the
-  write commits. Generalizes source-A's `loser_snapshot` and source-B's `*_pre_geocode`
-  columns into one row-agnostic mechanism — enables a mechanical row-level revert.
+  row state via `preImageSelect` and append it to a JSONL reversibility log that is
+  **durably flushed to disk (fsync or equiv) BEFORE the transaction COMMITs** — not merely
+  written earlier in code order (Rajesh QA). The dangerous failure mode is a COMMIT with no
+  corresponding log entry (a silent, unrevertable write = false negative); a log entry with
+  no write (crash between flush and COMMIT) is SAFE. Generalizes source-A's `loser_snapshot`
+  and source-B's `*_pre_geocode` columns into one row-agnostic mechanism — enables a
+  mechanical row-level revert.
 - **Collision PRE-CHECK (NEW, proactive):** run `collisionCheck` *before* the write; if it
   would violate a unique/FK constraint, **skip + log**, don't rely on catching `23505` after
   the fact. Keep the reactive `23505` catch as a belt-and-braces backstop.
@@ -152,7 +161,10 @@ Defaults and guarantees:
 - **AC-ii-1:** Module dry-runs by default; a caller with no `live:true` writes ZERO rows
   (assert via a staging table row-count delta of 0).
 - **AC-ii-2:** Pre-image log contains one entry per intended write with full prior row state,
-  written before the corresponding COMMIT (crash mid-run ⇒ log ⊇ actual writes, never fewer).
+  **fsync'd to disk before the corresponding COMMIT** (crash mid-run ⇒ log ⊇ actual writes,
+  never fewer). Test the crash-consistency invariant explicitly: simulate a crash between
+  flush and COMMIT and assert the log is a superset of committed writes (never a write
+  without a log entry). (Rajesh QA — durability ordering, not just code ordering.)
 - **AC-ii-3:** Collision pre-check skips a row that *would* 23505 and logs it; the reactive
   catch never fires in the happy path (proves the pre-check is doing the work).
 - **AC-ii-4:** Keyset resume: kill mid-run, re-run, and it resumes from checkpoint with no
@@ -199,7 +211,9 @@ validating a data migration or the safety-envelope module at realistic scale.
 - **AC-i-1:** `setup-staging.sh` (or successor) runs clean end-to-end and is documented in a
   staging README.
 - **AC-i-2:** Sampled seed loads ~50–100k rows that include ≥1 of each stratum (dedup
-  multi-active group, NULL-suburb row, coord-bearing row, ≥3 distinct industries).
+  multi-active group, NULL-suburb row, coord-bearing row, ≥3 distinct industries). **Must
+  include ≥1 dedup group of ≥10 rows** (a real multi-active place_id cluster) so the
+  collision pre-check gets a meaningful workout (Rajesh QA).
 - **AC-i-3:** Seed is repeatable/idempotent (re-run ⇒ same staging state).
 - **AC-i-4:** Seeding is **read-only against prod** (verified: no prod write in the seed path).
 - **AC-i-5:** The safety-envelope integration tests (§5.3) and the PITR restore drill
@@ -239,14 +253,14 @@ are **Tier-3, separate explicit Matt GO**. I will NOT self-authorize truncate or
 
 ## 9. Open questions for Matt / Rajesh
 
-- **Q1 (Matt):** pgBackRest vs WAL-G — any infra preference, or leave to my call during build
-  based on what packages the konnex-data box has?
-- **Q2 (Matt):** Backup repo target for the first cut — local separate-volume acceptable, with
-  off-box/object-store as a documented follow-up? Or do you want off-box from day one?
-- **Q3 (Rajesh):** Do you want the restore-drill (AC-iii-4) as a scripted, repeatable QA
-  artifact (so we can re-run it before Phase 2), or is a one-time documented proof enough?
-- **Q4 (Rajesh):** Sampled-seed size — is ~50–100k the right proving-ground scale, or do you
-  want a larger stratified sample to stress the envelope's batching?
+- **Q1 (Matt) — OPEN:** pgBackRest vs WAL-G — any infra preference, or leave to my call during
+  build based on what packages the konnex-data box has?
+- **Q2 (Matt) — OPEN:** Backup repo target for the first cut — local separate-volume acceptable,
+  with off-box/object-store as a documented follow-up? Or do you want off-box from day one?
+- **Q3 (Rajesh) — ANSWERED:** RE-RUNNABLE scripted artifact required (not one-time). Folded
+  into AC-iii-4.
+- **Q4 (Rajesh) — ANSWERED:** ~50–100k sufficient; must include ≥1 dedup group of ≥10 rows.
+  Folded into AC-i-2. (Full-production dedup-scale stress is a Phase 2 pre-flight concern.)
 
 ---
 
