@@ -69,11 +69,12 @@ Greenfield. No PITR, no WAL archiving, no pgBackRest/barman/wal-g, no cron backu
 ad-hoc `pg_dump` runbook step (`konnex-data-pipeline/TIER3-AU-TRADES-SCOPE-REDUCTION-CONTRACT.md:78-79`).
 
 ### 4.2 Design
-- **Tool:** pgBackRest (preferred over raw `archive_command` + cron for retention,
-  parallelism, and a first-class `restore --type=time` PITR path). Fallback to WAL-G if a
-  pgBackRest package is unavailable on the box — decide during build, note in the PR.
-- **Repo target:** local disk on a *separate volume* from PGDATA for the first cut; document
-  the off-box/object-store follow-up as a Phase 0.x nice-to-have (do not block on it).
+- **Tool:** pgBackRest — CONFIRMED available in apt on konnex-data (`2.50-1build2`), not yet
+  installed. First-class `restore --type=time` PITR path + retention/parallelism. No WAL-G
+  fallback needed.
+- **Repo target:** box has a SINGLE 610 GB disk (530 GB free) — no separate volume exists, so
+  first cut = separate directory on the same disk (`/var/lib/pgbackrest`). Off-box/object-store
+  is the prioritized Phase 0.x fast-follow for disk/box-loss DR (see §9 Q2).
 - **WAL archiving:** enable `archive_mode=on` + `archive_command` via pgBackRest. **VERIFIED
   PROD STATE (read-only, 2026-07-05):** `archive_mode=off`, `archive_command=disabled`,
   `wal_level=replica` (already sufficient for PITR — no change needed), `pg_stat_archiver`
@@ -259,14 +260,19 @@ are **Tier-3, separate explicit Matt GO**. I will NOT self-authorize truncate or
 
 ## 9. Open questions for Matt / Rajesh
 
-- **Q1 (Matt) — ANSWERED (Jack's call):** Matt delegated to me. **DECIDED: pgBackRest as
-  primary** (retention/parallelism/first-class `restore --type=time`), WAL-G only as fallback
-  if the konnex-data box can't package pgBackRest — decided at build, noted in the PR.
-- **Q2 (Matt) — ANSWERED (Jack's call):** Matt delegated to me. **DECIDED: local
-  separate-volume repo for the first cut, off-box/object-store as a documented fast-follow
-  (Phase 0.x).** Rationale: local PITR covers the Phase-2 "bad-migration rollback" risk class
-  immediately; box-loss DR is a distinct risk class handled by the off-box fast-follow — the
-  limitation is documented and off-box is prioritized before we'd lean on this for DR.
+- **Q1 (Matt) — ANSWERED + CONFIRMED (Jack's call):** **pgBackRest as primary.** VERIFIED
+  (read-only, 2026-07-05): pgBackRest is NOT installed on konnex-data but IS available in apt
+  (candidate `2.50-1build2`), so no WAL-G fallback needed — pgBackRest it is.
+- **Q2 (Matt) — ANSWERED + REFINED (Jack's call):** **REFINED after box inspection:** the
+  konnex-data box has a SINGLE 610 GB disk (`sda1` = `/`, 530 GB free); there is NO separate
+  volume to put the repo on. So the "first cut" = pgBackRest repo in a **separate directory on
+  the same disk** (e.g. `/var/lib/pgbackrest`), with **off-box/object-store as the prioritized
+  fast-follow (Phase 0.x)**. Rationale unchanged and actually reinforced: a same-disk repo
+  fully covers the Phase-2 *bad-migration/logical-corruption rollback* (disk is intact, you're
+  reverting a logical mistake); *disk-loss / box-loss DR* is the distinct risk class the
+  off-box follow-up closes — documented, and prioritized before we'd rely on this for DR.
+  (If Matt wants true separate-volume isolation now, that's an infra ask — attach a volume —
+  flag before build; otherwise same-disk-separate-dir is the first cut.)
 - **Q3 (Rajesh) — ANSWERED:** RE-RUNNABLE scripted artifact required (not one-time). Folded
   into AC-iii-4.
 - **Q4 (Rajesh) — ANSWERED:** ~50–100k sufficient; must include ≥1 dedup group of ≥10 rows.
