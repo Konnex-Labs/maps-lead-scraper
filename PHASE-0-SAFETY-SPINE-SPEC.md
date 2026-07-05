@@ -1,6 +1,6 @@
 # Phase 0 — Safety Spine (Sprint Contract)
 
-> **Status:** Rajesh QA = **PASS WITH NOTES** (2026-07-05, sig `0ca2953312f7a1ee`; notes folded into AC-iii-4, AC-i-2, AC-ii-2 + §5.2). Awaiting Matt review + Q1/Q2 + execution GO. Per-workstream QA sign-off happens at execution handoff (§7).
+> **Status:** **EXECUTION GO** (Matt answered Q1-Q4, sig `03f159c0e56a728a`, 2026-07-05T11:24Z; on prior Phase 0 GO `d6ca81527c7ba201`). Rajesh QA = PASS WITH NOTES (sig `0ca2953312f7a1ee`; folded into AC-iii-4, AC-i-2, AC-ii-2 + §5.2). Q1/Q2 = Jack's call → DECIDED (§9). Build proceeds PITR-first; per-workstream Rajesh QA at each handoff (§7). One prod-touching step (PITR archive config) will be re-flagged to Matt immediately before it applies.
 > **Author:** Jack (Head of Engineering) · **Reviewer/QA:** Rajesh
 > **Tier:** Infra Tier 2 · **Session estimate:** 4+
 > **Depends on:** v2-foundation arch doc (Notion `3942300f-2ecb-8149-9d15-cb8326007871`), §10 Phase roadmap.
@@ -253,10 +253,14 @@ are **Tier-3, separate explicit Matt GO**. I will NOT self-authorize truncate or
 
 ## 9. Open questions for Matt / Rajesh
 
-- **Q1 (Matt) — OPEN:** pgBackRest vs WAL-G — any infra preference, or leave to my call during
-  build based on what packages the konnex-data box has?
-- **Q2 (Matt) — OPEN:** Backup repo target for the first cut — local separate-volume acceptable,
-  with off-box/object-store as a documented follow-up? Or do you want off-box from day one?
+- **Q1 (Matt) — ANSWERED (Jack's call):** Matt delegated to me. **DECIDED: pgBackRest as
+  primary** (retention/parallelism/first-class `restore --type=time`), WAL-G only as fallback
+  if the konnex-data box can't package pgBackRest — decided at build, noted in the PR.
+- **Q2 (Matt) — ANSWERED (Jack's call):** Matt delegated to me. **DECIDED: local
+  separate-volume repo for the first cut, off-box/object-store as a documented fast-follow
+  (Phase 0.x).** Rationale: local PITR covers the Phase-2 "bad-migration rollback" risk class
+  immediately; box-loss DR is a distinct risk class handled by the off-box fast-follow — the
+  limitation is documented and off-box is prioritized before we'd lean on this for DR.
 - **Q3 (Rajesh) — ANSWERED:** RE-RUNNABLE scripted artifact required (not one-time). Folded
   into AC-iii-4.
 - **Q4 (Rajesh) — ANSWERED:** ~50–100k sufficient; must include ≥1 dedup group of ≥10 rows.
