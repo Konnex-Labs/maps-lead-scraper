@@ -1,50 +1,39 @@
 ---
-task_id: dfs-repull-live-ownership
+task_id: v2-foundation-architecture-notion-doc
 agent: jack
-session_id: 2026-07-03T16Z-dfs-repull-ownership
+session_id: 2026-07-05T07Z-arch-doc-write
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-03T16:15:00Z
+last_updated: 2026-07-05T08:02:00Z
+notion_task_id: 3942300f-2ecb-81b8-9b8c-dea9feb9fb02
 context_needed:
   files:
-    - /home/shared/prod-merges/reviews/141cd6f-relabel-attribution-arch-review.md
-    - /home/jack/projects/market-intelligence/svi/relabel-trade-attribution.js
-    - /home/jack/projects/market-intelligence/svi/nsw-trades-ingest-runner.js
-    - /home/jack/projects/market-intelligence/svi/dfs-repost-runbook.md (Grace, pending)
-  branches:
-    - "market-intelligence @ origin/contract/dataforseo-nsw-trades (Grace, commit 141cd6f)"
-  collaborators: ["matt", "rajesh", "grace"]
+    - /home/jack/projects/google-maps-scraper/V2-FOUNDATION-SYNTHESIS.md
+    - /home/shared/media/1783235720911-matt-to-jack.md (Vision doc, full)
+    - /home/shared/media/1783236531959-matt-to-jack.md (ChatGPT handoff doc, pre-pivot)
+  branches: []
+  collaborators: [matt, rajesh, grace]
 ---
 
-# DFS re-pull: own getting it live + running (Matt-delegated). Arch-review done; holding for Grace's F1/F2 revision.
+# v2 Foundation architecture — Notion doc WRITTEN + in Matt's review. Next = Phase 0 (safety spine) on Matt's OK.
 
-## Done (this session)
-- Session-start ground-truthed. **CX-5c SHIPPED**: PR #127 merged 15:47Z by Matt (quenito) + deployed live to /home/shared/bin/konnex-memory-query (md5 c1e8f39 == merged main). Ticket auto-closed. CK-1 AC3.2-topology closure condition SATISFIED. Prior "holding for Matt GO" state is resolved.
-- **Matt spend GO**: USD69.0, sig 241a4ebc VALID — CONDITIONAL (fires only after readiness gates green).
-- **Matt ownership grant**: sig 0bd9192a, then NARROWED by sig e8358a8 = "approve PRs for merge + deploy to carry the DFS re-pull to completion; executing as normal." NOT general authority (no ad-hoc schema DDL).
-- **Arch-review of Grace's 141cd6f COMPLETE** (doc: /home/shared/prod-merges/reviews/141cd6f-relabel-attribution-arch-review.md):
-  - Fix 1 (runner recurrence-prevention): APPROVED as-is (buildCrawlTradeMap ledger-sourced + fail-loud, carpenter default removed).
-  - Fix 2 (re-split DML): 2 BLOCKERS before --live. F1 = backup guard existence-only (must assert full-row parity + materialize full-row DB backup from CSV). F2 = idExpr/idMatch lower()+coalesce city/state but idx_businesses_dedup keeps them RAW; measured 228 wrongly-merged businesses + Step C non-determinism → align to index.
-  - F3 CLOSED by me: all 4 FKs referencing businesses(id) (business_events, business_merges canonical+loser, crawl_snapshots) are ON DELETE SET NULL; 0 of 33,489 created-today scoped rows are in merge lineage or have events → Step D won't abort or null real lineage.
-- **Owner decisions**: (1) AMOUNT = treat 69.0 as HARD TOTAL cap → forward re-post capped USD60.13 (69.0-8.87 sunk); runner resumable, stops+reports if hit; offered Matt a nudge to ~69.8 for one-shot. (2) INDEX = OPTION B batched delete (Matt's grant doesn't cover ad-hoc schema DDL); idx_crawl_snapshots_business_id deferred to a separate normal migration ticket. (3) TRIGGER = Grace single-hand, fires only on Jack explicit go after all gates green.
-- Grace confirmed **Gate-1 backup DONE**: full-row CSV (biz 34,902 / snaps 49,543) in svi/relabel-backup-20260703T144045Z/; nsw-trades_au still 18,445 (no re-split has run).
-- Re-grounded Rajesh (stale auto-relaunch checkpoint) → CX-5c shipped, QA gate on 141cd6f standing by, 2 stale DFS flow-violation reviews disposed.
+## Done
+- **Notion architecture doc WRITTEN + in review.** Page 3942300f-2ecb-8149-9d15-cb8326007871 (child of tracking task 3942300f-2ecb-81b8-9b8c-dea9feb9fb02, Sprint 17, Status In Review, Reviewer Matt). Full sections + mermaid: system arch, one-core/3-read-models, snapshot+event+provenance ER + DDL sketch, focused trades event set, verification tiers, build-now-vs-defer table w/ rationale, Phase 0/1/2 roadmap, risks/mitigations, consciously-deferred+WHY, locked-decisions appendix. Sourced entirely from V2-FOUNDATION-SYNTHESIS.md (design LOCKED, Matt sig 0ce148691d643626).
+- Session-start gate sent + Matt GO'd the doc write (sig 1b5d9771cb8b9245).
+- **Repo-deletion incident RESOLVED:** Matt accidentally deleted /home/jack/projects/google-maps-scraper in VSCode (sig 768b6b946ebfa6bf). Jack re-cloned from origin (restored to 99cbbbe) + restored V2-FOUNDATION-SYNTHESIS.md (verbatim) + this PROGRESS.md. No OS trash on this Remote-SSH host.
 
-## In Progress
-- **Grace revising 141cd6f** for F1 + F2 → fresh dry-run → my re-review → Rajesh QA. My arch-review VERDICT IS COMPLETE (2 blockers, doc in /home/shared/prod-merges/reviews/). Ball is in GRACE's court — no revised commit has landed (branch tip still 141cd6f as of 16:14Z).
-- **Grace context-exited + relaunched STALE** (16:13Z): her resume PROGRESS.md predated my review, so she regressed to "141cd6f delivered, awaiting Jack arch-review" and lost the F1/F2 context. I re-grounded her (sig 4afdc175) pointing at the review doc with the exact F1/F2 + Option-B + F3-cleared + 60.13 scope. Watch for the same drift on any further relaunch — the review doc is the durable spec.
-- **I (Jack) am context-exiting at 70%** (this exit). Auto-relaunch armed. Nothing fired.
+## In Progress / Awaiting
+- **Matt reviewing the arch doc.** On his OK → start Phase 0.
+- Grace coord-repost split (GO code merge tip 263b5a1 via Rajesh QA gate / HOLD backfill) — awaiting Matt's SEPARATE explicit confirm; untouched.
 
 ## Remaining
-1. **ON RELAUNCH FIRST:** check if Grace pushed her F1/F2 revision (git fetch origin contract/dataforseo-nsw-trades; if tip != 141cd6f, re-review it). Verify 228-divergence gone (re-run the 34,568-vs-34,796 identity check → should be equal), backup guard asserts full-row parity, Step D is batched (no index).
-2. Hand revised 141cd6f to Rajesh for QA PASS (his gate, NOT delegated).
-3. Gates green → I approve/merge/deploy Grace's PR + Grace fires re-post at USD60.13 cap, firing-now heads-up to Matt+Rajesh before spend.
-4. File idx_crawl_snapshots_business_id as a separate normal reviewed migration (deferred index).
-5. Flow-violation ticket closure (I own): assign Reviewer + reissue waiver (stale, DFS delivery merged a575fa6). Cosmetic.
-6. CX queue after DFS: CX-7 (Grafana Cortex-recall) → CX-4 → CK-2.
+1. On Matt doc-review OK → **Phase 0 execution** (staging DB schema-mirror + sampled data; prod-write safety-envelope-default; PITR/auto-snapshots). No spend, no destructive ops.
+2. Phase 1 schema build follows Phase 0.
+3. Phase 2 clean-cut + full NSW+3 pilot (epic 38a2300f, ~USD100-150) = Tier-3, GATED on explicit fresh Matt GO.
+4. LOST in the deletion (NOT auto-recovered): last 2 local-only WIP commits c5e1666+d4792ea (content preserved: synthesis restored + doc written); V2-VISION-DOC-BRIEF.md (reconstructable from media Vision doc); untracked WIP artifacts (SCHEMA-HARDENING-A/SM specs, V2-TRADES-STRATEGY/TICKETS, RECRAWL-PATH-PLAN, dynamic-stats-spec, agent-architecture-v3.md, generate-qsr-csv.js, qsr CSVs, ~40 screenshots). Awaiting Matt on whether any need recovery.
 
 ## Resume notes
-- I am ACTIVE (in_progress), NOT exiting. Nothing has fired — no spend, no live DB writes, no re-post, no index.
-- Do NOT fire anything: --live re-split + re-post are HELD until F1/F2 fixed → my re-review → Rajesh QA PASS → my explicit go. Grace is single hand on trigger.
-- INDEX = Option B (batched delete), NOT Option A. Amount cap = USD60.13 forward (total ≤69.0).
-- All Matt/Rajesh/Grace sigs this session verified VALID.
+- Autonomy: Matt sig 60b0ab4d256283fa = NSW+3 DFS + Cortex prod autonomy; does NOT cover fresh large spend or Phase 2 clean-cut (Tier-3 = explicit Matt GO).
+- Writing/reviewing the doc needs no gate; executing Phase 0/1 needs Matt review of the doc; Phase 2 needs explicit GO.
+- DO NOT: self-authorize truncate/spend; self-confirm the Grace split (Matt's call).
+- Prior arc (all LANDED): Explorer 5xx (PR#25, 410 Gone); AC7 PR#52 merged; DFS-B coord re-post clean; Tier-2 deploy-authority PR#128 merged.
