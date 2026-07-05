@@ -4,7 +4,7 @@ agent: jack
 session_id: 2026-07-05T09Z-phase0-spec
 model: claude-opus-4-8
 status: in_progress
-last_updated: 2026-07-05T12:11:00Z
+last_updated: 2026-07-05T12:40:00Z
 notion_task_id: null
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-0-SAFETY-SPINE-SPEC.md", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (arch doc, Phase 0 def)", "/home/jack/projects/konnex-data-pipeline/schema.sql", "/home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js"]
@@ -48,8 +48,11 @@ Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data,
 - **AC-iii-3 proof:** pg_stat_archiver archived_count=4, **failed_count=0**, last_archived_time 11:47:37Z. Disk 10%/524G free.
 - HANDED to Rajesh for QA (handoff-notification cf3c5ca9f6886d57). Matt notified.
 
-## WS-iii STATUS: 5/6 QA-PASS (Rajesh). Only AC-iii-4 (restore drill) left — gated on WS-i staging.
-- AC-iii-1..3 PASS, AC-iii-5 (runbook RTO/RPO + Matt-authorizer) PASS, AC-iii-6 (Persistent catch-up EXERCISED via backdated-stamp test) PASS. All committed+pushed: c9a87d8 (PITR + timers + runbook) + 31de4af (runbook fix).
+## WS-iii STATUS: AC-iii-4 EXECUTED + PASS (2026-07-05T12:36Z). 6/6 AC done; awaiting Rajesh final verdict → WS-iii CLOSE.
+- **AC-iii-4 restore drill PASS on-box (Option A, konnex-data).** Matt A GO `e2f1616f4387fd8e` (12:27Z). Ran restore-drill.sh twice: PITR --type=time target=2026-07-05 11:50:00+00 → promote. COUNT-ASSERT PASS (3776477), CHECKSUM-ASSERT PASS (md5 first 100k ids 8c2c00bddf68fdc9a8611c789f6fddf8), NAMED-ROW PASS (id 0000045f...5666 = 'PracticeCFO'). RTO=57-59s. Re-runnable proven. EXIT 0 (fixed success-path false-exit-1). Isolated: pg1-path /var/lib/postgresql/16/drill, port 5433, archive off, torn down. PROD UNTOUCHED (verified count post-drill = 3776477). Committed+pushed maps-lead-scraper main **05b0732**. Rajesh sent full evidence (sig 68a29378), awaiting verdict.
+- **[4/6] Debian layout VALIDATED on-box:** restored data dir lacks postgresql.conf/pg_hba.conf (Debian keeps in /etc); drill now materializes minimal ones, recovery max_* params read from restored control file (self-contained). Prod facts used: businesses quiescent since 00:53Z (< 11:42Z backup) so target-time state == current.
+- AC-iii-1..3 PASS, AC-iii-5 (runbook RTO/RPO + Matt-authorizer) PASS, AC-iii-6 (Persistent catch-up EXERCISED via backdated-stamp test) PASS. All committed+pushed: c9a87d8 (PITR + timers + runbook) + 31de4af (runbook fix) + 05b0732 (AC-iii-4).
+- **AUTH note (corrected this session):** Phase 0 auth chain = Matt Concept GO d6ca81527c7ba201 + Execution GO 03f159c0e56a728a; Q1/Q2 = Jack's delegated calls; AC-iii-4 prod-box gate = Matt A GO e2f1616f only. Grace is NOT in the chain (no 'Grace GO' exists — flagged by Grace+Rajesh, corrected).
 - systemd timers LIVE on konnex-data: pgbackrest-backup@full.timer (Sun 02:00) + @diff.timer (daily 02:30), Persistent=yes, validated end-to-end (diff backup 20260705-114245F_20260705-115219D landed via service).
 - notion_task_id still null — Phase 0 Notion task needs creating for Session estimate (4+). TODO.
 
@@ -73,13 +76,8 @@ Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data,
 ## Resume notes
 - **RESUMED clean on fresh context 2026-07-05T12:11Z. Prod PITR is LIVE — do NOT re-run archive setup.** Prod DB = 204.168.198.203:5432 market_intelligence, PG16.14, 26GB, 3.78M rows, archive_mode ON, first full backup taken, timers armed. WS-i staging built + handed to Rajesh QA (ea27941). Do NOT agent-offline.
 - **WS-i DONE + Rajesh QA PASS 4/4 (AC-i-1..4, verdict sig 464fe2048ea35d85). AC-i-5 = cross-workstream, proven later.**
-- **NEXT = AC-iii-4 restore drill — GATED ON MATT'S A/B CALL (escalated 12:14Z, no answer yet):**
-  - Root cause of the fork: repo is same-disk on konnex-data (Matt Q2); konnex-ops has NO pgbackrest + NO repo access, so the RUNBOOK's "drill on staging" isn't executable as-is.
-  - **Option A** (Rajesh QA-endorsed as scope-sufficient, sig 24acb18c90c5ba6a; Matt-aligned per his Q2 bad-migration reasoning): restore into an ISOLATED cluster ON konnex-data (separate pg1-path e.g. /var/lib/postgresql/16/drill, port 5433, archive OFF, torn down). Repo local. Proves backup integrity + PITR replay + named-row correctness.
-  - **Option B**: konnex-ops as pgbackrest repo-host client (install pgbackrest + restricted SSH key postgres@konnex-ops→konnex-data). True cross-box DR proof, matches runbook, but SSH-trust-on-prod-box = Matt's security call; beyond Phase 0 scope.
-  - **ON MATT'S CONFIRM:** build + run the drill ON konnex-data (NOT from konnex-ops — script must be authored/tested there: Debian PG splits config /etc vs data /var/lib, so restored data dir lacks postgresql.conf; start via `pg_ctl -D $DRILL_PGDATA -o "-p 5433 -c archive_mode=off -c archive_command=''"`). Read konnex-data REPO-MAP.md first (my rule). Deliver to Rajesh: re-runnable script + checksums@target-time + ≥1 named-row spot-check + measured RTO → RUNBOOK §RTO.
-  - Isolated-cluster safety: separate pg1-path (NEVER prod's /var/lib/postgresql/16/main), separate port 5433, archive_mode=off (must NOT push WAL to prod repo), tear down after. Disk: konnex-data /dev/sda1 ~470G free, 26GB restore fits.
-- **PARALLEL unblocked work (if AC-iii-4 stays gated): WS-ii envelope module** `lib/prod-write-envelope.js` (AC-ii-1..7): dry-run default + per-batch txn + fsync'd pre-image-before-COMMIT + proactive collision pre-check + VACUUM; refactor au-suburb-mapping.js as reference caller. Build/test on staging konnex_staging_v2 (614-row dedup cluster gives the collision pre-check a real workout). Proves AC-i-5's other half. NOT started — start fresh (needs its own context headroom).
+- **AC-iii-4 DONE (Option A, executed on-box 12:36Z, PASS, pushed 05b0732).** Matt chose A (e76b165e) after brief A/B confusion (Grace mis-relayed a B-lean; re-grounded to A). WS-iii awaits only Rajesh's final verdict to close. Do NOT re-run.
+- **NEXT = WS-ii envelope module (IN PROGRESS).** `konnex-data-pipeline/lib/prod-write-envelope.js` WRITTEN this session (not yet committed): dry-run default + per-batch BEGIN/COMMIT/ROLLBACK keyset + fsync'd pre-image-before-COMMIT (per-row SAVEPOINT so reactive 23505 doesn't poison the batch txn) + proactive collisionCheck + opt-in VACUUM(ANALYZE) + resumable durable checkpoint. Test seam `_afterFlushBeforeCommit` for the AC-ii-2 crash-consistency test. REMAINING: (task#2) unit tests per guard incl. crash-consistency (log ⊇ committed); (task#3) refactor backfill-au-suburb-mapping.js onto it, reproduce prior dry-run numbers; (task#4) integration test on staging konnex_staging_v2 (614-row dedup cluster exercises collision pre-check) → hand Rajesh. Build/test on STAGING only, no prod touch. Covered by Matt Execution GO 03f159c0e56a728a.
 - Create Phase 0 Notion task (notion_task_id still null) — Session estimate 4+. TODO.
 - Rajesh board: 3 TODOs incl. a NEW coord-repost suburb-normalization flow-violation ticket — NOT self-start, needs Jack direction (post-Phase-0). Grace also context-exited 12:00Z.
 - Matt Q&A this session: GO 03f159c0e56a728a; Q1/Q2 answered 46e5b05f2e7673ec (restart free, same-disk repo).
