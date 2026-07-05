@@ -1,0 +1,15 @@
+# Phase 0 Safety Spine — pgBackRest scheduled backup (templated: %i = full | diff).
+# Deployed to konnex-data at /etc/systemd/system/pgbackrest-backup@.service.
+[Unit]
+Description=pgBackRest %i backup of market_intelligence
+After=postgresql@16-main.service
+Requires=postgresql@16-main.service
+
+[Service]
+Type=oneshot
+User=postgres
+Group=postgres
+ExecStart=/usr/bin/pgbackrest --stanza=market_intelligence --type=%i backup
+# Backups are I/O heavy but non-urgent; be a good neighbour to the live DB.
+Nice=10
+IOSchedulingClass=idle

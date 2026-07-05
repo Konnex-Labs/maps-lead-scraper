@@ -3,8 +3,8 @@ task_id: v2-phase-0-safety-spine
 agent: jack
 session_id: 2026-07-05T09Z-phase0-spec
 model: claude-opus-4-8
-status: context-exit
-last_updated: 2026-07-05T11:33:00Z
+status: in_progress
+last_updated: 2026-07-05T11:48:00Z
 notion_task_id: null
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-0-SAFETY-SPINE-SPEC.md", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (arch doc, Phase 0 def)", "/home/jack/projects/konnex-data-pipeline/schema.sql", "/home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js"]
@@ -12,7 +12,7 @@ context_needed:
   collaborators: [matt, rajesh, grace]
 ---
 
-# CURRENT STATE = Phase 0 EXECUTION GO (Matt sig 03f159c0e56a728a + Rajesh QA PASS). BUILDING PITR-first. Spec = PHASE-0-SAFETY-SPINE-SPEC.md. Q1/Q2 LOCKED (Jack's call): pgBackRest primary (WAL-G fallback); local separate-volume repo first cut + off-box fast-follow. Recon DONE — do NOT re-run. NO prod data mutation in Phase 0; the ONE prod-touch = enabling archive_mode/archive_command on prod, must FLAG MATT immediately before applying (promised).
+# CURRENT STATE = Phase 0 BUILDING, PITR-first. **WS-iii AC-iii-1..3 DONE — prod PITR is LIVE.** Spec = PHASE-0-SAFETY-SPINE-SPEC.md. Matt cleared both WS-iii blockers 2026-07-05T11:37Z (sig 46e5b05f2e7673ec): Q1 prod-restart = free anytime (no customers, v2 build phase); Q2 = same-disk /var/lib/pgbackrest first cut (Jack's rec), off-box = Phase 0.x DR fast-follow. The one prod-touch (archive_mode enable + restart) DONE + Matt-pinged right before. Remaining WS-iii = systemd backup timer + re-runnable restore drill (needs WS-i staging). NO prod DATA mutation anywhere in Phase 0.
 
 ## Done (this session — all VERIFIED)
 - **Suburb backfill (thread d) CLOSED.** Grace ran LIVE (4c1752c) 08:39Z: net prod writes = 0; all 2,008 matched rows hit 23505 dedup-skip (safe, non-destructive); 233 no-geo-match. Grace + Rajesh both cross-checked at 0 writes. Coord-repost arc fully closed. Residual 2,008 NULL-suburb rows are dedup-BLOCKED → only closeable via dedup remediation (ticket 3932300f-2ecb-8197).
@@ -39,12 +39,20 @@ Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data,
 - Read the 2 envelope source scripts to ground §5.1 gap table: merge-lineage.js (dry-run default, per-batch txn, reversibility-log-before-write, idempotency skip-set) + au-suburb-mapping.js (keyset batching BATCH_SIZE=1000, resumable checkpoint, reactive 23505). Confirmed the 3 real gaps: generalized pre-image, PROACTIVE collision pre-check, VACUUM (in zero scripts).
 - Matt notified w/ spec summary + 4 open questions; Rajesh handoff-notified (spec in review, 2 Qs tagged for him).
 
-## In Progress
-- **BUILDING Phase 0, WS-iii (PITR) FIRST.** REPO-MAP read (done). **Prod box identity VERIFIED read-only:** market_intelligence LIVE at 204.168.198.203:5432, PG 16.14, 26 GB, 3,776,477 rows (`inet_server_addr`=204.168.198.203). The SSH-config "204.168.x decommissioned" comment = the crawl-1/crawl-2 cpx62 boxes, NOT this DB box. (Also noted drift: EXPLORER_DB_URL now → Supabase, no longer aliased to MARKET_INTEL_DB_URI as REPO-MAP claims.)
-- **Archiving baseline VERIFIED read-only:** archive_mode=off, archive_command=disabled, wal_level=replica (already OK for PITR — no change), pg_stat_archiver 0/0. **⚠️ enabling archive_mode = postmaster-context → needs a FULL PROD DB RESTART (brief blip), not a reload.** This is THE prod-touch → FLAGGED to Matt for a maintenance window (do NOT apply autonomously).
-- **pgBackRest + disk recon DONE (read-only SSH konnex-data):** pgBackRest NOT installed but AVAILABLE in apt (2.50-1build2) → pgBackRest primary confirmed, no WAL-G. Box = SINGLE 610GB disk (sda1=/, 530GB free); NO separate volume. → Q2 REFINED: first-cut repo = separate DIR on same disk (/var/lib/pgbackrest); off-box = prioritized Phase 0.x DR follow-up. (Offered Matt the option to attach a volume for true isolation if he wants it now.)
-- **BLOCKED on Matt:** (1) prod-restart window for archive_mode enable; (2) optional — attach separate volume for repo, or accept same-disk first cut. Next non-blocked steps: install pgBackRest + scaffold stanza config, restore-drill script, WS-i staging (parallel; hosts the restore drill).
-- notion_task_id null — Phase 0 Notion task likely needs creating for the Session estimate (4+) per protocol. TODO before/at first prod-touch.
+## WS-iii PITR — AC-iii-1..3 DONE (2026-07-05T11:47Z, prod PITR LIVE)
+- **pgBackRest 2.50 installed** on konnex-data (apt). Stanza config `/etc/pgbackrest/pgbackrest.conf` (stanza=`market_intelligence`, repo1=/var/lib/pgbackrest same-disk, retention full=2/diff=4, compress L3, log /var/log/pgbackrest). Legacy /etc/pgbackrest.conf (PG13 template) is INERT — dir-config takes precedence (verified: info reads my stanza).
+- **archive_mode enabled via** `/etc/postgresql/16/main/conf.d/pgbackrest.conf` (include_dir already on): archive_mode=on + archive_command='pgbackrest --stanza=market_intelligence archive-push %p'. wal_level=replica default was already OK. Validated read-only first via pg_file_settings (archive_command applied=t on reload; archive_mode applied=f pending restart).
+- **PROD RESTART done 11:42Z** (`systemctl restart postgresql@16-main`) — Matt-pinged right before (promised). Clean: DB healthy, businesses=3,776,477 unchanged. archive_mode=on confirmed.
+- **stanza-create + check OK** — check pushed test WAL 00000001000008C3000000FF to repo successfully (full archive path proven).
+- **First full backup 20260705-114245F** (~4m53s): db 26.2GB → repo 5.9GB compressed, 2056 files. `pgbackrest info` status=ok, wal min/max 00000001000008C3000000FF..00000001000008C400000001.
+- **AC-iii-3 proof:** pg_stat_archiver archived_count=4, **failed_count=0**, last_archived_time 11:47:37Z. Disk 10%/524G free.
+- HANDED to Rajesh for QA (handoff-notification cf3c5ca9f6886d57). Matt notified.
+
+## In Progress / Remaining WS-iii
+- **systemd backup timer** (task #7): weekly full + daily diff on konnex-data. Not yet built.
+- **Re-runnable restore drill** (AC-iii-4..6): needs WS-i staging as restore target. Blocked-by WS-i.
+- notion_task_id still null — Phase 0 Notion task needs creating for Session estimate (4+). TODO.
+- **Artifacts capture:** config mirrors + RUNBOOK going into repo `phase0/` (with the spec, this cwd) for reproducibility + Rajesh QA. Placement (here vs pipeline-orchestrator) = open, note for Matt.
 
 ## Remaining (BUILD — GO received)
 1. **WS-iii PITR (SEQUENCE FIRST):** pgBackRest stanza on prod + systemd-timer snapshots + `pg_stat_archiver` proof + RE-RUNNABLE restore drill w/ named-row spot-check (AC-iii-1..6). Archive-config = the one prod-touch → flag Matt first. Hand to Rajesh QA on landing.
@@ -54,11 +62,11 @@ Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data,
 5. After Phase 0 lands → **dedup remediation** (queued fast-follow, ticket 3932300f-2ecb-8197): ~492 dup place_id groups → survivor selection → merge attrs incl. suburb → delete/tombstone (FK-safe) → re-attribute suburbs. Needs spec + dry-run + pre-image + Rajesh QA. Blocked-by Phase 0.
 
 ## Resume notes
-- **CONTEXT-EXIT at 71% (2026-07-05T11:33Z), mid-WS-iii. Do NOT agent-offline (want auto-relaunch).** All state committed+pushed (maps-lead-scraper main **d08c32e**). Nothing uncommitted. Spec = PHASE-0-SAFETY-SPINE-SPEC.md.
-- **NEXT SESSION resume point = WS-iii build, but BLOCKED on 2 Matt decisions:** (1) prod-restart maintenance window for `archive_mode` enable (the one prod-touch — needs full PG restart, brief blip, pipeline idle so low impact); (2) Q2 repo target — thumbs-up on (a) same-disk `/var/lib/pgbackrest` first cut [Jack rec] vs (b) attach a dedicated volume. Both flagged to Matt 11:32Z; awaiting.
-- **Non-blocked work to progress while waiting:** install pgBackRest (apt 2.50, confirmed available) → scaffold stanza config; write the RE-RUNNABLE restore-drill script (AC-iii-4, needs staging as target); build WS-i staging (§6, hosts the drill; can run fully parallel — start here if Matt's decisions haven't landed). Then per-workstream hand to Rajesh QA.
-- **Do NOT re-run recon** — prod identity + archiving baseline + pgBackRest availability all VERIFIED this session (see In Progress). Prod DB = 204.168.198.203:5432 market_intelligence, PG16.14, 26GB, 3.78M rows, archive_mode=off, wal_level=replica (OK).
-- Rajesh holds full Phase 0 QA context + is monitoring this exit lands (will alert Matt if WIP commit doesn't appear ~4min). Matt GO logged (03f159c0e56a728a); Q1/Q2 locked.
+- **Active session 2026-07-05T11:48Z. Prod PITR is LIVE (see WS-iii DONE section) — do NOT re-run archive setup.** Prod DB = 204.168.198.203:5432 market_intelligence, PG16.14, 26GB, 3.78M rows. archive_mode NOW ON, first full backup taken.
+- **NEXT resume point = (1) build systemd backup timer on konnex-data [task #7, no dep]; (2) WS-i staging harden + stratified sampled seed [tasks #1/#2]; (3) restore drill [task #6, blocked-by WS-i staging].** Recommend doing systemd timer + WS-i staging, then the restore drill.
+- **Verified prod businesses columns read-only** for the WS-i stratified seed: has google_place_id (via migration 004), is_active, industry, address_suburb, lat/lng, enrichment_data, country_code, address_*_pre_geocode. schema.sql base table def is STALE/partial (no place_id) — introspect prod at seed time, don't trust schema.sql.
+- **Do NOT re-run recon** — prod identity + archiving + pgBackRest all VERIFIED/APPLIED this session.
+- Rajesh holds full Phase 0 QA context; AC-iii-1..3 handed to him (cf3c5ca9f6886d57), awaiting QA verdict. Matt GO 03f159c0e56a728a; Q1/Q2 answered 46e5b05f2e7673ec.
 - Recon subagent is resumable: SendMessage to agent id `a36df81df1efa758e` for deeper infra digs.
 - Autonomy: Matt Phase 0 GO covers safety-spine build (no spend, no destructive ops). Phase 2 clean-cut/truncate + ~USD100-150 NSW+3 = Tier-3, needs SEPARATE explicit Matt GO. Do NOT self-authorize truncate/spend.
 - DO NOT agent-offline on this exit (mid-work; want auto-relaunch). Rajesh + Grace both aware; Rajesh verifying exit lands clean.

@@ -1,0 +1,14 @@
+# Phase 0 Safety Spine — daily DIFFERENTIAL backup. Deployed at /etc/systemd/system/pgbackrest-backup@diff.timer.
+# Enable with: systemctl enable --now pgbackrest-backup@diff.timer
+# Runs daily; on Sunday the 02:00 full precedes the 02:30 diff (diff is a near-noop just after a full).
+[Unit]
+Description=Daily pgBackRest differential backup of market_intelligence
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+RandomizedDelaySec=300
+Unit=pgbackrest-backup@diff.service
+
+[Install]
+WantedBy=timers.target

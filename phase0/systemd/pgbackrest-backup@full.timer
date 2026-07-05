@@ -1,0 +1,13 @@
+# Phase 0 Safety Spine — weekly FULL backup. Deployed at /etc/systemd/system/pgbackrest-backup@full.timer.
+# Enable with: systemctl enable --now pgbackrest-backup@full.timer
+[Unit]
+Description=Weekly pgBackRest full backup of market_intelligence
+
+[Timer]
+OnCalendar=Sun *-*-* 02:00:00
+Persistent=true
+RandomizedDelaySec=300
+Unit=pgbackrest-backup@full.service
+
+[Install]
+WantedBy=timers.target
