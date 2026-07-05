@@ -12,14 +12,24 @@ CLUSTERS="${CLUSTERS:-25}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
 echo "[1/3] Truncate staging.businesses (idempotent reseed)"
-sudo -u postgres psql -d "$STAGING_DB" -v ON_ERROR_STOP=1 -c "TRUNCATE businesses;"
+# CASCADE: businesses is FK-referenced (business_events, business_merges, crawl_snapshots).
+# WS-i seeds only businesses, so those stay empty; CASCADE keeps the reseed idempotent.
+sudo -u postgres psql -d "$STAGING_DB" -v ON_ERROR_STOP=1 -c "TRUNCATE businesses CASCADE;"
 
 echo "[2/3] Stream stratified sample from prod (READ-ONLY) -> staging"
+# Disable USER triggers during the load so we mirror prod rows faithfully: prod's
+# trg_enforce_industry_country_match is enabled but ~52.8k grandfathered rows predate it
+# (it fires only on new DML), so re-inserting them here would wrongly reject valid prod data.
+# RI/FK triggers stay active. Trap re-enables even if the load fails mid-stream.
+restore_triggers() { sudo -u postgres psql -d "$STAGING_DB" -c "ALTER TABLE businesses ENABLE TRIGGER USER;" >/dev/null 2>&1 || true; }
+trap restore_triggers EXIT
+sudo -u postgres psql -d "$STAGING_DB" -v ON_ERROR_STOP=1 -c "ALTER TABLE businesses DISABLE TRIGGER USER;"
 # Server-side COPY (...) TO STDOUT is permitted for any role (only COPY TO/FROM file needs superuser).
 psql "$MARKET_INTEL_DB_URI" -v ON_ERROR_STOP=1 \
   -v CLUSTERS="$CLUSTERS" -v BASE="$BASE_SAMPLE" -v NULLS="$NULLSUB_SAMPLE" \
   -f "$HERE/sample-query.sql" \
   | sudo -u postgres psql -d "$STAGING_DB" -v ON_ERROR_STOP=1 -c "\copy businesses FROM STDIN"
+sudo -u postgres psql -d "$STAGING_DB" -v ON_ERROR_STOP=1 -c "ALTER TABLE businesses ENABLE TRIGGER USER;"
 
 echo "[3/3] Verify strata landed"
 sudo -u postgres psql -d "$STAGING_DB" -Atc "
