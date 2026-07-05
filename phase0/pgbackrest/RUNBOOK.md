@@ -40,7 +40,19 @@ sudo -u postgres psql -c "SELECT archived_count, failed_count, last_archived_wal
 systemctl list-timers 'pgbackrest-*'
 ```
 
-## Restore / PITR (⚠️ destructive to the TARGET cluster — never run against prod without an explicit GO)
+## RTO / RPO / authorization
+- **RPO (data-loss window):** WAL archiving is continuous, so under write load RPO ≈ seconds–minutes
+  (bounded by WAL segment fill + `pgbackrest archive-push`). The scheduled full/diff backups are the
+  **floor** of recoverability, not the ceiling — PITR can target any point covered by archived WAL.
+  ⚠️ On an **idle** DB a WAL segment may not switch for a while, widening the effective RPO; set
+  `archive_timeout` (e.g. 60s) for a hard RPO ceiling — tracked as a Phase 0.x tune.
+- **RTO (time-to-recover):** dominated by restoring the ~5.9GB repo + replaying WAL to the target time.
+  Estimated tens of minutes for the 26GB cluster; **actual RTO is measured by the AC-iii-4 restore
+  drill** and recorded here once the drill runs.
+- **Authorization:** any prod-touching restore/PITR is authorized by **Matt** only (spec §7). Restore
+  drills run against **staging** and need no prod GO.
+
+## Restore / PITR (⚠️ destructive to the TARGET cluster — Matt-authorized only; never run against prod without an explicit Matt GO)
 pgBackRest restore overwrites the target `pg1-path`. The re-runnable **restore drill** (AC-iii-4) exercises
 this against the **staging** box, never prod. Point-in-time example:
 ```bash
