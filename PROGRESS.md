@@ -3,8 +3,8 @@ task_id: v2-phase-0-safety-spine
 agent: jack
 session_id: 2026-07-05T09Z-phase0-spec
 model: claude-opus-4-8
-status: in_progress
-last_updated: 2026-07-05T13:05:00Z
+status: complete
+last_updated: 2026-07-05T13:11:00Z
 notion_task_id: null
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-0-SAFETY-SPINE-SPEC.md", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (arch doc, Phase 0 def)", "/home/jack/projects/konnex-data-pipeline/schema.sql", "/home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js"]
@@ -12,7 +12,10 @@ context_needed:
   collaborators: [matt, rajesh, grace]
 ---
 
-# CURRENT STATE = Phase 0 BUILDING. **WS-iii CLOSED (Rajesh FULL PASS 12:38Z sig 68a29378), WS-i CLOSED (Rajesh PASS 4/4 sig 464fe204, AC-i-5 confirmed), WS-ii COMPLETE (AC-ii-1..7 all green) — handed to Rajesh QA 13:05Z.** Prod PITR is LIVE.
+# CURRENT STATE = **PHASE 0 SAFETY-SPINE COMPLETE + CLOSED (2026-07-05T13:11Z).** All 3 workstreams PASS Rajesh QA: WS-i staging (sig 464fe204, 4/4), WS-iii PITR (12:38Z, prod PITR LIVE), WS-ii prod-write envelope (sig a3d75a425e6d301f, 11/11 green + clean code review, no blocking findings). Prod PITR is LIVE; prod-write safety envelope shipped (konnex-data-pipeline lib/prod-write-envelope.js). NO prod DATA mutation occurred anywhere in Phase 0.
+# NEXT (post-Phase-0, all gated): (a) create Phase 0 Notion task for cost record (Session estimate 4+); (b) author dedup-remediation spec → hand Grace (ticket 3932300f-2ecb-8197, was blocked-by Phase 0); (c) tee up Phase 1 entity model per arch doc; (d) route DFS Maps NSW+3 sourcing GO to Matt (Tier-3 spend-gated, Grace holding). (a)-(d) are separate follow-on tasks, NOT part of the now-complete Phase 0 task.
+# --- WS-ii FINAL QA (Rajesh 13:09Z, sig a3d75a425e6d301f): 11/11 green. Main 8/8 + dedup itest 3/3 on real 614-row cluster (7a proactive written=1/skip=4, 7b reactive 4-caught batch-not-poisoned, 7c pre-image revert clean). Code review: fsync-before-COMMIT ordering correct, cumBase/stats separation correct, plan()->null accounting matches pre-refactor, VACUUM live-only outside txn. Staging byte-clean post-run. ---
+# (prior) CURRENT STATE = Phase 0 BUILDING. **WS-iii CLOSED (Rajesh FULL PASS 12:38Z sig 68a29378), WS-i CLOSED (Rajesh PASS 4/4 sig 464fe204, AC-i-5 confirmed), WS-ii COMPLETE (AC-ii-1..7 all green) — handed to Rajesh QA 13:05Z.** Prod PITR is LIVE.
 # --- WS-ii DONE THIS SESSION (2026-07-05T13:05Z) --- All on konnex-data-pipeline main: f5e4936 (AC-ii-4 fix), 66145a3 (AC-ii-6 refactor + plan()->null), d184be2 (AC-ii-7 live dedup itest). Earlier ee9d8fc (module+tests WIP).
 # - AC-ii-4 keyset-resume FIXED: real bug was stats.written/scanned seeded from checkpoint (cumulative) -> per-run stats double-counted on resume + broke per-run log-superset invariant. Fix: only lastKey drives resume; checkpoint holds cumulative, stats.* count this invocation. (PROGRESS's old "run 1 didn't halt / all 20 committed" hypothesis was WRONG — run 1 halts fine; failure was line 200 stats2.written 20!=10.)
 # - Module generalization: plan(row)->null = "no change for this row" (scanned, not written, not logged; stats.planSkipped). Reordered plan() before collisionCheck. Unit suite now 8/8 green on staging.
