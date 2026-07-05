@@ -3,8 +3,8 @@ task_id: v2-phase-0-safety-spine
 agent: jack
 session_id: 2026-07-05T09Z-phase0-spec
 model: claude-opus-4-8
-status: in_progress
-last_updated: 2026-07-05T11:48:00Z
+status: context-exit
+last_updated: 2026-07-05T12:01:00Z
 notion_task_id: null
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-0-SAFETY-SPINE-SPEC.md", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (arch doc, Phase 0 def)", "/home/jack/projects/konnex-data-pipeline/schema.sql", "/home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js"]
@@ -48,11 +48,16 @@ Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data,
 - **AC-iii-3 proof:** pg_stat_archiver archived_count=4, **failed_count=0**, last_archived_time 11:47:37Z. Disk 10%/524G free.
 - HANDED to Rajesh for QA (handoff-notification cf3c5ca9f6886d57). Matt notified.
 
-## In Progress / Remaining WS-iii
-- **systemd backup timer** (task #7): weekly full + daily diff on konnex-data. Not yet built.
-- **Re-runnable restore drill** (AC-iii-4..6): needs WS-i staging as restore target. Blocked-by WS-i.
+## WS-iii STATUS: 5/6 QA-PASS (Rajesh). Only AC-iii-4 (restore drill) left — gated on WS-i staging.
+- AC-iii-1..3 PASS, AC-iii-5 (runbook RTO/RPO + Matt-authorizer) PASS, AC-iii-6 (Persistent catch-up EXERCISED via backdated-stamp test) PASS. All committed+pushed: c9a87d8 (PITR + timers + runbook) + 31de4af (runbook fix).
+- systemd timers LIVE on konnex-data: pgbackrest-backup@full.timer (Sun 02:00) + @diff.timer (daily 02:30), Persistent=yes, validated end-to-end (diff backup 20260705-114245F_20260705-115219D landed via service).
 - notion_task_id still null — Phase 0 Notion task needs creating for Session estimate (4+). TODO.
-- **Artifacts capture:** config mirrors + RUNBOOK going into repo `phase0/` (with the spec, this cwd) for reproducibility + Rajesh QA. Placement (here vs pipeline-orchestrator) = open, note for Matt.
+
+## WS-i staging — IN PROGRESS (scripts written, setup NOT yet green)
+- Wrote `phase0/staging/`: setup-staging.sh (durable rebuild — mirrors CURRENT prod schema via pg_dump --schema-only, read-only), sample-query.sql (deterministic stratified sample), seed-staging-sample.sh (runner + strata verify). README.md NOT yet written.
+- **Design:** full-schema mirror. Installed pgvector 0.6.0 on konnex-ops (staging box) — prod uses `vector` (market_intelligence doubles as Cortex corpus). Prod public = 56 base tables, 4 extensions (pg_trgm, plpgsql, uuid-ossp, vector).
+- **setup-staging.sh debugging (2 fixes applied, NEEDS a green re-run to confirm):** (1) strip dump's `CREATE SCHEMA public;` (collides with our pre-created public) — DONE via `grep -vxF`; (2) pg_dump --schema=public omits CREATE EXTENSION → pre-create uuid-ossp/pg_trgm/vector in step 1 — DONE. Last run failed at `public.uuid_generate_v4() does not exist` BEFORE fix #2; not yet re-run after fix #2.
+- **Seed strata feasibility (verified read-only on prod):** google_place_id EXISTS; 17,442 place_id groups ≥10 rows; null_suburb=58,792; coord_bearing=2,338,509; industries financial_advisor 447k/accountant 303k/mortgage_broker_us 244k/... Sample defaults: 25 clusters (≥10 rows,≥2 active) + 60k base (ORDER BY id) + 5k null-suburb → ~65k deterministic rows.
 
 ## Remaining (BUILD — GO received)
 1. **WS-iii PITR (SEQUENCE FIRST):** pgBackRest stanza on prod + systemd-timer snapshots + `pg_stat_archiver` proof + RE-RUNNABLE restore drill w/ named-row spot-check (AC-iii-1..6). Archive-config = the one prod-touch → flag Matt first. Hand to Rajesh QA on landing.
@@ -62,8 +67,15 @@ Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data,
 5. After Phase 0 lands → **dedup remediation** (queued fast-follow, ticket 3932300f-2ecb-8197): ~492 dup place_id groups → survivor selection → merge attrs incl. suburb → delete/tombstone (FK-safe) → re-attribute suburbs. Needs spec + dry-run + pre-image + Rajesh QA. Blocked-by Phase 0.
 
 ## Resume notes
-- **Active session 2026-07-05T11:48Z. Prod PITR is LIVE (see WS-iii DONE section) — do NOT re-run archive setup.** Prod DB = 204.168.198.203:5432 market_intelligence, PG16.14, 26GB, 3.78M rows. archive_mode NOW ON, first full backup taken.
-- **NEXT resume point = (1) build systemd backup timer on konnex-data [task #7, no dep]; (2) WS-i staging harden + stratified sampled seed [tasks #1/#2]; (3) restore drill [task #6, blocked-by WS-i staging].** Recommend doing systemd timer + WS-i staging, then the restore drill.
+- **CONTEXT-EXIT at 74% (2026-07-05T12:01Z, Rajesh monitor flagged — 2nd ceiling hit). Do NOT agent-offline (want auto-relaunch). Mid-WS-i build.** Prod PITR is LIVE — do NOT re-run archive setup. Prod DB = 204.168.198.203:5432 market_intelligence, PG16.14, 26GB, 3.78M rows, archive_mode ON, first full backup taken, timers armed.
+- **NEXT resume point = finish WS-i staging (tasks #1/#2):**
+  1. `cd phase0/staging && export MARKET_INTEL_DB_URI=... && ./setup-staging.sh` — re-run to confirm the 2 fixes make it GREEN (schema mirror: expect ~56 base tables, businesses ~60 cols). Both fixes already in the committed file.
+  2. `./seed-staging-sample.sh` — loads ~65k stratified rows; check the printed strata (total ~65k, ≥3 industries, null_suburb>0, coord_bearing>0, max_dedup_cluster≥10).
+  3. Write `phase0/staging/README.md` (connection, refresh cadence, what it is/isn't) — AC-i-1.
+  4. Hand WS-i (AC-i-1..4) to Rajesh QA (task #3). AC-i-5 proven later by envelope tests + restore drill.
+  5. Then AC-iii-4 restore drill (task #6): restore prod backup + PITR replay onto staging w/ named-row spot-check; re-runnable. Measure actual RTO → record in RUNBOOK.
+- Rajesh board: 3 TODOs incl. a NEW coord-repost suburb-normalization flow-violation ticket — NOT self-start, needs Jack direction (post-Phase-0). Grace also context-exited 12:00Z.
+- Matt Q&A this session: GO 03f159c0e56a728a; Q1/Q2 answered 46e5b05f2e7673ec (restart free, same-disk repo).
 - **Verified prod businesses columns read-only** for the WS-i stratified seed: has google_place_id (via migration 004), is_active, industry, address_suburb, lat/lng, enrichment_data, country_code, address_*_pre_geocode. schema.sql base table def is STALE/partial (no place_id) — introspect prod at seed time, don't trust schema.sql.
 - **Do NOT re-run recon** — prod identity + archiving + pgBackRest all VERIFIED/APPLIED this session.
 - Rajesh holds full Phase 0 QA context; AC-iii-1..3 handed to him (cf3c5ca9f6886d57), awaiting QA verdict. Matt GO 03f159c0e56a728a; Q1/Q2 answered 46e5b05f2e7673ec.
