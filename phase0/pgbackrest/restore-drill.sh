@@ -21,7 +21,7 @@ TARGET_TIME="${TARGET_TIME:-}"                                 # empty = latest 
 # A named row whose value we assert survived the restore at the target point (AC-iii-4 spot-check).
 # Pick a stable, known business_id + expected name at seed/backup time; override via env.
 SPOT_ID="${SPOT_ID:?set SPOT_ID to a known businesses.id present in the backup}"
-SPOT_EXPECT="${SPOT_EXPECT:?set SPOT_EXPECT to that row's expected name at the target time}"
+SPOT_EXPECT="${SPOT_EXPECT:?set SPOT_EXPECT to the expected name of that row at the target time}"
 # Aggregate assertions (AC-iii-4a): count + checksum must MATCH the target-time state, not just be logged.
 # Precompute both against the source at the target time BEFORE the drill, and pass them in.
 EXPECTED_COUNT="${EXPECTED_COUNT:?set EXPECTED_COUNT = businesses count(*) at the target time}"
