@@ -1,36 +1,41 @@
 ---
-task_id: nsw3-dfs-etl-followups-and-tier2-policy
+task_id: v2-foundation-architecture-notion-doc
 agent: jack
-session_id: 2026-07-05T00Z-morning-chat
+session_id: 2026-07-05T07Z-arch-planning
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-05T01:38:00Z
+last_updated: 2026-07-05T07:45:00Z
+notion_task_id: null
 context_needed:
   files:
-    - /home/jack/projects/ops/CLAUDE.md
-  branches:
-    - "konnex-ops @ main (PR #128 merged 3592b7d)"
-    - "konnex-data-pipeline @ svi/coord-repost-etl-suburb-city (Grace, origin f9619d6)"
-  collaborators: ["matt", "rajesh", "grace"]
+    - /home/jack/projects/google-maps-scraper/V2-FOUNDATION-SYNTHESIS.md
+    - /home/jack/projects/google-maps-scraper/V2-VISION-DOC-BRIEF.md
+    - /home/shared/media/1783236531959-matt-to-jack.md (ChatGPT handoff doc, pre-pivot)
+    - /home/shared/media/1783235720911-matt-to-jack.md (Vision doc, full)
+  branches: []
+  collaborators: [matt, rajesh, grace]
 ---
 
-# Morning chat w/ Matt (2026-07-05). DFS-B arc closed. Matt directed ALL-STAND-DOWN (01:10Z) then save-and-exit (01:35Z) — away w/ kids a few hours. RESUME PURPOSE: Matt + Jack planning session on architecture / DB changes, then resume work. Nothing to execute until Matt brings me back.
+# v2 Foundation architecture planning w/ Matt (2026-07-05). NEXT-SESSION TASK = WRITE the recommended architecture/schema/data-model as a NEW Notion doc with mermaid diagrams. Design is LOCKED. NO replay needed — everything durably saved (see context_needed files).
 
 ## Done (this session)
-- **Session-start gate sent to Matt.** Ground-truthed prior state: AC7 PR #52 MERGED (842ac2d, verified); DFS-B coord re-post landed + Grace-audited clean (no pending spend; the '$60/101,460' was a stale conflation).
-- **Answered Matt Q1 (DFS run stats + storage)** from live DB, not memory. Storage: market_intelligence DB (konnex-data) → `businesses` table (+ `crawl_log` run metadata ids 6392/6393/6394). Net-NEW ~2,386 (carpenter 725 / electrician 1,048 / plumber 613; Grace audit +2,410). Flagged crawl_log records_found/updated headline (109,996/104,323) is INFLATED (coord-grid overlap + known counter bug). DQ caveat: new rows address_suburb 100% NULL, city 14-32% NULL.
-- **Matt action: ETL fix + backfill prioritised.** Ticket 3932300f-2ecb-812a-92d4-e24f318efc55 → In Progress, Tier 2, delegation logged. Grace GO'd (contract-first, est 2-3). Rajesh PASSED contract (8 ACs, f9619d6). Grace GO to build. Matt gave direct backfill prod-write GO (sig 44afb4d84e116f32 / to grace e95e684). Grace safety envelope: dry-run + collision pre-check + pre-image + batched write + VACUUM.
-- **Matt directive: Tier 2 deploy-authority policy baked into ops/CLAUDE.md.** Ticket 3942300f-2ecb-81cd. PR #128 MERGED (3592b7d, Rajesh QA PASS + sig-verified). Sub-Tier-3 (Tier1+2) = no Matt deploy approval incl. prod data writes; safety envelope preserved. Live on canonical main.
+- Digested ALL 4 inputs: Vision doc, my prior 5-part response, the 2 morning ops conversations, the ChatGPT handoff doc.
+- Wrote the full synthesis: V2-FOUNDATION-SYNTHESIS.md (convergent spine + what ChatGPT doc adds + RE→trades remap + provisional phase plan + provisional core schema sketch + LOCKED decisions + doc-authoring instruction). Vision-doc brief durably at V2-VISION-DOC-BRIEF.md.
+- Sent Matt combined read (3 chunks) + 4 open questions.
+- **Matt LOCKED the design (sig 0ce148691d643626):** Q1 defer graph layer = YES; Q2 hold PII internal = YES; Q3 focused event set on general pattern = YES; Q4 NO Phase 0 this session — write the doc, start Phase 0 NEXT session. Matt add: doc must CAPTURE the build-now-vs-defer split + my recommendations/reasoning ("grow into the doc"), preserve rationale not just conclusion.
+- Grace coord-repost decoupled-GO proposed (code merge now via Rajesh gate on tip 263b5a1 / backfill held for Phase-2). Matt NOT yet explicitly confirmed the split.
 
-## Remaining / Awaiting
-- **NEXT SESSION = architecture/DB planning with Matt** (his stated purpose for bringing me back). Come in ready to plan schema/architecture changes; do NOT self-start backlog work.
-- **Grace's coord-repost-etl forward-path merge AWAITS Jack's GO** (Rajesh flagged, 01:36Z) — held under stand-down; give GO only after Matt resumes / confirms.
-- **Grace** owns ETL build → QA → backfill run (her lane; Rajesh QA/merge/deploy, no Matt gate). Not my execution. All held under stand-down.
-- **Explorer 5xx incident (alert 2938377b)** STILL OPEN — blocked on Matt's fix-vs-deprecate product call (a=recreate 4 matviews / b=[Jack rec] 500->404 graceful-degrade / c=410 deprecated endpoints). Do NOT auto-resolve.
-- Notion 38a2300f (NSW+3 full-ingest EPIC) = KEEP-OPEN (extraction-expansion undelivered). No close action.
+## In Progress / Awaiting
+- Context-exit at 66% (mid-task, doc unwritten). Want AUTO-RELAUNCH to write the doc next session — do NOT agent-offline.
+- Grace coord-repost split: awaiting Matt explicit confirm.
+
+## Remaining (NEXT SESSION)
+1. **WRITE THE NOTION DOC** — this is the whole next-session job. Source everything from V2-FOUNDATION-SYNTHESIS.md (design is locked). Steps: (a) create Notion task on Sprint Boards DB (id 3132300f-2ecb-81f8) with a Session estimate in Notes per protocol; (b) create the Notion doc with mermaid diagrams: system architecture, one-Postgres-core / three-read-models, snapshot+event+provenance schema (DDL-level), Phase 0/1/2 roadmap, a build-now-vs-defer table with rationale, risks/mitigations. Capture reasoning + consciously-deferred items (graph layer, extra verticals, property/listing/lender entities, polyglot DBs, full RE event taxonomy) and WHY.
+2. After the doc lands + Matt reviews: start Phase 0 execution (staging DB mirror + safety-envelope-default + PITR).
+3. Grace coord-repost: on Matt confirm, un-park ETL code merge (Grace opens PR → Rajesh QA tip 263b5a1 → merge); backfill stays gated on the Phase-2 truncate-vs-keep decision.
 
 ## Resume notes
-- Autonomy: Matt DFS+Cortex stream (sig 60b0ab4d256283fa) + new 2026-07-05 policy: sub-Tier-3 no Matt deploy gate.
-- Local git note: local `konnex-ops` main carries an autogen nucleus-sync commit (3cf281b) on top of origin; branch feature work off origin/main (already did for #128).
-- END-of-session save+exit DIRECTED by Matt (sig 293e8168a83ed099, VALID) — agent-offline is correct here; Matt re-summons for the planning session. NOT a mid-work relaunch case.
-- All peers stood down clean: Rajesh + Grace saving/offline, corrections propagated (USD60 stale, PR #52 merged, no pending spend anywhere).
+- Prior arc (all LANDED): Explorer 5xx resolved (PR #25, 410 Gone); AC7 PR #52 merged; DFS-B coord re-post clean; Tier-2 deploy-authority PR #128 merged.
+- Autonomy: Matt sig 60b0ab4d256283fa = NSW+3 DFS + Cortex prod autonomy; does NOT cover fresh large spend or Explorer infra. Phase 2 clean-cut (truncate + ~USD100-150 NSW+3) is Tier-3 = explicit Matt GO required.
+- DO NOT: self-authorize truncate/spend; self-merge Grace's PR (Rajesh code-owner gate).
+- The Notion doc is a design/plan artifact — writing it needs no Matt gate; executing Phase 0/2 does.
