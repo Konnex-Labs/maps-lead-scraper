@@ -1,41 +1,52 @@
 ---
-task_id: v2-foundation-architecture-notion-doc
+task_id: v2-phase-0-safety-spine
 agent: jack
-session_id: 2026-07-05T07Z-arch-planning
+session_id: 2026-07-05T09Z-phase0-start
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-05T07:45:00Z
+last_updated: 2026-07-05T09:18:00Z
 notion_task_id: null
 context_needed:
   files:
     - /home/jack/projects/google-maps-scraper/V2-FOUNDATION-SYNTHESIS.md
-    - /home/jack/projects/google-maps-scraper/V2-VISION-DOC-BRIEF.md
-    - /home/shared/media/1783236531959-matt-to-jack.md (ChatGPT handoff doc, pre-pivot)
-    - /home/shared/media/1783235720911-matt-to-jack.md (Vision doc, full)
+    - Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (§10 Phase roadmap = Phase 0 def)
+    - /home/jack/projects/konnex-data-pipeline/schema.sql (canonical market_intelligence schema)
+    - /home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh
+    - /home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js
+    - /home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js
   branches: []
   collaborators: [matt, rajesh, grace]
 ---
 
-# v2 Foundation architecture planning w/ Matt (2026-07-05). NEXT-SESSION TASK = WRITE the recommended architecture/schema/data-model as a NEW Notion doc with mermaid diagrams. Design is LOCKED. NO replay needed — everything durably saved (see context_needed files).
+# NEXT-SESSION TASK = WRITE the Phase 0 safety-spine SPEC from the recon below, then Matt review + Rajesh QA BEFORE any prod-touching execution. Recon is DONE (read-only) — do NOT re-run it. No prod infra was touched this session.
 
-## Done (this session)
-- Digested ALL 4 inputs: Vision doc, my prior 5-part response, the 2 morning ops conversations, the ChatGPT handoff doc.
-- Wrote the full synthesis: V2-FOUNDATION-SYNTHESIS.md (convergent spine + what ChatGPT doc adds + RE→trades remap + provisional phase plan + provisional core schema sketch + LOCKED decisions + doc-authoring instruction). Vision-doc brief durably at V2-VISION-DOC-BRIEF.md.
-- Sent Matt combined read (3 chunks) + 4 open questions.
-- **Matt LOCKED the design (sig 0ce148691d643626):** Q1 defer graph layer = YES; Q2 hold PII internal = YES; Q3 focused event set on general pattern = YES; Q4 NO Phase 0 this session — write the doc, start Phase 0 NEXT session. Matt add: doc must CAPTURE the build-now-vs-defer split + my recommendations/reasoning ("grow into the doc"), preserve rationale not just conclusion.
-- Grace coord-repost decoupled-GO proposed (code merge now via Rajesh gate on tip 263b5a1 / backfill held for Phase-2). Matt NOT yet explicitly confirmed the split.
+## Done (this session — all VERIFIED)
+- **Suburb backfill (thread d) CLOSED.** Grace ran LIVE (4c1752c) 08:39Z: net prod writes = 0; all 2,008 matched rows hit 23505 dedup-skip (safe, non-destructive); 233 no-geo-match. Grace + Rajesh both cross-checked at 0 writes. Coord-repost arc fully closed. Residual 2,008 NULL-suburb rows are dedup-BLOCKED → only closeable via dedup remediation (ticket 3932300f-2ecb-8197).
+- **Deletion-artifact recovery (Matt item 2) CLOSED — nothing lost.** Verified every artifact flagged at-risk from Matt's accidental delete of /home/jack/projects/google-maps-scraper is present + intact in THIS cwd (konnex-data-api/google-maps-scraper): 8 WIP specs, ~30 screenshots, both QSR CSVs, V2-VISION-DOC-BRIEF.md. No recovery needed.
+- **Mermaid fix DONE + render-validated.** Notion arch doc §5 erDiagram was failing (semicolon-separated attrs on one line). Fixed all 8 entity blocks to newline-separated form via update-page-markdown targeted find/replace (block f9e0364e-b255-463c-9e18-fbc9770927b6). Render-validated locally with mermaid-cli (--no-sandbox): clean erDiagram SVG, exit 0.
+- **Matt's 3 decisions logged:** (1) arch doc APPROVED + Phase 0 GO (sig d6ca81527c7ba201); (2) deletion recovery = close, nothing to recover; (3) dedup remediation = do AFTER Phase 0 / PITR-first (sig 3c8637e0c945f55a).
 
-## In Progress / Awaiting
-- Context-exit at 66% (mid-task, doc unwritten). Want AUTO-RELAUNCH to write the doc next session — do NOT agent-offline.
-- Grace coord-repost split: awaiting Matt explicit confirm.
+## Phase 0 RECON FINDINGS (read-only, done this session — DO NOT re-research)
+Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data, not a 3.7M clone); (ii) prod-write safety envelope as DEFAULT (dry-run default, pre-image, collision pre-check, batched + VACUUM); (iii) PITR / automated snapshots on prod.
+
+- **Prod DB:** `market_intelligence` on konnex-data **204.168.198.203**, Postgres 16.14. Addressed via `MARKET_INTEL_DB_URI` (in /home/jack/.env, or repo `.env.crawl` checked first; both gitignored). Resolution: `MARKET_INTEL_DB_URI || PIPELINE_DB_URI`. crawl-1/crawl-2 boxes DECOMMISSIONED 2026-07-03 (DFS pivot); konnex-data is the only enrichment box now. Explorer was `:6432/explorer` (pgbouncer) — pipeline prod likely same box, separate DB.
+- **Pipeline repo:** /home/jack/projects/konnex-data-pipeline (GitHub Konnex-Labs/konnex-data-pipeline). REPO-MAPs exist there + in pipeline-orchestrator. READ konnex-data-pipeline/REPO-MAP.md before any DB work (my rule).
+- **(iii) PITR = GREENFIELD / MISSING ENTIRELY.** No PITR, WAL archiving, pgBackRest/barman/wal-g, or cron backup anywhere in repos. Only ad-hoc `pg_dump` runbook step (konnex-data-pipeline/TIER3-AU-TRADES-SCOPE-REDUCTION-CONTRACT.md:78-79). Must build from scratch — this is the biggest Phase 0 lift.
+- **(i) Staging ~50% done but THROWAWAY.** `konnex_staging_v2` on 127.0.0.1:5432 (konnex-ops box), user konnex_staging, built by pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh (drops/recreates public, loads schema-prod-snapshot.sql = 25KB pg_dump --schema-only, applies migrations). Self-labeled "throwaway, not for production use — see Phase 1b permanent staging hardening." SCHEMA-MIRROR ONLY — no sampled-data seeding beyond a 30-row test harness. Phase 0 work = harden into a documented durable staging + add representative sampled-data seeding.
+- **(ii) Safety-envelope building blocks EXIST but scattered across 2 one-off scripts (no single script has all 5; VACUUM in ZERO scripts):**
+  - scripts/one-off/backfill-merge-lineage.js — dry-run DEFAULT (`--live` to write); per-batch BEGIN/COMMIT/ROLLBACK; reversibility log written BEFORE any write (JSONL to reports/); idempotency skip-set; ambiguity guard.
+  - scripts/one-off/backfill-au-suburb-mapping.js — batched keyset writes (BATCH_SIZE=1000, `id > lastId`); resumable checkpoint; 23505 catch-skip (reactive).
+  - GAPS to build for a generalized default envelope: (a) per-row PRE-IMAGE capture; (b) collision PRE-CHECK (currently only reactive 23505 catch); (c) VACUUM. Goal = extract these into a shared reusable module, not per-script copies.
+- **Migrations:** home-grown (no sqitch/flyway). konnex-data-pipeline/migrations/ (001-013) + pipeline-orchestrator/migrations/ (001-022, `npm run migrate`). Canonical schema: konnex-data-pipeline/schema.sql.
+- **CAVEAT:** commit 4c1752c is NOT in pushed konnex-data-pipeline history (Grace's local/unpushed worktree). Backfill DID run live + forward-path is merged; not a Phase 0 blocker, but don't cite 4c1752c as pushed.
 
 ## Remaining (NEXT SESSION)
-1. **WRITE THE NOTION DOC** — this is the whole next-session job. Source everything from V2-FOUNDATION-SYNTHESIS.md (design is locked). Steps: (a) create Notion task on Sprint Boards DB (id 3132300f-2ecb-81f8) with a Session estimate in Notes per protocol; (b) create the Notion doc with mermaid diagrams: system architecture, one-Postgres-core / three-read-models, snapshot+event+provenance schema (DDL-level), Phase 0/1/2 roadmap, a build-now-vs-defer table with rationale, risks/mitigations. Capture reasoning + consciously-deferred items (graph layer, extra verticals, property/listing/lender entities, polyglot DBs, full RE event taxonomy) and WHY.
-2. After the doc lands + Matt reviews: start Phase 0 execution (staging DB mirror + safety-envelope-default + PITR).
-3. Grace coord-repost: on Matt confirm, un-park ETL code merge (Grace opens PR → Rajesh QA tip 263b5a1 → merge); backfill stays gated on the Phase-2 truncate-vs-keep decision.
+1. **WRITE Phase 0 spec** (sprint contract — infra Tier ~2) from the recon above. Cover: (i) staging hardening + sampled-data seeding plan; (ii) generalize safety-envelope into a shared module (add pre-image + collision pre-check + VACUUM to the existing dry-run/batch/reversibility blocks); (iii) PITR from scratch (WAL archiving + automated snapshots + documented restore drill). Add Session estimate to Notion Notes per protocol. Sequence PITR first (it's the safety net the whole clean-cut depends on).
+2. Present spec → Matt review + Rajesh QA. NO prod-touching execution until both sign off (I promised Matt: flag before anything writes to prod infra).
+3. After Phase 0 lands → **dedup remediation** (queued fast-follow, ticket 3932300f-2ecb-8197): identify ~492 dup place_id groups → survivor selection → merge attrs incl. suburb → delete/tombstone dups (FK-safe) → re-attribute suburbs on survivors. Needs spec + dry-run + pre-image + Rajesh QA. Blocked-by Phase 0.
 
 ## Resume notes
-- Prior arc (all LANDED): Explorer 5xx resolved (PR #25, 410 Gone); AC7 PR #52 merged; DFS-B coord re-post clean; Tier-2 deploy-authority PR #128 merged.
-- Autonomy: Matt sig 60b0ab4d256283fa = NSW+3 DFS + Cortex prod autonomy; does NOT cover fresh large spend or Explorer infra. Phase 2 clean-cut (truncate + ~USD100-150 NSW+3) is Tier-3 = explicit Matt GO required.
-- DO NOT: self-authorize truncate/spend; self-merge Grace's PR (Rajesh code-owner gate).
-- The Notion doc is a design/plan artifact — writing it needs no Matt gate; executing Phase 0/2 does.
+- Recon subagent is resumable: SendMessage to agent id `a36df81df1efa758e` for deeper infra digs.
+- Autonomy: Matt Phase 0 GO covers safety-spine build (no spend, no destructive ops). Phase 2 clean-cut/truncate + ~USD100-150 NSW+3 = Tier-3, needs SEPARATE explicit Matt GO. Do NOT self-authorize truncate/spend.
+- DO NOT agent-offline on this exit (mid-work; want auto-relaunch). Rajesh + Grace both aware; Rajesh verifying exit lands clean.
+- $60 re-post = STALE CONFLATION (already-done $1.78 job), retracted by Rajesh + Matt-notified. If it resurfaces, it's either stale or a fresh Matt-gated spend — never autonomous.
