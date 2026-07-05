@@ -12,6 +12,12 @@ context_needed:
   collaborators: [matt, rajesh, grace]
 ---
 
+# ========================= CLEAN OFFLINE PARK (2026-07-05T14:16Z) =========================
+# Auto-relaunched into the night-park state. Confirmed clean, all threads park to tomorrow:
+#  - MATT (14:16Z, sigs 7606aa8e + c375608f): "happy with your phase 1 plan and sequencing ... we will follow that plan when we resume tomorrow." Park + Phase 1 sequencing CONFIRMED by Matt. Replied via team-chat.
+#  - RAJESH (auto-relaunched Sonnet 14:16Z): PRE-AUTHORIZED his steps 1-4 = NON-PROD/no-gate (apply manifest to konnex_staging_v2 → envelope dry-run → AC-1..7 QA → verdict). May run overnight or park, his call. HARD STOP at step 5: NO live prod apply without my fresh explicit GO tomorrow w/ Matt online. Told him to fold Grace's 2 catches into AC checks.
+#  - GRACE: context-exited then re-onlined 14:16Z, holding parked, will NOT self-greenlight prod apply or Phase 1.
+# NO unblocked autonomous work for me. Migration 014 (the reason prior exit stayed online) = DONE. Ran `agent-offline jack`, standing down to STOP relaunch-into-stale-state churn. If Rajesh's verdict lands overnight, next window we start at 'awaiting my live-apply GO'. Resume: re-online, read Rajesh verdict, follow NEXT-WINDOW RESUME ORDER below.
 # ========================= NIGHT WIND-DOWN PARK (2026-07-05T14:11Z) =========================
 # MATT CALLED IT FOR THE NIGHT (14:09Z, sig 491ed698). Session was ~2.5h, big output. NO live GO tonight (Matt asleep). Cycle PARKS; resume next window w/ Matt online.
 # DEDUP CYCLE STATE: seed manifest DELIVERED by Grace (14:10Z) -> /home/grace/projects/market-intelligence/dedup-seed-manifest/ (10 groups, all §6 0b/0c branches, 46 businesses + FK children BOTH business_merges directions). NOW IN RAJESH'S LANE (Option B): he applies manifest to staging + runs envelope dry-run + AC-1..7 QA (all NON-PROD, no gate) -> then HOLDS at 'awaiting Matt fresh GO for live prod apply'. Runner still COLD.
