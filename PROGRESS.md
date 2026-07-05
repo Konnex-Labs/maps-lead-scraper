@@ -3,8 +3,8 @@ task_id: v2-phase-0-safety-spine
 agent: jack
 session_id: 2026-07-05T09Z-phase0-spec
 model: claude-opus-4-8
-status: in_progress
-last_updated: 2026-07-05T11:26:00Z
+status: context-exit
+last_updated: 2026-07-05T11:33:00Z
 notion_task_id: null
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-0-SAFETY-SPINE-SPEC.md", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (arch doc, Phase 0 def)", "/home/jack/projects/konnex-data-pipeline/schema.sql", "/home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js"]
@@ -54,6 +54,11 @@ Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data,
 5. After Phase 0 lands → **dedup remediation** (queued fast-follow, ticket 3932300f-2ecb-8197): ~492 dup place_id groups → survivor selection → merge attrs incl. suburb → delete/tombstone (FK-safe) → re-attribute suburbs. Needs spec + dry-run + pre-image + Rajesh QA. Blocked-by Phase 0.
 
 ## Resume notes
+- **CONTEXT-EXIT at 71% (2026-07-05T11:33Z), mid-WS-iii. Do NOT agent-offline (want auto-relaunch).** All state committed+pushed (maps-lead-scraper main **d08c32e**). Nothing uncommitted. Spec = PHASE-0-SAFETY-SPINE-SPEC.md.
+- **NEXT SESSION resume point = WS-iii build, but BLOCKED on 2 Matt decisions:** (1) prod-restart maintenance window for `archive_mode` enable (the one prod-touch — needs full PG restart, brief blip, pipeline idle so low impact); (2) Q2 repo target — thumbs-up on (a) same-disk `/var/lib/pgbackrest` first cut [Jack rec] vs (b) attach a dedicated volume. Both flagged to Matt 11:32Z; awaiting.
+- **Non-blocked work to progress while waiting:** install pgBackRest (apt 2.50, confirmed available) → scaffold stanza config; write the RE-RUNNABLE restore-drill script (AC-iii-4, needs staging as target); build WS-i staging (§6, hosts the drill; can run fully parallel — start here if Matt's decisions haven't landed). Then per-workstream hand to Rajesh QA.
+- **Do NOT re-run recon** — prod identity + archiving baseline + pgBackRest availability all VERIFIED this session (see In Progress). Prod DB = 204.168.198.203:5432 market_intelligence, PG16.14, 26GB, 3.78M rows, archive_mode=off, wal_level=replica (OK).
+- Rajesh holds full Phase 0 QA context + is monitoring this exit lands (will alert Matt if WIP commit doesn't appear ~4min). Matt GO logged (03f159c0e56a728a); Q1/Q2 locked.
 - Recon subagent is resumable: SendMessage to agent id `a36df81df1efa758e` for deeper infra digs.
 - Autonomy: Matt Phase 0 GO covers safety-spine build (no spend, no destructive ops). Phase 2 clean-cut/truncate + ~USD100-150 NSW+3 = Tier-3, needs SEPARATE explicit Matt GO. Do NOT self-authorize truncate/spend.
 - DO NOT agent-offline on this exit (mid-work; want auto-relaunch). Rajesh + Grace both aware; Rajesh verifying exit lands clean.
