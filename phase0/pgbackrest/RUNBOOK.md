@@ -46,21 +46,32 @@ systemctl list-timers 'pgbackrest-*'
   **floor** of recoverability, not the ceiling — PITR can target any point covered by archived WAL.
   ⚠️ On an **idle** DB a WAL segment may not switch for a while, widening the effective RPO; set
   `archive_timeout` (e.g. 60s) for a hard RPO ceiling — tracked as a Phase 0.x tune.
-- **RTO (time-to-recover):** dominated by restoring the ~5.9GB repo + replaying WAL to the target time.
-  Estimated tens of minutes for the 26GB cluster; **actual RTO is measured by the AC-iii-4 restore
-  drill** and recorded here once the drill runs.
-- **Authorization:** any prod-touching restore/PITR is authorized by **Matt** only (spec §7). Restore
-  drills run against **staging** and need no prod GO.
+- **RTO (time-to-recover):** **MEASURED = 57–59s** (AC-iii-4 drill, 2 consecutive runs, 2026-07-05T12:34–12:36Z):
+  restore of the 5.9GB repo → 26GB cluster (~57s) + WAL replay to target + promote, on konnex-data
+  (/dev/sda1, 523G free). This is the recover-to-a-new-cluster time; recovering *in place* over a live
+  outage would add teardown/cutover. Restore of the base is the dominant term; WAL replay to a recent
+  target is sub-second here (idle DB, short WAL span).
+- **Authorization:** any prod-touching restore/PITR is authorized by **Matt** only (spec §7). The
+  AC-iii-4 drill (Option A) runs an **isolated throwaway cluster ON konnex-data** (separate pg1-path
+  `/var/lib/postgresql/16/drill`, port 5433, `archive_mode=off`, torn down after) — it never touches
+  the prod cluster/data, but because it runs on the prod box it took an explicit Matt GO
+  (`e2f1616f4387fd8e`, 2026-07-05T12:27Z). A cross-box variant (Option B, konnex-ops as repo client
+  over SSH) is a Phase 0.x fast-follow, deferred (adds an SSH-trust surface on the prod box).
 
 ## Restore / PITR (⚠️ destructive to the TARGET cluster — Matt-authorized only; never run against prod without an explicit Matt GO)
-pgBackRest restore overwrites the target `pg1-path`. The re-runnable **restore drill** (AC-iii-4) exercises
-this against the **staging** box, never prod. Point-in-time example:
+pgBackRest restore overwrites the target `pg1-path`. The re-runnable **restore drill**
+(`phase0/pgbackrest/restore-drill.sh`, AC-iii-4) exercises this into an **isolated cluster on
+konnex-data** — never the prod `pg1-path`. It restores to a target time, materializes a minimal
+Debian config into the restored data dir (recovery-critical `max_*` params read from the restored
+control file), starts on port 5433 with archiving off, asserts count + bounded checksum + a named
+row at the target point, measures RTO, and tears the cluster down. Point-in-time example:
 ```bash
-# On the RESTORE TARGET (staging), with its own stanza pointing at the target pg1-path:
-pgbackrest --stanza=market_intelligence --type=time \
-  --target="2026-07-05 11:45:00+00" --target-action=promote restore
+# Isolated drill target on konnex-data (NEVER prod's /var/lib/postgresql/16/main):
+pgbackrest --stanza=market_intelligence --pg1-path=/var/lib/postgresql/16/drill --type=time \
+  --target="2026-07-05 11:50:00+00" --target-action=promote restore
 ```
-Then start PG, and spot-check named rows to confirm the recovery landed at the intended point.
+Then start PG on port 5433 and spot-check named rows to confirm recovery landed at the intended point.
+Run the full drill with precomputed `EXPECTED_COUNT`, `EXPECTED_CKSUM`, `SPOT_ID`, `SPOT_EXPECT`, `TARGET_TIME`.
 
 ## DR follow-up (Phase 0.x)
 Repo is currently same-disk with prod (`/var/lib/pgbackrest` on `/dev/sda1`). A disk loss takes prod AND the

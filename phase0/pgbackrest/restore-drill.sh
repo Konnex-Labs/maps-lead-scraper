@@ -61,10 +61,43 @@ archive_mode = off
 archive_command = ''
 EOF
 
-echo "[4/6] Start the isolated cluster and wait for recovery→promote"
-# ⚠️ VALIDATE ON konnex-data: Debian keeps postgresql.conf/pg_hba.conf in /etc, so the restored data
-#    dir has none. Confirm the real layout on-box; if a config file is required, materialize a minimal
-#    one (port/listen/hba trust local) into $DRILL_PGDATA before starting. Then:
+echo "[4/6] Materialize minimal Debian config into the restored data dir, then start"
+# Debian keeps postgresql.conf/pg_hba.conf in /etc/postgresql/16/main, so a pgbackrest-restored data
+# dir has NEITHER. postgres refuses to start without $PGDATA/postgresql.conf, and archive recovery
+# refuses if the max_* params are below the values the WAL was generated with. Read those authoritative
+# values straight from the RESTORED control file (self-contained — no prod connection) and write a
+# clean minimal config. Do NOT copy prod's postgresql.conf: it sets data_directory=<prod main> +
+# include_dir=<prod conf.d w/ archive_mode=on>, either of which would be catastrophic here.
+CD() { sudo -u postgres "$PGBIN/pg_controldata" -D "$DRILL_PGDATA" | sed -n "s/^$1[^:]*:[[:space:]]*//p"; }
+MAXCONN=$(CD "max_connections setting"); MAXWORK=$(CD "max_worker_processes setting")
+MAXSEND=$(CD "max_wal_senders setting");  MAXPREP=$(CD "max_prepared_xacts setting")
+MAXLOCK=$(CD "max_locks_per_xact setting")
+echo "    control-file params: max_connections=$MAXCONN max_worker_processes=$MAXWORK max_wal_senders=$MAXSEND max_prepared_xacts=$MAXPREP max_locks_per_xact=$MAXLOCK"
+sudo -u postgres tee "$DRILL_PGDATA/postgresql.conf" >/dev/null <<CONF
+# minimal isolated restore-drill config (NOT prod's /etc config). data_directory intentionally unset
+# so it defaults to \$PGDATA (this drill dir). unix_socket_directories matches psql's Debian default.
+port = $DRILL_PORT
+listen_addresses = 'localhost'
+unix_socket_directories = '/var/run/postgresql'
+archive_mode = off
+archive_command = ''
+hba_file = '$DRILL_PGDATA/pg_hba.conf'
+ident_file = '$DRILL_PGDATA/pg_ident.conf'
+max_connections = $MAXCONN
+max_worker_processes = $MAXWORK
+max_wal_senders = $MAXSEND
+max_prepared_transactions = $MAXPREP
+max_locks_per_transaction = $MAXLOCK
+CONF
+sudo -u postgres tee "$DRILL_PGDATA/pg_hba.conf" >/dev/null <<'HBA'
+local   all all              trust
+host    all all 127.0.0.1/32 trust
+host    all all ::1/128      trust
+HBA
+sudo -u postgres tee "$DRILL_PGDATA/pg_ident.conf" >/dev/null <<'IDENT'
+# (empty — no ident maps needed for the drill)
+IDENT
+
 sudo -u postgres "$PGBIN/pg_ctl" -D "$DRILL_PGDATA" \
   -o "-p $DRILL_PORT -c archive_mode=off -c archive_command='' -c listen_addresses=localhost" \
   -w -t 1800 start
@@ -94,4 +127,8 @@ sudo rm -rf "$DRILL_PGDATA"
 
 echo
 echo "✓ Restore drill complete. RTO=${RTO_SEC}s. Record RTO in RUNBOOK.md §RTO/RPO."
-[[ "${SPOT_FAIL:-0}" == "1" ]] && { echo "✗ spot-check failed — investigate before recording PASS"; exit 1; }
+if [[ "${SPOT_FAIL:-0}" == "1" ]]; then
+  echo "✗ spot-check failed — investigate before recording PASS"
+  exit 1
+fi
+exit 0
