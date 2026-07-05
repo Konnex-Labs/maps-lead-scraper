@@ -40,8 +40,10 @@ Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data,
 - Matt notified w/ spec summary + 4 open questions; Rajesh handoff-notified (spec in review, 2 Qs tagged for him).
 
 ## In Progress
-- **BUILDING Phase 0, WS-iii (PITR) FIRST.** Next concrete step: read `konnex-data-pipeline/REPO-MAP.md` (mandatory pre-DB rule) + inspect konnex-data box (204.168.198.203) for pgBackRest packaging, then scaffold stanza + restore-drill script. Off-prod work first; archive-config prod-touch flagged to Matt before applying.
-- notion_task_id null — a Phase 0 Notion task likely needs creating so the Session estimate (4+) has a home per protocol. TODO before/at first prod-touch.
+- **BUILDING Phase 0, WS-iii (PITR) FIRST.** REPO-MAP read (done). **Prod box identity VERIFIED read-only:** market_intelligence LIVE at 204.168.198.203:5432, PG 16.14, 26 GB, 3,776,477 rows (`inet_server_addr`=204.168.198.203). The SSH-config "204.168.x decommissioned" comment = the crawl-1/crawl-2 cpx62 boxes, NOT this DB box. (Also noted drift: EXPLORER_DB_URL now → Supabase, no longer aliased to MARKET_INTEL_DB_URI as REPO-MAP claims.)
+- **Archiving baseline VERIFIED read-only:** archive_mode=off, archive_command=disabled, wal_level=replica (already OK for PITR — no change), pg_stat_archiver 0/0. **⚠️ enabling archive_mode = postmaster-context → needs a FULL PROD DB RESTART (brief blip), not a reload.** This is THE prod-touch → FLAGGED to Matt for a maintenance window (do NOT apply autonomously).
+- **BLOCKED on Matt:** scheduling the prod-restart window for archive_mode enable. Next steps that DON'T need it: SSH konnex-data to check pgBackRest packaging (read-only), scaffold stanza config + restore-drill script, and start WS-i staging (which can proceed in parallel + hosts the restore drill).
+- notion_task_id null — Phase 0 Notion task likely needs creating for the Session estimate (4+) per protocol. TODO before/at first prod-touch.
 
 ## Remaining (BUILD — GO received)
 1. **WS-iii PITR (SEQUENCE FIRST):** pgBackRest stanza on prod + systemd-timer snapshots + `pg_stat_archiver` proof + RE-RUNNABLE restore drill w/ named-row spot-check (AC-iii-1..6). Archive-config = the one prod-touch → flag Matt first. Hand to Rajesh QA on landing.

@@ -74,8 +74,14 @@ ad-hoc `pg_dump` runbook step (`konnex-data-pipeline/TIER3-AU-TRADES-SCOPE-REDUC
   pgBackRest package is unavailable on the box — decide during build, note in the PR.
 - **Repo target:** local disk on a *separate volume* from PGDATA for the first cut; document
   the off-box/object-store follow-up as a Phase 0.x nice-to-have (do not block on it).
-- **WAL archiving:** enable `archive_mode=on`, `archive_command` via pgBackRest, confirm
-  WAL is shipping (non-destructive — a config reload, not a restart, where possible).
+- **WAL archiving:** enable `archive_mode=on` + `archive_command` via pgBackRest. **VERIFIED
+  PROD STATE (read-only, 2026-07-05):** `archive_mode=off`, `archive_command=disabled`,
+  `wal_level=replica` (already sufficient for PITR — no change needed), `pg_stat_archiver`
+  0/0 (nothing ever archived), DB size 26 GB, 3,776,477 rows. **⚠️ MATERIAL: enabling
+  `archive_mode` from `off` is a postmaster-context change → requires a FULL PROD DB RESTART
+  (brief availability blip), NOT a reload.** `archive_command` itself is reload-only, but
+  the mode flip is not. → This is THE prod-touch to flag Matt on; it needs a scheduled
+  maintenance window, not an autonomous apply.
 - **Automated snapshots:** daily full + intra-day incremental via `pgbackrest backup`,
   scheduled through systemd timer (durable across reboot — mirrors the cgroup-containment
   lesson) rather than a bare crontab.
