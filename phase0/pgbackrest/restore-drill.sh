@@ -22,6 +22,11 @@ TARGET_TIME="${TARGET_TIME:-}"                                 # empty = latest 
 # Pick a stable, known business_id + expected name at seed/backup time; override via env.
 SPOT_ID="${SPOT_ID:?set SPOT_ID to a known businesses.id present in the backup}"
 SPOT_EXPECT="${SPOT_EXPECT:?set SPOT_EXPECT to that row's expected name at the target time}"
+# Aggregate assertions (AC-iii-4a): count + checksum must MATCH the target-time state, not just be logged.
+# Precompute both against the source at the target time BEFORE the drill, and pass them in.
+EXPECTED_COUNT="${EXPECTED_COUNT:?set EXPECTED_COUNT = businesses count(*) at the target time}"
+CKSUM_ROWS="${CKSUM_ROWS:-100000}"   # bounded, deterministic id-window (keeps the checksum lightweight)
+EXPECTED_CKSUM="${EXPECTED_CKSUM:?set EXPECTED_CKSUM = md5(string_agg(id ORDER BY id)) over the first CKSUM_ROWS ids at the target time}"
 
 # ---- SAFETY GUARDS: refuse to ever operate on the prod cluster ----------------------------------
 [[ "$DRILL_PGDATA" == "/var/lib/postgresql/16/main" ]] && { echo "REFUSE: DRILL_PGDATA points at prod data dir"; exit 1; }
@@ -67,13 +72,21 @@ T1=$(date +%s)
 RTO_SEC=$((T1 - T0))
 echo "    RTO (restore start → promoted + accepting connections) = ${RTO_SEC}s"
 
-echo "[5/6] Spot-check — named row + aggregate checksums at the recovered point"
+echo "[5/6] Assertions at the recovered point — count + checksum (AC-iii-4a) + named row (AC-iii-4b)"
 PSQL=(sudo -u postgres "$PGBIN/psql" -p "$DRILL_PORT" -d market_intelligence -Atc)
-echo -n "    recovery_target_time reached: "; "${PSQL[@]}" "SELECT pg_last_wal_replay_lsn() IS NOT NULL;"
-echo -n "    businesses row count: "; "${PSQL[@]}" "SELECT count(*) FROM businesses;"
+echo -n "    recovery replay reached: "; "${PSQL[@]}" "SELECT pg_last_wal_replay_lsn() IS NOT NULL;"
+
+GOT_COUNT="$("${PSQL[@]}" "SELECT count(*) FROM businesses;")"
+echo "    businesses count = $GOT_COUNT (expected $EXPECTED_COUNT)"
+[[ "$GOT_COUNT" == "$EXPECTED_COUNT" ]] && echo "    COUNT-ASSERT PASS ✓" || { echo "    COUNT-ASSERT FAIL ✗"; SPOT_FAIL=1; }
+
+GOT_CKSUM="$("${PSQL[@]}" "SELECT md5(string_agg(id::text, ',' ORDER BY id)) FROM (SELECT id FROM businesses ORDER BY id LIMIT $CKSUM_ROWS) s;")"
+echo "    checksum(first $CKSUM_ROWS ids) = $GOT_CKSUM (expected $EXPECTED_CKSUM)"
+[[ "$GOT_CKSUM" == "$EXPECTED_CKSUM" ]] && echo "    CHECKSUM-ASSERT PASS ✓" || { echo "    CHECKSUM-ASSERT FAIL ✗"; SPOT_FAIL=1; }
+
 GOT="$("${PSQL[@]}" "SELECT name FROM businesses WHERE id='$SPOT_ID';")"
 echo "    named-row [$SPOT_ID] name = '$GOT' (expected '$SPOT_EXPECT')"
-if [[ "$GOT" == "$SPOT_EXPECT" ]]; then echo "    SPOT-CHECK PASS ✓"; else echo "    SPOT-CHECK FAIL ✗"; SPOT_FAIL=1; fi
+[[ "$GOT" == "$SPOT_EXPECT" ]] && echo "    NAMED-ROW PASS ✓" || { echo "    NAMED-ROW FAIL ✗"; SPOT_FAIL=1; }
 
 echo "[6/6] Tear down the drill cluster (leave prod + repo untouched)"
 sudo -u postgres "$PGBIN/pg_ctl" -D "$DRILL_PGDATA" stop -m fast || true
