@@ -3,8 +3,8 @@ task_id: v2-phase-0-safety-spine
 agent: jack
 session_id: 2026-07-05T09Z-phase0-spec
 model: claude-opus-4-8
-status: context-exit
-last_updated: 2026-07-05T12:01:00Z
+status: in_progress
+last_updated: 2026-07-05T12:11:00Z
 notion_task_id: null
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-0-SAFETY-SPINE-SPEC.md", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (arch doc, Phase 0 def)", "/home/jack/projects/konnex-data-pipeline/schema.sql", "/home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js"]
@@ -53,8 +53,12 @@ Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data,
 - systemd timers LIVE on konnex-data: pgbackrest-backup@full.timer (Sun 02:00) + @diff.timer (daily 02:30), Persistent=yes, validated end-to-end (diff backup 20260705-114245F_20260705-115219D landed via service).
 - notion_task_id still null — Phase 0 Notion task needs creating for Session estimate (4+). TODO.
 
-## WS-i staging — IN PROGRESS (scripts written, setup NOT yet green)
-- Wrote `phase0/staging/`: setup-staging.sh (durable rebuild — mirrors CURRENT prod schema via pg_dump --schema-only, read-only), sample-query.sql (deterministic stratified sample), seed-staging-sample.sh (runner + strata verify). README.md NOT yet written.
+## WS-i staging — DONE, HANDED TO RAJESH QA (commit ea27941, 2026-07-05T12:11Z)
+- **AC-i-1..4 met + evidence sent to Rajesh (handoff sigId 6c0baad7b392a9e3).** AC-i-5 = cross-workstream, proven later by WS-ii envelope + AC-iii-4 restore drill.
+- setup-staging.sh GREEN (56 base tables, businesses 94 cols). seed 71,572 rows: 142 industries, 5,000 null-suburb, 41,116 coord, max dedup cluster 614. Idempotent: identical id-set md5 b20183e9ab29588ba3c74698ad19a2cd + count across a full reseed. Read-only prod (pg_dump --schema-only + COPY TO STDOUT only).
+- **2 seed fixes this session:** (1) `TRUNCATE businesses CASCADE` (FK-referenced by business_events/business_merges/crawl_snapshots, all empty); (2) disable USER triggers during load (trap-guarded) so ~52,862 grandfathered rows that predate trg_enforce_industry_country_match (ENABLED on prod, fires only on new DML) mirror faithfully; RI/FK stay on.
+- **DQ finding flagged to Matt:** ~52,862 prod businesses rows violate the enabled industry/country trigger (grandfathered). Awaiting Matt: file ticket for Grace's lane, or leave.
+- Wrote `phase0/staging/`: setup-staging.sh, sample-query.sql, seed-staging-sample.sh, README.md (all committed ea27941).
 - **Design:** full-schema mirror. Installed pgvector 0.6.0 on konnex-ops (staging box) — prod uses `vector` (market_intelligence doubles as Cortex corpus). Prod public = 56 base tables, 4 extensions (pg_trgm, plpgsql, uuid-ossp, vector).
 - **setup-staging.sh debugging (2 fixes applied, NEEDS a green re-run to confirm):** (1) strip dump's `CREATE SCHEMA public;` (collides with our pre-created public) — DONE via `grep -vxF`; (2) pg_dump --schema=public omits CREATE EXTENSION → pre-create uuid-ossp/pg_trgm/vector in step 1 — DONE. Last run failed at `public.uuid_generate_v4() does not exist` BEFORE fix #2; not yet re-run after fix #2.
 - **Seed strata feasibility (verified read-only on prod):** google_place_id EXISTS; 17,442 place_id groups ≥10 rows; null_suburb=58,792; coord_bearing=2,338,509; industries financial_advisor 447k/accountant 303k/mortgage_broker_us 244k/... Sample defaults: 25 clusters (≥10 rows,≥2 active) + 60k base (ORDER BY id) + 5k null-suburb → ~65k deterministic rows.
@@ -67,13 +71,12 @@ Phase 0 = 3 parts (arch doc §10): (i) staging DB (schema mirror + SAMPLED data,
 5. After Phase 0 lands → **dedup remediation** (queued fast-follow, ticket 3932300f-2ecb-8197): ~492 dup place_id groups → survivor selection → merge attrs incl. suburb → delete/tombstone (FK-safe) → re-attribute suburbs. Needs spec + dry-run + pre-image + Rajesh QA. Blocked-by Phase 0.
 
 ## Resume notes
-- **CONTEXT-EXIT at 74% (2026-07-05T12:01Z, Rajesh monitor flagged — 2nd ceiling hit). Do NOT agent-offline (want auto-relaunch). Mid-WS-i build.** Prod PITR is LIVE — do NOT re-run archive setup. Prod DB = 204.168.198.203:5432 market_intelligence, PG16.14, 26GB, 3.78M rows, archive_mode ON, first full backup taken, timers armed.
-- **NEXT resume point = finish WS-i staging (tasks #1/#2):**
-  1. `cd phase0/staging && export MARKET_INTEL_DB_URI=... && ./setup-staging.sh` — re-run to confirm the 2 fixes make it GREEN (schema mirror: expect ~56 base tables, businesses ~60 cols). Both fixes already in the committed file.
-  2. `./seed-staging-sample.sh` — loads ~65k stratified rows; check the printed strata (total ~65k, ≥3 industries, null_suburb>0, coord_bearing>0, max_dedup_cluster≥10).
-  3. Write `phase0/staging/README.md` (connection, refresh cadence, what it is/isn't) — AC-i-1.
-  4. Hand WS-i (AC-i-1..4) to Rajesh QA (task #3). AC-i-5 proven later by envelope tests + restore drill.
-  5. Then AC-iii-4 restore drill (task #6): restore prod backup + PITR replay onto staging w/ named-row spot-check; re-runnable. Measure actual RTO → record in RUNBOOK.
+- **RESUMED clean on fresh context 2026-07-05T12:11Z. Prod PITR is LIVE — do NOT re-run archive setup.** Prod DB = 204.168.198.203:5432 market_intelligence, PG16.14, 26GB, 3.78M rows, archive_mode ON, first full backup taken, timers armed. WS-i staging built + handed to Rajesh QA (ea27941). Do NOT agent-offline.
+- **NEXT resume point (WS-i done, awaiting Rajesh QA verdict):**
+  1. On Rajesh WS-i PASS → **AC-iii-4 restore drill** (closes WS-iii): restore latest prod pgBackRest backup + PITR replay onto staging (konnex_staging_v2, konnex-ops) w/ named-row spot-check; re-runnable. Measure actual RTO → record in RUNBOOK. This is the WS-i↔WS-iii proof of AC-i-5.
+  2. **WS-ii envelope module** `lib/prod-write-envelope.js` (AC-ii-1..7): dry-run default + per-batch txn + fsync'd pre-image-before-COMMIT + proactive collision pre-check + VACUUM; refactor au-suburb-mapping.js as reference caller. Build/test on staging (614-row dedup cluster gives the collision pre-check a real workout). This proves AC-i-5's other half.
+  3. Create Phase 0 Notion task (notion_task_id still null) — Session estimate 4+.
+  4. If Rajesh flags WS-i fixes → address, re-verify, re-handoff.
 - Rajesh board: 3 TODOs incl. a NEW coord-repost suburb-normalization flow-violation ticket — NOT self-start, needs Jack direction (post-Phase-0). Grace also context-exited 12:00Z.
 - Matt Q&A this session: GO 03f159c0e56a728a; Q1/Q2 answered 46e5b05f2e7673ec (restart free, same-disk repo).
 - **Verified prod businesses columns read-only** for the WS-i stratified seed: has google_place_id (via migration 004), is_active, industry, address_suburb, lat/lng, enrichment_data, country_code, address_*_pre_geocode. schema.sql base table def is STALE/partial (no place_id) — introspect prod at seed time, don't trust schema.sql.
