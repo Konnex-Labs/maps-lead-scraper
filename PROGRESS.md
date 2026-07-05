@@ -1,50 +1,36 @@
 ---
-task_id: dfs-repull-live-ownership
+task_id: nsw3-dfs-etl-followups-and-tier2-policy
 agent: jack
-session_id: 2026-07-03T16Z-dfs-repull-ownership
+session_id: 2026-07-05T00Z-morning-chat
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-03T16:15:00Z
+last_updated: 2026-07-05T01:38:00Z
 context_needed:
   files:
-    - /home/shared/prod-merges/reviews/141cd6f-relabel-attribution-arch-review.md
-    - /home/jack/projects/market-intelligence/svi/relabel-trade-attribution.js
-    - /home/jack/projects/market-intelligence/svi/nsw-trades-ingest-runner.js
-    - /home/jack/projects/market-intelligence/svi/dfs-repost-runbook.md (Grace, pending)
+    - /home/jack/projects/ops/CLAUDE.md
   branches:
-    - "market-intelligence @ origin/contract/dataforseo-nsw-trades (Grace, commit 141cd6f)"
+    - "konnex-ops @ main (PR #128 merged 3592b7d)"
+    - "konnex-data-pipeline @ svi/coord-repost-etl-suburb-city (Grace, origin f9619d6)"
   collaborators: ["matt", "rajesh", "grace"]
 ---
 
-# DFS re-pull: own getting it live + running (Matt-delegated). Arch-review done; holding for Grace's F1/F2 revision.
+# Morning chat w/ Matt (2026-07-05). DFS-B arc closed. Matt directed ALL-STAND-DOWN (01:10Z) then save-and-exit (01:35Z) — away w/ kids a few hours. RESUME PURPOSE: Matt + Jack planning session on architecture / DB changes, then resume work. Nothing to execute until Matt brings me back.
 
 ## Done (this session)
-- Session-start ground-truthed. **CX-5c SHIPPED**: PR #127 merged 15:47Z by Matt (quenito) + deployed live to /home/shared/bin/konnex-memory-query (md5 c1e8f39 == merged main). Ticket auto-closed. CK-1 AC3.2-topology closure condition SATISFIED. Prior "holding for Matt GO" state is resolved.
-- **Matt spend GO**: USD69.0, sig 241a4ebc VALID — CONDITIONAL (fires only after readiness gates green).
-- **Matt ownership grant**: sig 0bd9192a, then NARROWED by sig e8358a8 = "approve PRs for merge + deploy to carry the DFS re-pull to completion; executing as normal." NOT general authority (no ad-hoc schema DDL).
-- **Arch-review of Grace's 141cd6f COMPLETE** (doc: /home/shared/prod-merges/reviews/141cd6f-relabel-attribution-arch-review.md):
-  - Fix 1 (runner recurrence-prevention): APPROVED as-is (buildCrawlTradeMap ledger-sourced + fail-loud, carpenter default removed).
-  - Fix 2 (re-split DML): 2 BLOCKERS before --live. F1 = backup guard existence-only (must assert full-row parity + materialize full-row DB backup from CSV). F2 = idExpr/idMatch lower()+coalesce city/state but idx_businesses_dedup keeps them RAW; measured 228 wrongly-merged businesses + Step C non-determinism → align to index.
-  - F3 CLOSED by me: all 4 FKs referencing businesses(id) (business_events, business_merges canonical+loser, crawl_snapshots) are ON DELETE SET NULL; 0 of 33,489 created-today scoped rows are in merge lineage or have events → Step D won't abort or null real lineage.
-- **Owner decisions**: (1) AMOUNT = treat 69.0 as HARD TOTAL cap → forward re-post capped USD60.13 (69.0-8.87 sunk); runner resumable, stops+reports if hit; offered Matt a nudge to ~69.8 for one-shot. (2) INDEX = OPTION B batched delete (Matt's grant doesn't cover ad-hoc schema DDL); idx_crawl_snapshots_business_id deferred to a separate normal migration ticket. (3) TRIGGER = Grace single-hand, fires only on Jack explicit go after all gates green.
-- Grace confirmed **Gate-1 backup DONE**: full-row CSV (biz 34,902 / snaps 49,543) in svi/relabel-backup-20260703T144045Z/; nsw-trades_au still 18,445 (no re-split has run).
-- Re-grounded Rajesh (stale auto-relaunch checkpoint) → CX-5c shipped, QA gate on 141cd6f standing by, 2 stale DFS flow-violation reviews disposed.
+- **Session-start gate sent to Matt.** Ground-truthed prior state: AC7 PR #52 MERGED (842ac2d, verified); DFS-B coord re-post landed + Grace-audited clean (no pending spend; the '$60/101,460' was a stale conflation).
+- **Answered Matt Q1 (DFS run stats + storage)** from live DB, not memory. Storage: market_intelligence DB (konnex-data) → `businesses` table (+ `crawl_log` run metadata ids 6392/6393/6394). Net-NEW ~2,386 (carpenter 725 / electrician 1,048 / plumber 613; Grace audit +2,410). Flagged crawl_log records_found/updated headline (109,996/104,323) is INFLATED (coord-grid overlap + known counter bug). DQ caveat: new rows address_suburb 100% NULL, city 14-32% NULL.
+- **Matt action: ETL fix + backfill prioritised.** Ticket 3932300f-2ecb-812a-92d4-e24f318efc55 → In Progress, Tier 2, delegation logged. Grace GO'd (contract-first, est 2-3). Rajesh PASSED contract (8 ACs, f9619d6). Grace GO to build. Matt gave direct backfill prod-write GO (sig 44afb4d84e116f32 / to grace e95e684). Grace safety envelope: dry-run + collision pre-check + pre-image + batched write + VACUUM.
+- **Matt directive: Tier 2 deploy-authority policy baked into ops/CLAUDE.md.** Ticket 3942300f-2ecb-81cd. PR #128 MERGED (3592b7d, Rajesh QA PASS + sig-verified). Sub-Tier-3 (Tier1+2) = no Matt deploy approval incl. prod data writes; safety envelope preserved. Live on canonical main.
 
-## In Progress
-- **Grace revising 141cd6f** for F1 + F2 → fresh dry-run → my re-review → Rajesh QA. My arch-review VERDICT IS COMPLETE (2 blockers, doc in /home/shared/prod-merges/reviews/). Ball is in GRACE's court — no revised commit has landed (branch tip still 141cd6f as of 16:14Z).
-- **Grace context-exited + relaunched STALE** (16:13Z): her resume PROGRESS.md predated my review, so she regressed to "141cd6f delivered, awaiting Jack arch-review" and lost the F1/F2 context. I re-grounded her (sig 4afdc175) pointing at the review doc with the exact F1/F2 + Option-B + F3-cleared + 60.13 scope. Watch for the same drift on any further relaunch — the review doc is the durable spec.
-- **I (Jack) am context-exiting at 70%** (this exit). Auto-relaunch armed. Nothing fired.
-
-## Remaining
-1. **ON RELAUNCH FIRST:** check if Grace pushed her F1/F2 revision (git fetch origin contract/dataforseo-nsw-trades; if tip != 141cd6f, re-review it). Verify 228-divergence gone (re-run the 34,568-vs-34,796 identity check → should be equal), backup guard asserts full-row parity, Step D is batched (no index).
-2. Hand revised 141cd6f to Rajesh for QA PASS (his gate, NOT delegated).
-3. Gates green → I approve/merge/deploy Grace's PR + Grace fires re-post at USD60.13 cap, firing-now heads-up to Matt+Rajesh before spend.
-4. File idx_crawl_snapshots_business_id as a separate normal reviewed migration (deferred index).
-5. Flow-violation ticket closure (I own): assign Reviewer + reissue waiver (stale, DFS delivery merged a575fa6). Cosmetic.
-6. CX queue after DFS: CX-7 (Grafana Cortex-recall) → CX-4 → CK-2.
+## Remaining / Awaiting
+- **NEXT SESSION = architecture/DB planning with Matt** (his stated purpose for bringing me back). Come in ready to plan schema/architecture changes; do NOT self-start backlog work.
+- **Grace's coord-repost-etl forward-path merge AWAITS Jack's GO** (Rajesh flagged, 01:36Z) — held under stand-down; give GO only after Matt resumes / confirms.
+- **Grace** owns ETL build → QA → backfill run (her lane; Rajesh QA/merge/deploy, no Matt gate). Not my execution. All held under stand-down.
+- **Explorer 5xx incident (alert 2938377b)** STILL OPEN — blocked on Matt's fix-vs-deprecate product call (a=recreate 4 matviews / b=[Jack rec] 500->404 graceful-degrade / c=410 deprecated endpoints). Do NOT auto-resolve.
+- Notion 38a2300f (NSW+3 full-ingest EPIC) = KEEP-OPEN (extraction-expansion undelivered). No close action.
 
 ## Resume notes
-- I am ACTIVE (in_progress), NOT exiting. Nothing has fired — no spend, no live DB writes, no re-post, no index.
-- Do NOT fire anything: --live re-split + re-post are HELD until F1/F2 fixed → my re-review → Rajesh QA PASS → my explicit go. Grace is single hand on trigger.
-- INDEX = Option B (batched delete), NOT Option A. Amount cap = USD60.13 forward (total ≤69.0).
-- All Matt/Rajesh/Grace sigs this session verified VALID.
+- Autonomy: Matt DFS+Cortex stream (sig 60b0ab4d256283fa) + new 2026-07-05 policy: sub-Tier-3 no Matt deploy gate.
+- Local git note: local `konnex-ops` main carries an autogen nucleus-sync commit (3cf281b) on top of origin; branch feature work off origin/main (already did for #128).
+- END-of-session save+exit DIRECTED by Matt (sig 293e8168a83ed099, VALID) — agent-offline is correct here; Matt re-summons for the planning session. NOT a mid-work relaunch case.
+- All peers stood down clean: Rajesh + Grace saving/offline, corrections propagated (USD60 stale, PR #52 merged, no pending spend anywhere).
