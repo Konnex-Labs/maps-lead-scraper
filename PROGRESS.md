@@ -3,17 +3,31 @@ task_id: v2-phase-0-safety-spine
 agent: jack
 session_id: 2026-07-05T09Z-phase0-spec
 model: claude-opus-4-8
-status: complete
-last_updated: 2026-07-05T13:11:00Z
-notion_task_id: null
+status: context-exit
+last_updated: 2026-07-05T13:30:00Z
+notion_task_id: 3942300f-2ecb-8161-99e6-d5eb8ea2bf65
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-0-SAFETY-SPINE-SPEC.md", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (arch doc, Phase 0 def)", "/home/jack/projects/konnex-data-pipeline/schema.sql", "/home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js"]
   branches: []
   collaborators: [matt, rajesh, grace]
 ---
 
+# ========================= CONTEXT-EXIT RESUME (2026-07-05T13:30Z, 74%) =========================
+# IMMEDIATE NEXT TASK ON RELAUNCH = author the merged_into migration (Jack's lane, unblocks Grace).
+#   → konnex-data-pipeline/migrations/014_* : ALTER TABLE businesses ADD COLUMN merged_into uuid NULL REFERENCES businesses(id); + partial index WHERE merged_into IS NOT NULL. Tier-2 additive/reversible/no-data-mutation. Rajesh QA. Apply staging (dry-run) then prod (at live step). See DEDUP-REMEDIATION-SPEC.md §4.3.1.
+# DEDUP SPEC STATUS: rev1 committed (maps-lead-scraper main 61c28e7) — absorbed Rajesh CONDITIONAL-PASS (2 blockers: merged_into migration + staging-seed gap; 2 must-fix: corroboration catch-all + null-phone rule) + Grace decompose note (§4.3.2 group-boundary batching). BACK IN RAJESH REVIEW for clear-to-build.
+# GRACE (parallel lane, holding runner build until migration + spec-clear): owns the READ-ONLY staging seed MANIFEST *and* the staging INSERT apply (non-prod, her dry-run fixture). Manifest reviewable by Jack/Rajesh. Then builds decompose runner → staging dry-run → Rajesh QA → FRESH Matt GO → live. Zero prod writes / zero spend until that GO.
+# PHASE 1 (entity model per arch doc 3942300f): Matt GO'd to proceed BUT it's a 4+ build — needs its own spec + Session-estimate GO from Matt BEFORE going deep (I told Matt I'd flag). Not started.
+# DFS Maps NSW+3 sourcing: PARKED behind Phase 1 (Matt call). Grace holding cold. Do NOT start.
+# Phase 0 Notion task CREATED: 3942300f-2ecb-8161-99e6-d5eb8ea2bf65 (Done, Session estimate 4+).
+# EXIT MODE: context-exit WITHOUT agent-offline (Rajesh monitoring + will re-summon per mutual-summon; auto-relaunch to author migration). Team all online+aligned as of 13:30Z.
+# ================================================================================================
 # CURRENT STATE = **PHASE 0 SAFETY-SPINE COMPLETE + CLOSED (2026-07-05T13:11Z).** All 3 workstreams PASS Rajesh QA: WS-i staging (sig 464fe204, 4/4), WS-iii PITR (12:38Z, prod PITR LIVE), WS-ii prod-write envelope (sig a3d75a425e6d301f, 11/11 green + clean code review, no blocking findings). Prod PITR is LIVE; prod-write safety envelope shipped (konnex-data-pipeline lib/prod-write-envelope.js). NO prod DATA mutation occurred anywhere in Phase 0.
-# NEXT (post-Phase-0, all gated): (a) create Phase 0 Notion task for cost record (Session estimate 4+); (b) author dedup-remediation spec → hand Grace (ticket 3932300f-2ecb-8197, was blocked-by Phase 0); (c) tee up Phase 1 entity model per arch doc; (d) route DFS Maps NSW+3 sourcing GO to Matt (Tier-3 spend-gated, Grace holding). (a)-(d) are separate follow-on tasks, NOT part of the now-complete Phase 0 task.
+# NEXT (Matt order 14574f2e, 13:23Z): do (1) then (2), both in parallel to Phase 1; proceed with Phase 1; park DFS behind Phase 1.
+#  (2) DEDUP SPEC — **DONE.** DEDUP-REMEDIATION-SPEC.md committed (maps-lead-scraper main), handed to Rajesh (review 703a01b2) + Grace (staging dry-run prep 3a1f77c4). PARALLEL track owned by Grace/Rajesh; live-apply gated on a FRESH verifiable Matt GO (3c8637e0 is sequencing-only, NOT apply-GO). Scope v1=399 core-trades NSW groups. Grounded in Grace audit /tmp/dedup_audit_nsw_trades_2026-07-05.md. Key: place_id=grouping-only (D5), corroboration-gated auto-merge + quarantine, FK re-point (497 crawl_snapshots/24 business_events/36 business_merges-prior-canonical) before tombstone, reversible via Phase-0 envelope. Null-suburb is DISJOINT (separate track).
+#  (1) Phase 0 Notion task (retroactive cost record, Session estimate for the completed 4+ build) — IN PROGRESS.
+#  (c) PHASE 1 (entity model per arch doc 3942300f) — Matt GO'd to proceed. LARGER build: needs its own spec + Session-estimate GO from Matt BEFORE going deep (told Matt I'd flag). = next real work item.
+#  (d) DFS Maps NSW+3 sourcing — PARKED behind Phase 1 (Matt call). Grace holding cold, zero spend. NOT to start.
 # --- WS-ii FINAL QA (Rajesh 13:09Z, sig a3d75a425e6d301f): 11/11 green. Main 8/8 + dedup itest 3/3 on real 614-row cluster (7a proactive written=1/skip=4, 7b reactive 4-caught batch-not-poisoned, 7c pre-image revert clean). Code review: fsync-before-COMMIT ordering correct, cumBase/stats separation correct, plan()->null accounting matches pre-refactor, VACUUM live-only outside txn. Staging byte-clean post-run. ---
 # (prior) CURRENT STATE = Phase 0 BUILDING. **WS-iii CLOSED (Rajesh FULL PASS 12:38Z sig 68a29378), WS-i CLOSED (Rajesh PASS 4/4 sig 464fe204, AC-i-5 confirmed), WS-ii COMPLETE (AC-ii-1..7 all green) — handed to Rajesh QA 13:05Z.** Prod PITR is LIVE.
 # --- WS-ii DONE THIS SESSION (2026-07-05T13:05Z) --- All on konnex-data-pipeline main: f5e4936 (AC-ii-4 fix), 66145a3 (AC-ii-6 refactor + plan()->null), d184be2 (AC-ii-7 live dedup itest). Earlier ee9d8fc (module+tests WIP).
