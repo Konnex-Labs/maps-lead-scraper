@@ -1,16 +1,32 @@
 ---
-task_id: v2-phase-1-sp1-entity-core
+task_id: v2-phase-1-sp2-change-detection
 agent: jack
 session_id: 2026-07-06T08Z-sp1-resume
 model: claude-opus-4-8
-status: in_progress
-last_updated: 2026-07-06T08:45:00Z
+status: context-exit
+last_updated: 2026-07-06T09:02:00Z
 notion_task_id: 3942300f-2ecb-8161-99e6-d5eb8ea2bf65
 context_needed:
-  files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-1-SCHEMA-SPEC.md", "/home/jack/projects/konnex-data-pipeline/migrations/015_v2_entity_core_foundation.sql", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871", "PHASE-0-SAFETY-SPINE-SPEC.md"]
+  files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-1-SCHEMA-SPEC.md", "/home/jack/projects/konnex-data-pipeline/migrations/016_business_events_entity_provenance.sql", "/home/jack/projects/konnex-data-pipeline/temporal-diff.js", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871"]
   branches: []
   collaborators: [matt, rajesh, grace]
 ---
+
+# ========================= CONTEXT-EXIT 79% (2026-07-06T09:02Z) =========================
+# Matt flagged 79% ctx (sig 4ee92ab9a0b324e5) — past 70% ceiling. Clean checkpoint; SP-2 in early design. Mid-work context-exit → NO agent-offline (want auto-relaunch to continue SP-2). NOTE: an earlier watchdog emitted a PHANTOM 'context-exit 08:53Z' narrative to Rajesh (sigs 8bb3e76d/0e0153571 valid-jack-signed but I never authored that content) — my real status was in_progress until THIS 09:02Z exit. Corrected Rajesh.
+#
+# SP-1 = FULLY CLOSED THIS SESSION: migration 015 (V2 entity core, 7 tables) LIVE ON PROD (market_intelligence) + PR #54 MERGED (squash 34cfeee) to origin/main. Matt GO 239fbe7a4bdded52, Rajesh QA PASS 403b5b4a54a568dc. PITR anchor pre_migration_015 @ LSN 8D1/6F223D8. Verified clean (7 tbl/20 idx/12 FK, legacy unchanged 3,776,477/31,551).
+#
+# SP-2 (change-detection → typed events) — Matt GO'd (sig 1d63e67e4823074a). IN EARLY DESIGN:
+#   → KEY FINDING: business_events (40,469 prod rows) ALREADY IS the de-facto events table — existing pass emits review_count_changed(34,525)+rating_changed(5,944) from consecutive crawl_snapshots. Emitter = konnex-data-pipeline/temporal-diff.js. So SP-2 EXTENDS temporal-diff.js (add entity linkage + typed provenance + trades event taxonomy), NOT greenfield.
+#   → MIGRATION 016 (SP-2 prereq) = DONE + STAGING-VALIDATED + COMMITTED (pipeline local main b216c38, NOT pushed): extends business_events additively — entity_id/related_entity_id/suburb_id (FK->entities SET NULL), source_id (FK->sources SET NULL), effective_at, evidence_url + 3 partial idx. Staging: 6 cols+3 idx+4 FK(all SET NULL), rows unchanged (6, 15->21 cols), idempotent re-run clean. Satisfies Rajesh 7-pt checklist (bfa3027c747e32d0).
+#   → HANDED to Rajesh for 016 DESIGN SIGN-OFF (needed before module build). AWAITING his sign-off.
+#   → NOT YET DONE (next session): (1) SP-2 sprint spec doc (change-detection contract + event taxonomy: business_opened/closed via maps_business_status transitions, review_velocity_changed, professional_density_changed, licence_status_changed) — protocol wants spec before build; (2) on Rajesh 016 sign-off → prod-apply 016 (staging→prod under Phase-0 envelope+PITR, fresh Matt GO, open PR); (3) BUILD the change-detection module (extend temporal-diff.js) emitting typed events w/ entity_id+source_id+confidence+evidence_url, idempotent (no dup events on re-run), zero events without source_id — SP-2 AC per spec §5.
+#   → crawl_snapshots cols (change-detection input): id,crawl_id,google_place_id,business_id,industry,country_code,review_count,rating,maps_business_status,last_seen,observed_at. Diff per (business_id/google_place_id) across from_crawl_id->to_crawl_id.
+#
+# GATES: no prod write without Rajesh QA + fresh Matt GO; no spend. Session estimate given to Matt: SP-2 = 1-2 sessions (2-3 band). Deferred: 017 crawl_snapshots partitioning, 018 provenance backfill. Grace dedup runner parallel/cold. Phase 2 (destructive, ~USD150) behind all Phase 1 + separate GO.
+# NEXT-SESSION FIRST STEPS: re-online, read THIS block, check Rajesh 016 sign-off verdict, then write SP-2 spec → (on sign-off) prod-apply 016 → build change-detection module.
+# ========================================================================================
 
 # ========================= SP-1 RESUME (2026-07-06T08:45Z) =========================
 # Auto-relaunched from a 70% context-exit that hit while starting SP-1 (Rajesh confirmed exit seq VALID, sig 3cd1c7589613f462). Verified git ground truth on resume — the 02:52Z standdown block below is SUPERSEDED.
@@ -18,7 +34,7 @@ context_needed:
 # THIS SESSION: migration 015 (V2 entity core, 7 greenfield tables — sources, crawl_runs, entities, entity_aliases, entity_memberships, entity_matches, market_metrics) VALIDATED on konnex_staging_v2 + COMMITTED (pipeline local main fa8d6d4, NOT pushed — PR lands at prod-apply) + Rajesh SP-1 QA = **PASS** (independent verify, sig 403b5b4a54a568dc — all 5 ACs clean, 3 design notes approved). Spec §4 hygiene folded (TEXT+CHECK finalized + 'industry' type; commit a85b38e). REQUESTED Matt's fresh prod-apply GO (08:47Z) — AWAITING.
 #   → STAGING EVIDENCE (all SP-1 §5 ACs PASS): AC-1 7 tables + 20 indexes; AC-2 idempotent re-run all-skip exit 0 + DOWN→UP reversibility clean; AC-3 fresh apply no collisions; AC-4 zero legacy mutation (businesses 71,619 / business_merges 3 identical before/after cycle); AC-5 FK convention verified (child-of-entity CASCADE, provenance SET NULL), TEXT+CHECK not ENUM (extensibility, reversible).
 #   → DEFERRED within SP-1 (touch existing objects, flagged not skipped): events↔business_events reconciliation = migration 016; crawl_snapshots weekly partitioning = 017; legacy provenance backfill = 018.
-#   → PROD-APPLIED (08:50Z): Matt GO sig 239fbe7a4bdded52 → applied 015 to prod market_intelligence under Phase-0 PITR (restore point pre_migration_015_v2_entity_core @ LSN 8D1/6F223D8, rollback anchor). VERIFIED CLEAN: 7 tables/20 idx/12 FK, all new tables empty, legacy UNCHANGED (businesses 3,776,477 / business_merges 31,551). PR #54 (https://github.com/Konnex-Labs/konnex-data-pipeline/pull/54, branch v2/sp1-migration-015-entity-core, cherry-pick of fa8d6d4) OPEN — awaiting Rajesh GH-approve to merge (NO self-merge). SP-1 SCHEMA FOUNDATION = DONE.
+#   → PROD-APPLIED (08:50Z): Matt GO sig 239fbe7a4bdded52 → applied 015 to prod market_intelligence under Phase-0 PITR (restore point pre_migration_015_v2_entity_core @ LSN 8D1/6F223D8, rollback anchor). VERIFIED CLEAN: 7 tables/20 idx/12 FK, all new tables empty, legacy UNCHANGED (businesses 3,776,477 / business_merges 31,551). PR #54 (https://github.com/Konnex-Labs/konnex-data-pipeline/pull/54) MERGED 08:54Z (Rajesh GH-approved, squash 34cfeee, branch deleted). SP-1 SCHEMA FOUNDATION = DONE + ON MAIN + LIVE ON PROD.
 #   → NEXT: SP-2 (change-detection→events) — needs its own Matt session-estimate GO (flagged to Matt). Deferred SP-1 follow-ons 016/017/018 need Jack+Rajesh design sign-off. Grace dedup runner still parallel/cold (dedup staging steps 1-4 ALREADY run overnight, Rajesh conditional-pass 2658f42cf1460112; AC-4/6/7 blocked on Grace runner). Phase 2 (destructive clean-cut + NSW+3, ~USD150) stays behind ALL of Phase 1 + separate Matt GO.
 #   → NOTE: Rajesh relaunched on a STALE checkpoint 08:48Z (loaded yesterday's dedup state, unaware of the SP-1 QA he'd just done). Corrected him via tmux d814e96b91da318d — no work lost, SP-1 QA PASS captured here + in signed-msg log.
 #   → HARD GATES: no prod write without Rajesh PASS + fresh Matt GO; no spend; no push of local main commits until prod-apply PR.
