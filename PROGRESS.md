@@ -4,7 +4,8 @@ agent: jack
 session_id: 2026-07-06T08Z-sp1-resume
 model: claude-opus-4-8
 status: in_progress
-last_updated: 2026-07-06T09:45:00Z
+last_updated: 2026-07-06T09:48:00Z
+status_note: context-ceiling checkpoint; emitter cleared+spec'd, build next session
 notion_task_id: 3942300f-2ecb-8161-99e6-d5eb8ea2bf65
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-1-SCHEMA-SPEC.md", "/home/jack/projects/konnex-data-pipeline/migrations/016_business_events_entity_provenance.sql", "/home/jack/projects/konnex-data-pipeline/temporal-diff.js", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871"]
@@ -12,6 +13,17 @@ context_needed:
   collaborators: [matt, rajesh, grace]
 ---
 
+# ========================= RAJESH SIGN-OFF + SCHEMA FINDINGS (2026-07-06T09:48Z) — EMITTER CLEARED TO WRITE =========================
+# RAJESH DESIGN SIGN-OFF (sig 61145428d836cacb, HMAC-verified) — BOTH decisions APPROVED. 4 concrete AC requirements to bake into the emitter:
+#   (R1) Envelope JSONL log MUST distinguish dry-run vs live in the header: dry-run = "WOULD insert N rows, IDs:[...] (hypothetical — RETURNING inside txn then ROLLBACK, NOT a durable/live artifact)"; live = "inserted N rows, IDs:[...]". So a recovery operator never mistakes a dry-run log for live.
+#   (R2) In LIVE mode the JSONL reversibility artifact MUST be fsync'd BEFORE COMMIT (match envelope durability guarantee).
+#   (R3) density guard must be EXPLICIT in emitter code (WHERE suburb_id IS NOT NULL on the diff inputs) — Rajesh wants to see it at QA.
+#   (R4) dry-run output MUST print a deferred-count line: "X professional_density_changed rows deferred (suburb entities not yet seeded, activates SP-3)" — needed in AC-4 fixture output for auditability. (Apply the SAME deferred-count line pattern to the status-transition + licence branches — see F2/F3.)
+# SCHEMA FINDINGS (staging + prod read-only, this session — do NOT re-introspect):
+#   (F1) crawl_snapshots cols: id(bigint),crawl_id(int),google_place_id(varchar),business_id(uuid),industry(varchar),country_code(varchar),review_count(int),rating(numeric),maps_business_status(varchar),last_seen(date),observed_at(timestamptz).
+#   (F2) PROD maps_business_status is only ''(blank, 358,379) + 'operational' (lowercase, 189,267) — ~0 CLOSED_* values. So: (a) match LOWERCASE 'operational' + handle blank/NULL, NOT spec's uppercase; (b) the status-transition business_closed/opened branch (spec's "primary" signal) emits ~0 rows in practice TODAY — ships as a guarded branch w/ a deferred/'0 emitted' count line, real emission depends on the crawler capturing closed statuses. FLAG to Matt like the density+licence gaps.
+#   (F3) sources.name has NO unique index (only PK) → lookup-then-insert (already locked). entity_aliases(alias_kind,alias_value,entity_id) = best-effort entity_id join key.
+# RAJESH IS OFFLINE (hit his own 70% ~09:45Z, self-reported+sig-verified 1b3c54c258123ab9; auto-relaunches for AC-1..6 QA when I call). His warning: verify his PROGRESS.md before acting on any alert about him (phantom-watchdog caution).
 # ========================= SP-2 BUILD — INCREMENT 1 + MODULE DESIGN LOCKED (2026-07-06T09:45Z) =========================
 # Build branch: konnex-data-pipeline `svi/sp2-change-detection` (off local main; has envelope + 014/015/016). NOT pushed (gates: local until prod-apply PR).
 # DONE THIS INCREMENT (staging-validated, committed fb80ae2 on build branch): migration 017_business_events_density_uniq.sql.
