@@ -3,8 +3,8 @@ task_id: v2-phase-1-sp2-change-detection
 agent: jack
 session_id: 2026-07-06T08Z-sp1-resume
 model: claude-opus-4-8
-status: context-exit
-last_updated: 2026-07-06T09:02:00Z
+status: in_progress
+last_updated: 2026-07-06T09:08:00Z
 notion_task_id: 3942300f-2ecb-8161-99e6-d5eb8ea2bf65
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-1-SCHEMA-SPEC.md", "/home/jack/projects/konnex-data-pipeline/migrations/016_business_events_entity_provenance.sql", "/home/jack/projects/konnex-data-pipeline/temporal-diff.js", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871"]
@@ -12,6 +12,15 @@ context_needed:
   collaborators: [matt, rajesh, grace]
 ---
 
+# ========================= SP-2 RESUME (2026-07-06T09:08Z) =========================
+# Auto-relaunched from the 09:02Z context-exit. Verified git ground truth (HEAD b51328f) — resumed from THIS PROGRESS.md, NOT the stale injected checkpoint (that one still described Explorer-5xx/AC7/Grace-ETL, all long-closed). Sent Matt session-start status (the gate).
+# DONE THIS SESSION (all non-prod, no spend):
+#   (1) RAJESH 016 DESIGN SIGN-OFF = PASS 7/7 (sig f763047ae2391225, HMAC-verified). His side of the 016 gate is CLEAR. → task board #2 (016 prod-apply) now only awaits fresh Matt GO.
+#   (2) SP-2 SPRINT SPEC written + committed: SP-2-CHANGE-DETECTION-SPEC.md (maps-lead-scraper main 606a1f1). Contract: EXTENDS temporal-diff.js (not greenfield); trades event taxonomy (business_opened/closed via maps_business_status transitions [supersedes set-diff], review_velocity_changed, professional_density_changed [suburb-agg, needs own uniq idx — flagged], licence_status_changed [emission deferred, no licence source feed]); source_id enforced (emitter aborts if unresolved = "zero events w/o source_id" invariant); entity_id best-effort (SP-3 backfills); runs on Phase-0 envelope. ACs AC-1..6 concretized from parent §5.
+#   (3) BOARD-HYGIENE gap CLOSED: PR #54 (mig 015) had no Notion ticket (watcher fired sig 5370c3ee, Rajesh flagged, his Notion token 401'd). Created Sprint-Boards ticket 3952300f-2ecb-81c1-ace4-c81103017aa2 (Done/Jack/Rajesh/V2 Pipeline Rebuild, GitHub=PR#54+34cfeee). My Notion token works.
+# NEXT (all gated on Matt): (a) fresh Matt GO → 016 prod-apply (push pipeline local main b216c38 → prod market_intelligence under PITR+envelope → PR → Rajesh GH-approve); THEN (b) build change-detection module on staging (konnex_staging_v2 already has 016) per SP-2 spec §9 + staging fixture AC-1..6 → Rajesh QA → fresh Matt GO for first prod emission (dry-run first). Module build (task #3) can START on staging pre-prod-016 since staging is validated — held pending Matt's reprioritise reply to the gate msg.
+# GATES: no prod write w/o Rajesh QA + fresh Matt GO; no spend (SP-2 = pure PG). Session estimate SP-2 = 1-2.
+# ==================================================================================
 # ========================= CONTEXT-EXIT 79% (2026-07-06T09:02Z) =========================
 # Matt flagged 79% ctx (sig 4ee92ab9a0b324e5) — past 70% ceiling. Clean checkpoint; SP-2 in early design. Mid-work context-exit → NO agent-offline (want auto-relaunch to continue SP-2). NOTE: an earlier watchdog emitted a PHANTOM 'context-exit 08:53Z' narrative to Rajesh (sigs 8bb3e76d/0e0153571 valid-jack-signed but I never authored that content) — my real status was in_progress until THIS 09:02Z exit. Corrected Rajesh.
 #
