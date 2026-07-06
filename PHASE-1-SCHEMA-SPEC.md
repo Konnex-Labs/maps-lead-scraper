@@ -64,13 +64,19 @@ Captured so we preserve the *why*, not just the conclusion:
 New/extended tables on the one core. Column lists are the contract; exact types finalized in SP-1
 against live prod introspection (schema.sql is stale — introspect, don't trust it).
 
+**SP-1 type finalization (migration 015, Rajesh-QA-approved sig 403b5b4a54a568dc):** all categorical
+columns below written as `TEXT + CHECK` constraints, NOT Postgres ENUMs — the load-bearing
+extensibility property (§1): a new source kind / member_type is an additive `ALTER ... CHECK`, never
+an enum-value migration + table rewrite. The `ENUM[...]` notation in the column lists denotes the
+allowed value set, realized as a CHECK. Trivially reversible to ENUMs if preferred.
+
 - `sources` (source_id PK, kind ENUM[maps|licence|website|review|search_volume|permit|other],
   name, base_url, trust_tier ENUM[gold|silver|bronze], created_at, is_active)
 - `crawl_runs` (run_id PK, source_id FK, started_at, finished_at, params jsonb, cost_usd, status)
 - `crawl_snapshots` (snapshot_id PK, run_id FK, entity_ref, observed_at, raw_payload_ref,
   checksum) — **IMMUTABLE, append-only, partitioned by week.** *Already exists in prod — EXTEND, do
   not recreate; preserve all rows.*
-- `entities` (entity_id PK, type ENUM[business|suburb|trade|licence], canonical fields (jsonb or
+- `entities` (entity_id PK, type ENUM[business|suburb|trade|licence|industry], canonical fields (jsonb or
   typed), current_state jsonb, first_seen_at, last_seen_at, is_active, verification_tier
   ENUM[silver|gold]) — canonical living record. `businesses` maps in as `type=business`.
 - `entity_aliases` (alias_id PK, entity_id FK, alias_value, alias_kind, source_id) — entity
