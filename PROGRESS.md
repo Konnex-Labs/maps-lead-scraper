@@ -4,7 +4,7 @@ agent: jack
 session_id: 2026-07-05T09Z-phase0-spec
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-05T13:30:00Z
+last_updated: 2026-07-06T02:52:00Z
 notion_task_id: 3942300f-2ecb-8161-99e6-d5eb8ea2bf65
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-0-SAFETY-SPINE-SPEC.md", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (arch doc, Phase 0 def)", "/home/jack/projects/konnex-data-pipeline/schema.sql", "/home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js"]
@@ -12,6 +12,23 @@ context_needed:
   collaborators: [matt, rajesh, grace]
 ---
 
+# ========================= 5HR STANDDOWN (2026-07-06T02:52Z) =========================
+# Session crashed 02:34Z (watchdog-stuck-kill, exit 137) while parked overnight — NO work lost, currentTaskId=none, PROGRESS intact. Rajesh crash-recovery attempted; came back online healthy. Acked Rajesh (both holding parked).
+# MATT (02:49Z, sig 8f5e827d4a56982f, [Telegram]): "stand down for another 5hrs and we will work on my way home on the metro." → explicit go-offline. Standdown until ~07:50Z. Acked via Telegram. Ran agent-offline jack to stop relaunch churn. Nothing autonomous; all live threads still Matt-gated (dedup live-apply + Phase 1 session-estimate GO). Resume order unchanged (see NEXT-WINDOW RESUME ORDER below).
+# ====================================================================================
+# ========================= OVERNIGHT UPDATE (2026-07-05T17:14Z) — STAGING QA CONDITIONAL PASS =========================
+# RAJESH crash-recovered (sigkill-137 after ~2.5h uptime; I summoned crash-recovery ~16:51Z → clean session-b) then ran his PRE-AUTHORIZED non-prod steps 1-4 overnight (my GO sig 0c6eea9a05bee533). Now re-parked for the night.
+# STAGING SEED + CLASSIFICATION QA = CONDITIONAL PASS (Rajesh verdict sig 2658f42cf1460112, 17:13Z):
+#   - Seed applied to konnex_staging_v2: 48 businesses + 30 crawl_snapshots + 6 business_events + 3 business_merges + 8 crawl_log. All FK satisfied; merged_into=NULL pre-merge.
+#   - AC-1 PASS: full-prod classification = 399 groups / 373 quarantine / 26 auto_merge_candidates / 431 losers / 0 unclassified (matches spec exactly; 399 core-trades count LOCKED).
+#   - AC-2 PASS: 7 quarantine groups correct, ZERO auto-merge of quarantined. AC-2a: 0 NULL/empty place_id in seed (Grace Finding A VERIFIED).
+#   - AC-3 PASS: 0 orphan FKs; §6.0c BOTH business_merges FK directions 3/3.
+#   - AC-5 PASS: survivor COALESCE(enrichment='enriched',false) DESC correct (Grace Finding B VERIFIED).
+#   - AC-4/6/7 DEFERRED: reversibility / envelope-invariants / idempotency all require Grace's dedup DECOMPOSE RUNNER (spec §4.3.2), NOT BUILT yet. So the 'envelope dry-run' sub-step of steps 1-4 was NOT RUNNABLE tonight — Grace's runner is a PREREQUISITE for it.
+# CORRECTED SEQUENCING FOR TOMORROW (Matt online): (1) Grace builds decompose runner per spec §4.3.2; (2) envelope dry-run on staging → AC-4/6/7 verified → FULL PASS; (3) I route full verdict + Grace validates survivor selection; (4) FRESH explicit Matt+Jack GO → live prod apply. Live prod still HARD-GATED; nothing tonight.
+# INFRA FOLLOW-UP (tomorrow, my lane): Rajesh's 70%-exit git PUSH FAILED — 403 write-denied to konnex-qa.git on his branch (his local commit 54eb374 holds his PROGRESS; NOT pushed). His verdict content is SAFE (captured above in THIS PROGRESS.md), so the WIP-gap risk is mitigated, but the repo-write-permission block on Rajesh's qa branch needs fixing so his checkpoints can push.
+# ALL FOUR (Matt/Grace/Rajesh/Jack) OFFLINE for the night. Resume tomorrow NIGHT per Matt (sig 391e6c48bc7939cb 'chat tomorrow night').
+# =====================================================================================================================
 # ========================= CLEAN OFFLINE PARK (2026-07-05T14:16Z) =========================
 # Auto-relaunched into the night-park state. Confirmed clean, all threads park to tomorrow:
 #  - MATT (14:16Z, sigs 7606aa8e + c375608f): "happy with your phase 1 plan and sequencing ... we will follow that plan when we resume tomorrow." Park + Phase 1 sequencing CONFIRMED by Matt. Replied via team-chat.
