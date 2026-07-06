@@ -4,7 +4,7 @@ agent: jack
 session_id: 2026-07-06T08Z-sp1-resume
 model: claude-opus-4-8
 status: in_progress
-last_updated: 2026-07-06T09:30:00Z
+last_updated: 2026-07-06T09:45:00Z
 notion_task_id: 3942300f-2ecb-8161-99e6-d5eb8ea2bf65
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-1-SCHEMA-SPEC.md", "/home/jack/projects/konnex-data-pipeline/migrations/016_business_events_entity_provenance.sql", "/home/jack/projects/konnex-data-pipeline/temporal-diff.js", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871"]
@@ -12,6 +12,47 @@ context_needed:
   collaborators: [matt, rajesh, grace]
 ---
 
+# ========================= SP-2 BUILD — INCREMENT 1 + MODULE DESIGN LOCKED (2026-07-06T09:45Z) =========================
+# Build branch: konnex-data-pipeline `svi/sp2-change-detection` (off local main; has envelope + 014/015/016). NOT pushed (gates: local until prod-apply PR).
+# DONE THIS INCREMENT (staging-validated, committed fb80ae2 on build branch): migration 017_business_events_density_uniq.sql.
+#   professional_density_changed events have google_place_id=NULL → existing idx_event_dedup UNIQUE treats NULLs as distinct = NO dedup. Added
+#   idx_event_dedup_suburb_agg UNIQUE(event_type, suburb_id, industry, to_crawl_id) WHERE google_place_id IS NULL AND suburb_id IS NOT NULL.
+#   Staging: apply exit0 + index-present + idempotent-rerun(skip) + DOWN→0/UP→1. Task #3 CLOSED.
+#
+# MODULE DESIGN LOCKED (verified against staging schema — write temporal-diff.js extension next session, then fixture, then AC test):
+#  1. SOURCE_ID (AC-4): sources.name has NO unique constraint (only PK on source_id) → do NOT use ON CONFLICT(name). Use LOOKUP-THEN-INSERT in code
+#     (emitter runs singly, no race): SELECT source_id FROM sources WHERE name='google_maps_crawl'; if none INSERT (kind='maps',name='google_maps_crawl',
+#     trust_tier='silver',is_active=true) then re-SELECT. Resolve ONCE at emitter start; ABORT non-zero if unresolved → pass as $3 to every INSERT.
+#  2. PROVENANCE COLS on all INSERTs (existing review_count_changed/rating_changed/business_opened/closed + new types): add source_id=$3,
+#     effective_at = t.observed_at (to-snapshot time; for set-diff business_closed there's no t row → use the to_crawl's observed_at via subquery or crawl_runs),
+#     evidence_url = 'https://www.google.com/maps/place/?q=place_id:'||google_place_id (per-business); suburb-agg uses Explorer suburb URL or NULL.
+#  3. ENTITY_ID best-effort: LEFT JOIN entity_aliases ea ON ea.alias_kind='google_place_id' AND ea.alias_value=t.google_place_id → ea.entity_id (NULL until SP-3 seeds entities). entity_memberships(member_type,member_ref=business_id) is the alt path.
+#  4. TAXONOMY §4: (a) business_closed/opened via maps_business_status transition JOIN f&t on (google_place_id,industry), conf 0.9 — SUPERSEDES set-diff as
+#     PRIMARY; keep set-diff disappearance as 0.5 fallback (rule=disappeared_from_scope) + first-appearance 0.6, BOTH only under --full-scope. Verify prod
+#     maps_business_status enum values (expect OPERATIONAL / CLOSED_PERMANENTLY / CLOSED_TEMPORARILY) before writing WHERE clauses.
+#     (b) review_velocity_changed conf 1.0 = Δreview_count/Δdays(f.observed_at→t.observed_at) crossing materiality threshold; KEEP raw review_count_changed;
+#     reuse existing positive→0 parse-miss guard. (c) professional_density_changed conf 0.8, suburb_id set/entity NULL, ON CONFLICT via idx_event_dedup_suburb_agg.
+#     (d) licence_status_changed = guarded no-op (no licence source feed).
+#  5. GAP FLAG (like licence): professional_density_changed needs suburb_id = an entities-row FK, but SP-2 doesn't seed suburb entities (SP-3) → density likely
+#     emits 0 real rows until suburb entities exist. Contract/branch ships; emission gated on suburb entities. FLAG to Matt/Rajesh so it's understood, not a "gap".
+#  6. ENVELOPE (task #4) — DESIGN DECISION TO CONFIRM w/ Rajesh+Matt: runEnvelope is ROW-oriented (keyset selectBatch→per-row plan→INSERT); temporal-diff is
+#     SET-based INSERT...SELECT w/ ON CONFLICT (efficient, already idempotent + dry-run via ROLLBACK). Forcing bulk INSERT through a per-row loop = perf/correctness
+#     regression. Spec §3 itself notes pre-image is empty + collision maps to ON CONFLICT for append-only. PROPOSAL: keep set-based inserts, add RETURNING id → JSONL
+#     reversibility audit log to reportDir + keep dry-run default. Gives the "one reversible audit trail" without the row-loop. NEED Rajesh/Matt nod before finalizing.
+# REMAINING (tasks #1,2,4,5): write module per above → build staging fixture (deterministic before/after crawl_snapshots) → AC-1..6 harness on konnex_staging_v2
+#   → Rajesh QA PASS → 016+017 prod-apply PR + FRESH Matt GO → first prod emission (dry-run first). No spend (pure PG). Session estimate remaining: 1.
+# ==================================================================================
+# ========================= PR #55 MERGED + RECONCILE FINDING (2026-07-06T09:36Z) =========================
+# Auto-relaunched ~09:33Z (Rajesh's 'context-exit #3' alert = PHANTOM watchdog again, I never authored it — I'm online/in_progress). Sent Matt session-start gate.
+# RAJESH: 016 GO 6419f0af7eff504f VALID + PR #55 reviewDecision=APPROVED (sig 1b53b810d51fa1d2, HMAC-verified). Cleared SP-2 staging build (no reprioritise). Phantom-watchdog fix = my ops lane, priority when SP-2 frees.
+# ACTION: MERGED PR #55 → squash ea103b9435dff090e724bdaad0fb91c0a3fe19da to konnex-data-pipeline origin/main @ 09:34:10Z, branch deleted. Ticket 3952300f-2ecb-81af-b275-c026e855717b auto-closes.
+# RECONCILE FINDING (IMPORTANT — do NOT `git reset --hard origin/main`): local pipeline main (b216c38) carries GENUINE unpushed work NOT on origin/main:
+#   - migration 014 (9804a18, businesses.merged_into tombstone) — intentionally staged to land via a later dedup PR. (origin's '107334f BUG-014' is UNRELATED — google_place_id dedup, not merged_into.)
+#   - WS-ii prod-write-envelope module (ee9d8fc/f5e4936/66145a3/d184be2, lib/prod-write-envelope.js) — Phase 0, Rajesh QA PASS 11/11, never pushed. NOT on origin/main.
+#   Plus two now-REDUNDANT pre-squash commits duplicated by origin squashes: fa8d6d4(=015→34cfeee) + b216c38(=016→ea103b9).
+#   SAFETY: snapshotted local main → branch wip/local-main-snapshot-20260706 (b216c38) before any rewrite. Main left UNTOUCHED. Proper reconcile = land 014 + envelope via their own PRs, THEN clean main — deferred, NOT autonomous history-rewrite.
+# NEXT: build SP-2 change-detection module on staging (Rajesh-cleared, Matt SP-2 GO 1d63e67e4823074a covers no-spend staging build; only FIRST PROD EMISSION needs a fresh Matt GO). Awaiting Matt's gate-msg reply but staging build is within existing GO.
+# ==================================================================================
 # ========================= 016 PROD-APPLIED (2026-07-06T09:30Z) =========================
 # MATT GAVE FRESH 016 GO (sig 6419f0af7eff504f, [Telegram] "GO nothing to reprioritise") — HMAC-verified. EXECUTED the 016 prod-apply:
 #   → PITR restore point pre_migration_016_business_events_provenance @ LSN 8D1/55B74B40 created on prod as postgres (rollback anchor). pgbackrest continuous archiving live (archive_command=pgbackrest --stanza=market_intelligence).
