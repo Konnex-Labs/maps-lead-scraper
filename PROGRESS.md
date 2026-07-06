@@ -1,16 +1,26 @@
 ---
-task_id: v2-phase-0-safety-spine
+task_id: v2-phase-1-sp1-entity-core
 agent: jack
-session_id: 2026-07-05T09Z-phase0-spec
+session_id: 2026-07-06T08Z-sp1-resume
 model: claude-opus-4-8
-status: context-exit
-last_updated: 2026-07-06T02:52:00Z
+status: in_progress
+last_updated: 2026-07-06T08:45:00Z
 notion_task_id: 3942300f-2ecb-8161-99e6-d5eb8ea2bf65
 context_needed:
-  files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-0-SAFETY-SPINE-SPEC.md", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871 (arch doc, Phase 0 def)", "/home/jack/projects/konnex-data-pipeline/schema.sql", "/home/jack/projects/pipeline-orchestrator/v2-pilot/staging-setup/setup-staging.sh", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-merge-lineage.js", "/home/jack/projects/konnex-data-pipeline/scripts/one-off/backfill-au-suburb-mapping.js"]
+  files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-1-SCHEMA-SPEC.md", "/home/jack/projects/konnex-data-pipeline/migrations/015_v2_entity_core_foundation.sql", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871", "PHASE-0-SAFETY-SPINE-SPEC.md"]
   branches: []
   collaborators: [matt, rajesh, grace]
 ---
+
+# ========================= SP-1 RESUME (2026-07-06T08:45Z) =========================
+# Auto-relaunched from a 70% context-exit that hit while starting SP-1 (Rajesh confirmed exit seq VALID, sig 3cd1c7589613f462). Verified git ground truth on resume — the 02:52Z standdown block below is SUPERSEDED.
+# MATT GO'd Phase 1 / SP-1 on the metro (2026-07-06, Telegram sig c38ce2333aead7ea). Prior session wrote PHASE-1-SCHEMA-SPEC.md (committed maps-lead-scraper main 807839d, 08:20Z) + drafted migration 015.
+# THIS SESSION: migration 015 (V2 entity core, 7 greenfield tables — sources, crawl_runs, entities, entity_aliases, entity_memberships, entity_matches, market_metrics) VALIDATED on konnex_staging_v2 + COMMITTED (pipeline local main fa8d6d4, NOT pushed — PR lands at prod-apply) + HANDED to Rajesh for SP-1 QA (handoff sig 856934041a9d6415).
+#   → STAGING EVIDENCE (all SP-1 §5 ACs PASS): AC-1 7 tables + 20 indexes; AC-2 idempotent re-run all-skip exit 0 + DOWN→UP reversibility clean; AC-3 fresh apply no collisions; AC-4 zero legacy mutation (businesses 71,619 / business_merges 3 identical before/after cycle); AC-5 FK convention verified (child-of-entity CASCADE, provenance SET NULL), TEXT+CHECK not ENUM (extensibility, reversible).
+#   → DEFERRED within SP-1 (touch existing objects, flagged not skipped): events↔business_events reconciliation = migration 016; crawl_snapshots weekly partitioning = 017; legacy provenance backfill = 018.
+#   → NEXT: await Rajesh SP-1 QA verdict → on PASS, get FRESH explicit Matt GO → prod-apply 015 via migration runner under Phase-0 prod-write-envelope + live PITR (open PR at that point). Then SP-2 (change-detection→events) pending its own Matt session-estimate GO. Grace dedup runner still parallel/cold. Phase 2 (destructive clean-cut + NSW+3, ~USD150) stays behind ALL of Phase 1 + separate Matt GO.
+#   → HARD GATES: no prod write without Rajesh PASS + fresh Matt GO; no spend; no push of local main commits until prod-apply PR.
+# ==================================================================================
 
 # ========================= 5HR STANDDOWN (2026-07-06T02:52Z) =========================
 # Session crashed 02:34Z (watchdog-stuck-kill, exit 137) while parked overnight — NO work lost, currentTaskId=none, PROGRESS intact. Rajesh crash-recovery attempted; came back online healthy. Acked Rajesh (both holding parked).
