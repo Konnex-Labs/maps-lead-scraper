@@ -4,7 +4,7 @@ agent: jack
 session_id: 2026-07-06T08Z-sp1-resume
 model: claude-opus-4-8
 status: in_progress
-last_updated: 2026-07-06T09:08:00Z
+last_updated: 2026-07-06T09:30:00Z
 notion_task_id: 3942300f-2ecb-8161-99e6-d5eb8ea2bf65
 context_needed:
   files: ["/home/jack/projects/konnex-data-api/google-maps-scraper/PHASE-1-SCHEMA-SPEC.md", "/home/jack/projects/konnex-data-pipeline/migrations/016_business_events_entity_provenance.sql", "/home/jack/projects/konnex-data-pipeline/temporal-diff.js", "Notion arch doc 3942300f-2ecb-8149-9d15-cb8326007871"]
@@ -12,6 +12,17 @@ context_needed:
   collaborators: [matt, rajesh, grace]
 ---
 
+# ========================= 016 PROD-APPLIED (2026-07-06T09:30Z) =========================
+# MATT GAVE FRESH 016 GO (sig 6419f0af7eff504f, [Telegram] "GO nothing to reprioritise") — HMAC-verified. EXECUTED the 016 prod-apply:
+#   → PITR restore point pre_migration_016_business_events_provenance @ LSN 8D1/55B74B40 created on prod as postgres (rollback anchor). pgbackrest continuous archiving live (archive_command=pgbackrest --stanza=market_intelligence).
+#   → GOTCHA: market_intel (app user) is NOT superuser + lacks REFERENCES on entities/sources (those are POSTGRES-owned, created by 015; business_events is market_intel-owned). First apply via market_intel URI FAILED "permission denied for table entities" — txn rolled back clean (0 partial state, still 15 cols). RE-APPLIED as postgres via `ssh konnex-data "sudo -u postgres psql -d market_intelligence -v ON_ERROR_STOP=1" < migrations/016_...` → exit 0.
+#   → VERIFIED CLEAN on prod market_intelligence: business_events 15->21 cols (entity_id/related_entity_id/suburb_id/source_id/effective_at/evidence_url, ALL nullable no-default); 40,469 rows UNCHANGED; 0 rows with source_id/entity_id (legacy untouched); 4 FKs all SET NULL (confdeltype=n: entity_id/related_entity_id/suburb_id->entities, source_id->sources); 3 partial indexes present. Matches staging + Rajesh 7/7 sign-off EXACTLY.
+#   → PR #55 OPEN: https://github.com/Konnex-Labs/konnex-data-pipeline/pull/55 (branch svi/migration-016-business-events-provenance = origin/main 34cfeee + cherry-picked 016 as 5499b4f; clean single-commit, NOT self-merged local main). Body carries Ticket: 3952300f-2ecb-81af-b275-c026e855717b (board-hygiene fixed — footer present from creation). AWAITING Rajesh independent QA + GH approve → then I merge.
+#   → SP-2 Notion ticket CREATED: 3952300f-2ecb-81af-b275-c026e855717b (In Progress, Jack/Rajesh, V2 Pipeline Rebuild). SP-1 mig-015 ticket = 3952300f-2ecb-81c1-ace4-c81103017aa2 (Done).
+#   → KNOWN SP-2-BUILD FOLLOW-UP (privilege gap): the temporal-diff.js emitter runs as market_intel and must INSERT source_id/entity_id FK values referencing postgres-owned sources/entities → market_intel needs SELECT/REFERENCES on entities+sources. GRANT during SP-2 module build (will surface on staging emitter test). Not needed for the 016 DDL itself.
+#   → PHANTOM WATCHDOG (RECURRING BUG): during this apply, a watchdog emitted 2x valid-jack-signed 'Jack context-exit 71%/09:14Z/09:26Z' alerts to Rajesh that I NEVER AUTHORED (same phantom as the 09:02 one, PROGRESS line ~16). Corrected Rajesh (tmux c31937fa21e2ebf8) + flagged to Matt. My real status stayed in_progress throughout. This phantom-context-exit watchdog needs a fix (my ops lane) — it repeatedly misleads collaborators mid-work.
+# NEXT: (1) Rajesh GH-approve PR #55 → merge → reconcile local main. (2) Build change-detection module on staging (konnex_staging_v2 has 016) per SP-2 spec §9 + grant market_intel privileges + staging fixture AC-1..6 → Rajesh QA → fresh Matt GO for first prod emission (dry-run first). No spend.
+# ==================================================================================
 # ========================= SP-2 RESUME (2026-07-06T09:08Z) =========================
 # Auto-relaunched from the 09:02Z context-exit. Verified git ground truth (HEAD b51328f) — resumed from THIS PROGRESS.md, NOT the stale injected checkpoint (that one still described Explorer-5xx/AC7/Grace-ETL, all long-closed). Sent Matt session-start status (the gate).
 # DONE THIS SESSION (all non-prod, no spend):
