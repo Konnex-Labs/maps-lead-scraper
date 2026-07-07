@@ -71,6 +71,36 @@ staging GRANT → author migration 019 (catalog+entities+aliases+memberships+mat
 idempotent, reversible DOWN) → run on `konnex_staging_v2` → validate AC (parity counts, FK integrity,
 zero associations lost) → Rajesh QA → prod GRANT + backfill under Phase-0 envelope + PITR on SEPARATE GO.
 
+## Identity key — traced to the runner (2026-07-07, Jack)
+The business-entity identity key = the dedup runner's canonical key (matches D1: "match the runner").
+Source: `konnex-data-pipeline/dedup-qa.js:170-178` (primary hard-delete runner):
+```
+key = google_place_id ? `PID|${normalizeName(name)}|${google_place_id}`
+                       : `ADDR|${normalizeName(name)}|${lower(address_state)}|${normalizeStreet(address_street)}`
+```
+- `normalizeName` = `lib/normalize-name.js:13-14`: strip suffixes `\b(LLC|Inc|Corp|Corporation|Company|Co|Ltd|PLLC|LP|Group|Team)\b`, lowercase, strip non-alphanumeric (`[^\w\s]`), collapse whitespace.
+- `normalizeStreet` = `dedup-qa.js:118-121`: lowercase, strip street-type words, strip non-alphanumeric, collapse ws.
+- Canonical (survivor) selection tiebreak: verify_score > completeness(non-null count) > review_count > created_at. (`dedup-qa.js:191-200`) — relevant for WHICH row's fields seed the entity's canonical/current_state.
+- NOTE: runner runs per-industry (never auto-merges cross-industry). For the ENTITY layer we DO collapse
+  same-(normalizeName, place_id) ACROSS industries into 1 entity + N memberships (Schema-Hardening C).
+  The name component keeps genuinely-distinct businesses (differing name, shared place_id) separate.
+
+### Empirical prod check (read-only, 2026-07-07) — cross-industry place_id cohort
+Over 281,968 cross-industry place_ids (active, non-merged, non-null place_id):
+- **278,730 (98.9%)** share the SAME normalized name across industries → COLLAPSE to 1 entity + N memberships.
+- **3,238** have DIFFERING normalized name → stay SEPARATE (distinct businesses).
+- BUT Grace's D1 cited **6,982** distinct-business collisions. My SQL normalizeName ≈ but ≠ runner's exact
+  (2x gap: 3,238 vs 6,982). **BLOCKER on authoring the grouping**: need the runner's EXACT normalization
+  (or a persisted canonical_key column) so mig019 matches bit-for-bit. Sent to Grace (sig a4d91fee5da58d7b):
+  (1) how 6,982 was derived, (2) confirm cross-industry collapse semantics, (3) replicate normalizeName
+  as SQL fns vs group on an existing canonical_key column. Do NOT author grouping until locked.
+
+## `businesses` columns relevant to mig019 (staging introspection)
+id(uuid PK), industry(varchar100 NOT NULL), name(varchar500 NOT NULL), address_street/suburb/city/state/zip,
+lat/lng, phone, email, website_url, google_place_id(varchar64), merged_into(uuid, mig014, 22 set on prod),
+is_active, created_at, review_count, rating, verify flags (email_verified/phone_verified/regulator_verified).
+Aliases to emit per entity: place_id, name, phone, website (alias_kind ∈ name|phone|place_id|website).
+
 ## Reversibility
 All INSERT-only into the new (currently empty) entity tables. DOWN = `TRUNCATE`/`DELETE` the backfilled
 rows (tables were empty pre-SP-3). `businesses` untouched. PITR live on prod as the outer safety net.

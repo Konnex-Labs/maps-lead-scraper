@@ -3,9 +3,10 @@ task_id: v2-phase-1-sp3-entity-resolution-membership-backfill
 agent: jack
 session_id: 2026-07-07T22Z-resume
 model: claude-opus-4-8
-status: context-exit
-last_updated: 2026-07-07T23:14:00Z
-status_note: CONTEXT-EXIT at 71% (Rajesh monitor confirmed) — mid-work, NO agent-offline (auto-relaunch to continue SP-3). SP-3 (entity resolution + membership backfill) has FULL Matt authority through prod (sig 2539cdab30ecd51e / 379a0cc4e47c9833, no per-step GO). This session = SP-3 groundwork only: live data characterized (358,191 collapsible dup rows / 2.32M place_ids / 142 industries), backfill plan written (SP-3-BACKFILL-PLAN.md), GRANT-gap blocker found (market_intel lacks privileges on mig-015 entity tables → needs postgres-superuser GRANT, staging first). NO migration authored yet, NO staging/prod writes done. Also this session: sprint-rotation fix built+PR'd (konnex-ops #129, deploy HELD for Rajesh QA — he is dry-running now); Schema-Hardening-C confirmed design-complete (subsumed by mig 015). Grace working design D1 (entity_matches lineage). RESUME: establish staging access (konnex_staging_v2 @ konnex-ops tunnel:15432) → apply staging GRANT → author migration 019 (INSERT..SELECT, idempotent, reversible) → run on staging → validate AC → Rajesh QA → prod backfill under envelope+PITR. Fresh context recommended for the large migration authoring.
+status: blocked
+last_updated: 2026-07-07T23:30:00Z
+status_note: BLOCKED (online, awaiting Grace) — mig019 authoring is gated on Grace's EXACT dedup canonical key. This resume session (2026-07-07T23Z, fresh ctx): (1) staging access RESOLVED — host IS konnex-ops, konnex_staging_v2 local @5432, passwordless sudo confirmed; staging GRANT applied+verified (konnex_staging already owns tables on staging; market_intel PROD grant is the real deferred item). (2) D1(Grace)+D2(Rajesh) resolved. (3) PR #129 sprint-rotation fix DEPLOYED+MERGED (parked item cleared; Rajesh full QA PASS). (4) Traced identity key to dedup-qa.js:170-178 + verified collision structure on prod (278,730/281,968 cross-industry place_ids COLLAPSE same-name; ~3,238 my-norm vs Grace's 6,982 differ→SEPARATE). BLOCKER: my SQL normalizeName != runner's exact — sent Grace 3-part co-review (sig a4d91fee5da58d7b): exact 6,982 derivation, confirm cross-industry collapse semantics, replicate normalizeName-in-SQL vs group on a persisted canonical_key. NOT authoring grouping until locked. NEXT PASS (fresh ctx): on Grace's key → author migration 019 (all INSERT..SELECT idempotent reversible) → run on konnex_staging_v2 (71,619 biz fixture) → validate AC → Rajesh QA → prod on separate go-live GO. Full design in SP-3-BACKFILL-PLAN.md (Identity key section).
+status_note_prev: CONTEXT-EXIT at 71% (Rajesh monitor confirmed) — mid-work, NO agent-offline (auto-relaunch to continue SP-3). SP-3 (entity resolution + membership backfill) has FULL Matt authority through prod (sig 2539cdab30ecd51e / 379a0cc4e47c9833, no per-step GO). This session = SP-3 groundwork only: live data characterized (358,191 collapsible dup rows / 2.32M place_ids / 142 industries), backfill plan written (SP-3-BACKFILL-PLAN.md), GRANT-gap blocker found (market_intel lacks privileges on mig-015 entity tables → needs postgres-superuser GRANT, staging first). NO migration authored yet, NO staging/prod writes done. Also this session: sprint-rotation fix built+PR'd (konnex-ops #129, deploy HELD for Rajesh QA — he is dry-running now); Schema-Hardening-C confirmed design-complete (subsumed by mig 015). Grace working design D1 (entity_matches lineage). RESUME: establish staging access (konnex_staging_v2 @ konnex-ops tunnel:15432) → apply staging GRANT → author migration 019 (INSERT..SELECT, idempotent, reversible) → run on staging → validate AC → Rajesh QA → prod backfill under envelope+PITR. Fresh context recommended for the large migration authoring.
 notion_task_id: 3942300f-2ecb-8161-99e6-d5eb8ea2bf65
 context_needed:
   files: ["SP-3-BACKFILL-PLAN.md", "PHASE-1-SCHEMA-SPEC.md", "/home/jack/projects/konnex-data-pipeline/migrations/015_v2_entity_core_foundation.sql", "/home/jack/projects/konnex-data-pipeline/db.js"]
@@ -30,12 +31,19 @@ context_needed:
 ## BLOCKER (flagged to Matt)
 - GRANT gap: `market_intel` role → `permission denied for table entities` (mig-015 tables). GO-B granted only sources+entity_aliases. Need postgres-superuser GRANT (SELECT + backfill INSERT) on entities/entity_memberships/entity_matches/market_metrics/crawl_runs, on staging first then prod. Blocks backfill execution, not authoring.
 
+## Session 2026-07-07T23Z (resume) — progress
+- **Staging access RESOLVED**: this host IS konnex-ops (hostname match; no SSH). konnex_staging_v2 local @127.0.0.1:5432. I have passwordless sudo to postgres AND /usr/local/bin. Conn (Rajesh): user konnex_staging / db konnex_staging_v2. Verified: entities=0 (backfill target), staging businesses=**71,619** (REDUCED FIXTURE, not prod's 3.78M — correctness AC valid, prod timing estimated separately).
+- **Staging GRANT applied + verified**: SELECT,INSERT (+seq usage) on entities/entity_memberships/entity_matches/entity_aliases/market_metrics/crawl_runs → konnex_staging. NOTE: konnex_staging already holds ALL privs on these (owns them on staging) — grant confirmatory. The market_intel denial is PROD-only, deferred to go-live. mig019 runs as konnex_staging on staging.
+- **D1 (Grace) + D2 (Rajesh) both RESOLVED** — D2: 1 entity per NULL-place_id row (122,658), conservative (sig f40e837127dea8fc). D1 sigs d20dbf14fe745315 / 32031304d397b2ac.
+- **PR #129 (sprint-rotation fix) DEPLOYED + MERGED** (parked item cleared): Rajesh full QA PASS + GH APPROVED + deploy OK. Installed /usr/local/bin/sprint-rotation.js (backup .bak-20260707T232327Z), MERGED squash + branch deleted. Timer next Mon 2026-07-13 13:30Z. Follow-up (flagged to Matt): sprint POINTER ~4wk behind (CURRENT_SPRINT=.env Sprint 16); Jack+Rajesh rec = advance 1/week, no multi-rotate.
+
 ## Remaining (SP-3)
-1. Apply staging GRANT (konnex_staging_v2) — postgres superuser.
-2. Resolve open design decisions D1 (Grace: entity_matches lineage contract) / D2 (Rajesh: NULL-place_id handling) / D3 (industry vs trade type) / D4 (batching) — see SP-3-BACKFILL-PLAN.md.
-3. Author migration 019: catalog(142) + business entities (~2.32M+122,658) + aliases + memberships + entity_matches projection. All INSERT..SELECT, idempotent, reversible DOWN. `businesses` untouched.
-4. Run on konnex_staging_v2 → validate AC (parity, FK integrity, zero associations lost) → Rajesh QA.
-5. Prod GRANT + additive backfill under Phase-0 envelope + PITR on SEPARATE go-live GO.
+1. [DONE] staging GRANT.
+2. [DONE] design decisions D1/D2. (D3 all type=industry, D4 batching TBD on staging measure.)
+3. **BLOCKING mig019 authoring — identity key**: Grace D1 says business-entity identity must match the DEDUP RUNNER's canonical key (place_id NOT unique; 6,982 cross-industry collisions = distinct businesses; cross-industry same-place_id → SEPARATE entities). MUST read the runner's canonical key before authoring the grouping — do NOT guess. Investigating runner in konnex-data-pipeline now.
+4. Author migration 019: catalog(142) + business entities + aliases + memberships + entity_matches projection (off businesses.merged_into, 22 merges, NOT business_merges). All INSERT..SELECT, idempotent, reversible DOWN. `businesses` untouched.
+5. Run on konnex_staging_v2 → validate AC (parity, FK integrity, zero associations lost) → Rajesh QA.
+6. Prod GRANT (market_intel) + additive backfill under Phase-0 envelope + PITR on SEPARATE go-live GO.
 
 ## Parked (non-SP-3)
 - Close Schema-Hardening C + A Notion tickets as superseded-by-doc.
