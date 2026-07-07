@@ -3,9 +3,9 @@ task_id: v2-phase-1-sp3-entity-resolution-membership-backfill
 agent: jack
 session_id: 2026-07-07T22Z-resume
 model: claude-opus-4-8
-status: in_progress
-last_updated: 2026-07-07T23:12:00Z
-status_note: SP-3 (entity resolution + membership backfill) GO'd by Matt (sig 9832327213b794cf), session estimate 2-3. Groundwork done — live data shape characterized, backfill plan written (SP-3-BACKFILL-PLAN.md). BLOCKER surfaced = GRANT gap (market_intel role lacks privileges on mig-015 entity tables; needs postgres superuser GRANT before staging/prod backfill). Also this session: sprint-rotation.service fix built + PR'd (konnex-ops #129, deploy HELD for Rajesh QA); Schema-Hardening-C confirmed design-complete (subsumed by mig 015). Rajesh online, assigned PR #129 QA. Next: apply staging GRANT, author migration 019 (catalog+entities+aliases+memberships+matches, INSERT..SELECT idempotent+reversible), run on konnex_staging_v2.
+status: context-exit
+last_updated: 2026-07-07T23:14:00Z
+status_note: CONTEXT-EXIT at 71% (Rajesh monitor confirmed) — mid-work, NO agent-offline (auto-relaunch to continue SP-3). SP-3 (entity resolution + membership backfill) has FULL Matt authority through prod (sig 2539cdab30ecd51e / 379a0cc4e47c9833, no per-step GO). This session = SP-3 groundwork only: live data characterized (358,191 collapsible dup rows / 2.32M place_ids / 142 industries), backfill plan written (SP-3-BACKFILL-PLAN.md), GRANT-gap blocker found (market_intel lacks privileges on mig-015 entity tables → needs postgres-superuser GRANT, staging first). NO migration authored yet, NO staging/prod writes done. Also this session: sprint-rotation fix built+PR'd (konnex-ops #129, deploy HELD for Rajesh QA — he is dry-running now); Schema-Hardening-C confirmed design-complete (subsumed by mig 015). Grace working design D1 (entity_matches lineage). RESUME: establish staging access (konnex_staging_v2 @ konnex-ops tunnel:15432) → apply staging GRANT → author migration 019 (INSERT..SELECT, idempotent, reversible) → run on staging → validate AC → Rajesh QA → prod backfill under envelope+PITR. Fresh context recommended for the large migration authoring.
 notion_task_id: 3942300f-2ecb-8161-99e6-d5eb8ea2bf65
 context_needed:
   files: ["SP-3-BACKFILL-PLAN.md", "PHASE-1-SCHEMA-SPEC.md", "/home/jack/projects/konnex-data-pipeline/migrations/015_v2_entity_core_foundation.sql", "/home/jack/projects/konnex-data-pipeline/db.js"]
@@ -43,7 +43,14 @@ context_needed:
 - Legacy-agent cleanup (ada/brian/maria/priya/sarah) — Matt GO'd "after phase-1"; still held (mid Phase-1).
 - Follow-up: sprint-rotation notifyBrian() targets decommissioned brian agent.
 
+## Staging access (resolve before authoring runs)
+- Target: `konnex_staging_v2`, user `konnex_staging`, `127.0.0.1:15432` (SSH-tunnel port). SSH host `konnex-ops` exists in ~/.ssh/config. Password NOT in my env — vaulted on konnex-ops; establish tunnel + creds next pass.
+- Phase-0 write envelope: `konnex-data-pipeline/lib/prod-write-envelope.js` (use `runEnvelope` for any data-movement; dry-run default, pre-image, collision pre-check).
+- Migration-runner: no standalone runner script found; mig 015/016/017/018 appear applied via direct psql. Confirm the apply path used for 015 before running 019 the same way.
+
 ## Resume notes
-- DO NOT: mutate `businesses` in SP-3 (additive only); self-authorize prod backfill (needs separate go-live GO); self-deploy PR #129 (Rajesh QA + deploy OK first).
+- DO NOT: mutate `businesses` in SP-3 (additive only); self-deploy PR #129 (Rajesh QA + deploy OK first).
+- **Autonomy UPGRADED**: Matt granted FULL SP-3 authority through to production — no per-step GO, work with Raj + Grace (sig 2539cdab30ecd51e + 379a0cc4e47c9833, 2026-07-07T23:12Z). Still hold engineering discipline: additive-only, staging → Rajesh QA PASS → prod under envelope + PITR. Scope = SP-3 ONLY; Phase 2 (destructive clean-cut) stays a separate GO.
 - Session estimate 2-3 given to Matt via Telegram (cost-exposure channel). Notion Notes estimate TODO (need C-ticket id).
-- Autonomy: Matt GO to write estimate + implement SP-3 on staging (sig 9832327213b794cf). Prod go-live is a separate GO.
+- In-flight collaborator threads: Grace on D1 (entity_matches lineage contract, I lean option (a)); Rajesh dry-running PR #129 vs Sprint 16.
+- Next build pass (fresh context recommended for the large migration): resolve staging access → author migration 019 (INSERT..SELECT, idempotent, reversible) → run on staging → validate AC → Rajesh QA → prod backfill under envelope+PITR.
