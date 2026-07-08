@@ -37,8 +37,11 @@ Authority (VALID): Matt original Phase-0/1 GO `54248e8e3859546f`; Matt LIVE 'go 
 - **H REAL ARCHIVE COMMITTED** (single tx, verify-before-commit gate passed, COMMIT ok): UPDATE 0 businesses (already archived 07-02), UPDATE 1,661,449 entities (fresh). Gate NOTICEs: biz total=3,776,477 archived=3,406,379 keep_live=370,098 keep_wrongly_archived=0; ent total=1,837,437 archived=1,661,449 keep_live=175,988 keep_wrongly_archived=0.
 - **I POST-ARCHIVE VERIFY PASS** (independent re-query): ent_archived=1,661,449; biz_archived=3,406,379; ent_keep_live=175,988; ent_keep_wrongly_archived=0. **AC-6 velocity hash STILL = 23692c660633e5d66059b8036272e428** (recomputed via SP-4 query, UNCHANGED — baseline preserved).
 
+## Done (archive) — cont.
+- **J RAJESH QA PASS ✅ (2026-07-08T17:12Z, sig 15089728409c8a62 VALID).** AC4-AC8 independently verified on prod: counts exact both layers, partition exact, keep_wrongly_archived=0 both, AC-6/AC7 velocity hash 23692c66… exact SP-4 match. Benign note: biz keep_live=370,098 vs contract 331,940 = +38,158 pipeline ingests since 07-02 (NOT a defect). **7-day cooling started 2026-07-08T17:12Z → Phase-3 hard-purge earliest 2026-07-15, needs SEPARATE 3rd Matt GO.** Matt notified.
+
 ## Remaining
-- **J (IN PROGRESS)** Matt notified of commit + Step I pass. Rajesh handed prod archive for QA (AC4-AC8). Begin ≥7-day cooling. Hard-purge (Phase 3, IRREVERSIBLE) = SEPARATE 3rd Matt GO after cooling. DFS NSW+3 pilot spend (~USD100-150) = separate spend GO.
+- **Cooling (passive):** ≥7-day window running; Phase-3 hard-purge (IRREVERSIBLE) = separate 3rd Matt GO after 2026-07-15. DFS NSW+3 pilot spend (~USD100-150) = separate spend GO.
 - **B** NOTE-3 read-path scoping (own cross-repo PR + Rajesh QA): add `AND archived_at IS NULL` to prod views/MVs (nsw_trades_stats, v_verified_active_silver, explorer_suburb_agg + pg_matviews/pg_views scan), konnex-data-api serving queries, pipeline stage filters. LIVE before Phase-1 go-live. Safe order: archive-first done (archived rows still served), now scope. NOT started.
 
 ## Resume notes
