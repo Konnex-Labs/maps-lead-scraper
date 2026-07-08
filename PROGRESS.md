@@ -1,66 +1,69 @@
 ---
 task_id: v2-phase-2-clean-cut-au-trades-scope-reduction
 agent: jack
-session_id: 2026-07-08T15Z-phase2-clean-cut-kickoff
+session_id: 2026-07-08T15Z-phase2-clean-cut-build
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-08T15:52:00Z
+last_updated: 2026-07-08T16:18:00Z
 notion_task_id: 3912300f-2ecb-8159-a300-ec7bd5009746
 context_needed:
   files:
-    - "/home/jack/projects/konnex-data-pipeline/TIER3-AU-TRADES-SCOPE-REDUCTION-CONTRACT.md"
-    - "/home/jack/projects/konnex-data-api/google-maps-scraper/V2-FOUNDATION-SYNTHESIS.md"
-    - "/home/jack/projects/konnex-data-pipeline/migrations/015_v2_entity_core_foundation.sql"
-    - "/home/jack/projects/konnex-data-pipeline/migrations/019_v2_entity_membership_backfill.sql"
-    - "/home/jack/projects/konnex-data-pipeline/migrations/020_v2_velocity_baseline_preservation.sql"
-  branches: []
+    - "/home/jack/projects/konnex-data-pipeline/TIER3-AU-TRADES-SCOPE-REDUCTION-CONTRACT-v2.md"
+    - "/home/jack/projects/konnex-data-pipeline/migrations/021_v2_entities_archived_at.sql"
+    - "/home/jack/projects/konnex-data-pipeline/scripts/one-off/tier3-phase2-archive.sql"
+    - "/home/jack/projects/konnex-data-pipeline/scripts/one-off/tier3-phase0-export.sh"
+    - "/home/jack/projects/konnex-data-pipeline/docs/runbooks/tier3-phase2-clean-cut-staging-dryrun.md"
+  branches: [v2/phase2-clean-cut-build]
   collaborators: [matt, rajesh, grace]
 ---
 
-# 🟢 PHASE 2 — CLEAN-CUT + PILOT (Tier-3 destructive) — RESUME HERE
+# 🔴 PHASE 2 — PROD PHASE-0/1 EXECUTION — MATT GO RECEIVED → EXECUTE IN FRESH CONTEXT
 
-> **⏭️ CONTEXT-EXIT @64% (mid-work, 2026-07-08T15:52Z). MATT INSTRUCTED restart-with-fresh-context. DO NOT agent-offline — auto-relaunch is DESIRED to continue the build.**
-> **NEXT ACTION ON RELAUNCH:** author the export + soft-archive migration + runbook, then run the STAGING dry-run on konnex_staging_v2 (both layers). Spec is LOCKED + Rajesh-QA-PASSED (contract v2, branch `v2/phase2-clean-cut-contract` commit b145ab0). Recommend a FRESH large-build pass. Details in "SPEC LOCKED" + Remaining sections below.
-> **Matt GO to proceed with the BUILD+STAGING: sig `2c556fdd3cba0c1b` VALID (2026-07-08).** NOTE: this GO covers the migration build + staging dry-run only. **PROD Phase 0/1 (export + soft-archive) STILL needs a SEPARATE Matt execution GO** (contract §10); hard-purge = a THIRD separate GO after 7-day cooling. Do NOT self-authorize prod writes off this build GO.
+> **⏭️ CONTEXT-EXIT for a fresh-context prod run. This is the DOCUMENTED plan (contract execution =
+> "FRESH SESSION recommended") + 70% discipline: Tier-3 prod DML at ~5M rows must NOT run deep in a
+> session where mid-op compaction could corrupt state tracking. DO NOT agent-offline — auto-relaunch
+> is DESIRED to execute the runbook below with clean headroom.**
+>
+> **✅ Matt prod Phase-0/1 execution GO: sig `54248e8e3859546f` VALID (2026-07-08T16:16Z, "PR#60 GO").**
+> Scope = reversible only (export + PITR + AC-6 verify + soft-archive both layers). NOT hard-purge
+> (Phase 3 = SEPARATE 3rd Matt GO after ≥7-day cooling). NO spend.
 
+## Authority (all VALID, full 16-char)
+- Prod Phase-0/1 execution: Matt `54248e8e3859546f` ← THE GO to act on
+- Phase-2 phase gate: Matt `4a1a16ae1897d78a` · Build+staging: Matt `2c556fdd3cba0c1b`
+- entity-scope extension: Matt `96d90de23d72bcdb` · businesses keep-set: Matt `9f53bfb5f64bafa0`
+- Contract v2 QA: Rajesh PASS `5b1fc24e2b0e8ce3` (11 ACs, staging) + `b6860903b6e32535` (spec)
+- PR #60: rajesh-konnex GH-approved (16:11Z), merge gate CLEAR.
 
-**Matt GO'd Phase 2** 2026-07-08T15:14Z — sig **4a1a16ae1897d78a VALID** ("you have permission to go on Phase 2").
-This clears the PHASE gate. Internal safety gates REMAIN: spec → Rajesh QA → staging dry-run → full backup + PITR + AC-6 hash verify → prod on a SEPARATE final go-live GO. NO prod writes / NO spend yet.
+## ⛔ PROD DISCIPLINE — read before ANY prod write
+- Every prod-write under the Phase-0 prod-write envelope + a LIVE PITR named restore point (like SP-4's `sp4_pre_apply_...`).
+- STOP + escalate to Matt on ANY unexplained count drift OR AC-6 hash mismatch. Do not "proceed anyway".
+- Soft-archive is REVERSIBLE (archived_at→NULL) + atomic (verify-before-commit). Hard-purge is NOT in scope.
+- DDL applies as postgres/superuser (mig 021 header). market_intel/serving roles are NOT table owners.
+- NO DFS spend. NO hard-purge.
 
-Prior task **SP-4 / V2 Foundation Phase 1 is COMPLETE** (mig020 prod-applied, all 7 ACs PASS, 4/4 sub-phases). AC-6 prod preservation hash = **3 rows / MD5 23692c660633e5d66059b8036272e428** — Phase-2 clean-cut MUST verify this pre-truncate (do not truncate market_metrics nor review_velocity_changed events).
+## ▶️ ORDERED PROD EXECUTION RUNBOOK (fresh session runs this top-to-bottom)
+**Pre-flight:** re-verify Matt GO `54248e8e3859546f`; re-read contract v2 §6/§7/§11; confirm target = prod market_intelligence on konnex-data (NOT staging).
 
-## Key discovery this session
-A **Matt-signed** Tier-3 clean-cut contract ALREADY EXISTS: `konnex-data-pipeline/TIER3-AU-TRADES-SCOPE-REDUCTION-CONTRACT.md` (2026-07-02, Notion ticket 3912300f-2ecb-8159-a300-ec7bd5009746). Do NOT author from scratch — RECONCILE + EXTEND it.
-- **Keep-set predicate = Matt-signed Option A, sig 9f53bfb5f64bafa0**: `industry IN ('builder_au','electrician_au','landscaper_au','handyman_service_au','painter_au','carpenter_au','plumber_au','pest_control_au','hvac_au')`. DELETE = complement. (Suffix, not country_code='AU' — country_code is corrupted on ~9.6k real AU trades; suffix is the reliable signal.)
-- Mechanism is STAGED + REVERSIBLE: Phase-0 full export → Phase-1 soft-archive (add `archived_at`, NOTHING removed) → 7-day cooling → Phase-3 hard-purge behind a SEPARATE explicit Matt GO. Keep this discipline.
+- **A. Merge PR #60 → main** (code-only, reviewer-approved, Matt GO'd): `gh pr merge 60 --squash` in konnex-data-pipeline. Lands mig 021 + scripts + runbook on main.
+- **B. NOTE-3 read-path scoping (contract §11, cross-repo — its OWN PR + Rajesh review).** Add `AND archived_at IS NULL` to every path serving businesses/entities:
+    - prod views/MVs: `nsw_trades_stats`, `v_verified_active_silver` (confirmed on staging); re-enumerate on prod incl. `explorer_suburb_agg` + any others (`pg_matviews`/`pg_views` where def references businesses/entities).
+    - konnex-data-api serving queries. · pipeline stage filters.
+    - Sequencing note: Phase-1 archive is reversible and "archived rows still served" is the SAFE direction (nothing vanishes), so scoping may follow the archive — but it MUST be LIVE before Phase-1 is declared go-live. Decide order in the fresh session; both are safe.
+- **C. Apply migration 021 on PROD** as postgres, under envelope + live PITR. Additive (entities.archived_at + partial index) — fast, reversible.
+- **D. Phase-0 export on PROD** (read-only): `DB_URI=<prod> OUT_DIR=<off-box> scripts/one-off/tier3-phase0-export.sh`. Reconcile `rowcount_manifest.csv` vs live. **AC-6 hash MUST == `23692c660633e5d66059b8036272e428`** (abort if not).
+- **E. Named PITR restore point** BEFORE any DML (e.g. `sp_phase2_pre_archive_<ts>`), record the LSN/label for Matt.
+- **F. Re-reconcile prod delete-set counts** (drift check): compute live businesses delete-set (~3,406,379) + entities delete-set (~1,661,449). Use the EXACT current numbers as `-v expected_biz_delete=<N> -v expected_ent_delete=<N>`.
+- **G. Re-run NOTE-1 + NOTE-2 on PROD** (staging showed 0 on subset — prod scale differs). Document real N for crawl_snapshots/business_events → delete-set businesses, and business_merges cross-boundary. Acknowledge before archiving.
+- **H. Phase-1 soft-archive on PROD**: `psql <prod> -v ON_ERROR_STOP=1 -v expected_biz_delete=<N> -v expected_ent_delete=<N> -f scripts/one-off/tier3-phase2-archive.sql` as postgres (needs UPDATE on businesses+entities). Verify-before-commit gate enforces AC1/AC6/partition; confirm NOTICE counts before it COMMITs.
+- **I. Post-archive verify**: AC-6 hash STILL == `23692c66…` (market_metrics/review_velocity untouched); every keep-set row `archived_at IS NULL`; counts match F.
+- **J. Notify Matt + hand Rajesh the prod archive for QA.** Begin **≥7-day cooling**. Hard-purge (Phase 3) = SEPARATE 3rd Matt GO after cooling.
 
-## RECONCILIATION GAP (the real work — old contract predates SP-3/SP-4)
-Live-verified 2026-07-08T15:1xZ on prod market_intelligence (read-only, as postgres):
-- businesses: total **3,776,477** / KEEP (9 trades) **370,098** / DELETE-set **3,406,379** (delete-set identical to 2026-07-02 — frozen/static; all growth is in trades).
-- **v2 entities: total 1,837,437; linked to DELETE-set businesses = 1,665,660 (~90%).** The 2026-07-02 contract only scoped the `businesses` table + its FK children (crawl_snapshots, business_events, business_merges) — it does NOT cover the v2 entity layer built by SP-3.
-- FK delete behavior (confdeltype): all FKs referencing `businesses` = SET NULL (n) — incl. `entities.legacy_business_id`. So purging businesses would leave 1.66M ORPHANED non-trade entities (link NULLed, rows remain).
-- FKs referencing `entities`: entity_memberships CASCADE, entity_matches CASCADE, entity_aliases CASCADE, market_metrics SET NULL, business_events SET NULL. So purging a non-trade entity CASCADE-removes its memberships/matches/aliases; market_metrics link only NULLs.
-- **AC-6 safety**: market_metrics → entities is SET NULL; the 3 baseline rows are all keep-set trades (carpenter/electrician/plumber), so safe. Still MUST verify hash 23692c66 pre AND post.
-
-**Therefore the reconciled clean-cut must be a 2-LAYER scope reduction**: businesses (delete-set) AND the derived non-trade entities (+ CASCADE children). Soft-archive must extend to the entity layer.
-
-## DONE this session
-- Matt confirmed BOTH scope questions (keep-set stands + extend to derived non-trade entities) — sig **96d90de23d72bcdb VALID**.
-- Authoritative membership-based entity counts locked (entities use member_type='industry', member_code — NOT an `industry` col): entities KEEP **175,988** (>=1 trade membership) / DELETE **1,661,449** / total 1,837,437; memberships 2,176,230; aliases 6,928,276; entity_matches 22.
-- **Reconciled contract v2 WRITTEN + PUSHED**: konnex-data-pipeline branch `v2/phase2-clean-cut-contract` (commit 9b6c83f), file `TIER3-AU-TRADES-SCOPE-REDUCTION-CONTRACT-v2.md`. Supersedes v1; extends scope to entity layer; adds AC-6 hash gate + AC7 (baseline untouched) + AC8 (zero orphaned non-trade entities).
-- Handed to Rajesh for QA (handoff sig dd9c1f3218796fe5). Matt notified.
-- **Rajesh QA PASS** — sig **b6860903b6e32535 VALID**, all 8 ACs, authority chain independently verified. 3 non-blocking impl notes FOLDED into contract (commit b145ab0): NOTE-1 §7 gate 4b (count delete-set-referencing snapshots/events on staging); NOTE-2 §11 (business_merges cross-boundary staging AC); NOTE-3 §11 (pre-Phase-1 read-path enumeration). Matt notified of PASS + plan; asked if he wants changes before the build.
-
-## SPEC LOCKED — next is the execution build (Task #4, FRESH SESSION recommended)
-Author export + soft-archive migration + runbook → staging dry-run on konnex_staging_v2 (both layers: businesses + entities). Staging ACs = keep/delete counts + soft-archive reversibility + Rajesh's 3 notes as explicit tests. NO prod, NO spend.
-
-## Remaining (all gated, nothing fires without the gate)
-1. Staging dry-run PASS (Rajesh QA) → PROD Phase 0/1 needs **Matt execution GO** (contract §10): full export + PITR + AC-6 hash verify (23692c66) → soft-archive (reversible, archived_at on businesses AND entities, NOTHING removed) → 7-day cooling (task #5).
-2. Hard-purge (Phase 3, irreversible) = **SEPARATE explicit Matt GO** after cooling. Never bundled with archive.
-3. DFS NSW+3 pilot SPEND (~USD100-150 + DFS top-up) — SEPARATE spend GO AFTER clean-cut lands (task #2).
+## Remaining after Phase-1 (all separately gated)
+- Hard-purge (Phase 3, IRREVERSIBLE) — 3rd explicit Matt GO after ≥7-day cooling (contract §9).
+- DFS NSW+3 pilot SPEND (~USD100-150) — SEPARATE spend GO after clean-cut lands.
 
 ## Resume notes
-- Matt Phase-2 GO sig 4a1a16ae1897d78a (VALID) = PHASE gate only; hard-purge needs its OWN fresh Matt GO (contract §9).
-- NO self-authorized spend; NO prod writes before Rajesh QA + staging PASS + final go-live GO.
-- Rajesh online + holding (his Notion MCP restored, effective next his restart). Grace available for schema-fit.
-- Keep the Remaining section clean — the relauncher reads stale Remaining items (Rajesh-flagged ghost-relaunch loop).
+- Staging creds (for reference only; PROD is the target now): konnex_staging_v2 @127.0.0.1:15432, DDL via `sudo -u postgres`.
+- Build artifacts are on branch `v2/phase2-clean-cut-build` (commits 2b321d9 + 502800b), PR #60.
+- Rajesh online (session F), standing by; will QA the prod archive. Grace available for schema-fit.
