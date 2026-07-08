@@ -3,8 +3,8 @@ task_id: v2-phase-2-clean-cut-au-trades-scope-reduction
 agent: jack
 session_id: 2026-07-08T16Z-phase2-prod-exec
 model: claude-opus-4-8
-status: context-exit
-last_updated: 2026-07-08T16:56:00Z
+status: in_progress
+last_updated: 2026-07-08T17:05:00Z
 notion_task_id: 3912300f-2ecb-8159-a300-ec7bd5009746
 context_needed:
   files: ["konnex-data-pipeline/scripts/one-off/tier3-phase2-archive.sql", "konnex-data-pipeline/scripts/one-off/tier3-phase0-export.sh", "/home/jack/backups/tier3-au-trades/tier3-phase0-20260708T164635Z"]
@@ -32,15 +32,14 @@ Authority (VALID): Matt original Phase-0/1 GO `54248e8e3859546f`; Matt LIVE 'go 
 - **G** NOTE-1/2 CLEAN: NOTE-1 snap_ref_delete=0, evt_ref_delete=0 (delete-set is legacy, predates temporal/event tables). NOTE-2 = 0 cross-boundary merges (all 31,551 within-boundary: 21,508 del/del + 10,043 keep/keep).
 - **KEY FINDING — businesses layer ALREADY archived on prod (EXPECTED, not drift).** `businesses.archived_at` set on EXACTLY 3,406,379 rows, single tx at 2026-07-02 09:02:49.783561Z = the v1 businesses-only clean-cut (matches backups/tier3-au-trades/20260702T084334Z). CLEAN: keep_wrongly_archived=0, delete_NOT_archived=0. Per mig021 header, businesses = v1 layer; Phase-2 adds ENTITY layer. On PROD the script's businesses UPDATE touches 0 rows (`WHERE archived_at IS NULL`), only entities archive fresh (1,661,449). Gate still validates both (b_arch=3,406,379==expected). By design/idempotent — surface in gate, NOT a stop (counts exact, AC-6 held).
 
-## In Progress
-- **Two-person gate BEFORE archive COMMIT (MANDATORY).** Next actions gated on: (1) run dry-run to capture verify-gate NOTICE counts, (2) present dry counts + businesses-already-archived finding to BOTH Matt AND Rajesh, (3) Rajesh ACK numbers + Matt confirm, THEN commit. Rajesh hard req: "Do not COMMIT until I've seen and ACK'd those numbers." Archive is NOT committed; no open transaction.
+## Done (archive)
+- **TWO-PERSON GATE SATISFIED** (2026-07-08T17:04Z): Rajesh CLEAR (sig 2f60f069a6cbf087 VALID) + Matt LIVE GO (sig fdb60ed7d62bff14 VALID), both verified.
+- **H REAL ARCHIVE COMMITTED** (single tx, verify-before-commit gate passed, COMMIT ok): UPDATE 0 businesses (already archived 07-02), UPDATE 1,661,449 entities (fresh). Gate NOTICEs: biz total=3,776,477 archived=3,406,379 keep_live=370,098 keep_wrongly_archived=0; ent total=1,837,437 archived=1,661,449 keep_live=175,988 keep_wrongly_archived=0.
+- **I POST-ARCHIVE VERIFY PASS** (independent re-query): ent_archived=1,661,449; biz_archived=3,406,379; ent_keep_live=175,988; ent_keep_wrongly_archived=0. **AC-6 velocity hash STILL = 23692c660633e5d66059b8036272e428** (recomputed via SP-4 query, UNCHANGED — baseline preserved).
 
 ## Remaining
-- **H0 dry-run (from CORRECT dir!)**: `cd /home/jack/projects/konnex-data-pipeline` then `git show origin/main:scripts/one-off/tier3-phase2-archive.sql | sed 's/^COMMIT;/ROLLBACK;/' | ssh konnex-data "sudo -u postgres psql -d market_intelligence -v expected_biz_delete=3406379 -v expected_ent_delete=1661449 -v ON_ERROR_STOP=1 -f -"`. (Earlier attempt ran from wrong dir → empty file → NO-OP, prod untouched.)
-- **H real archive**: same but ORIGINAL sql (COMMIT). Single tx, verify-before-commit gate self-aborts (0 rows) on any AC1/AC6/partition RAISE → escalate Matt, do NOT proceed.
-- **I** Post-archive verify: AC-6 hash STILL == `23692c66…`; keep-set rows archived_at IS NULL both layers; ent_archived==1,661,449, biz_archived==3,406,379.
-- **B** NOTE-3 read-path scoping (own cross-repo PR + Rajesh QA): add `AND archived_at IS NULL` to prod views/MVs (nsw_trades_stats, v_verified_active_silver, explorer_suburb_agg + pg_matviews/pg_views scan), konnex-data-api serving queries, pipeline stage filters. LIVE before Phase-1 go-live. Safe order: archive first (archived rows still served), then scope.
-- **J** Notify Matt + hand Rajesh prod archive for QA (AC4-AC8). Begin ≥7-day cooling. Hard-purge (Phase 3, IRREVERSIBLE) = SEPARATE 3rd Matt GO after cooling. DFS NSW+3 pilot spend (~USD100-150) = separate spend GO.
+- **J (IN PROGRESS)** Matt notified of commit + Step I pass. Rajesh handed prod archive for QA (AC4-AC8). Begin ≥7-day cooling. Hard-purge (Phase 3, IRREVERSIBLE) = SEPARATE 3rd Matt GO after cooling. DFS NSW+3 pilot spend (~USD100-150) = separate spend GO.
+- **B** NOTE-3 read-path scoping (own cross-repo PR + Rajesh QA): add `AND archived_at IS NULL` to prod views/MVs (nsw_trades_stats, v_verified_active_silver, explorer_suburb_agg + pg_matviews/pg_views scan), konnex-data-api serving queries, pipeline stage filters. LIVE before Phase-1 go-live. Safe order: archive-first done (archived rows still served), now scope. NOT started.
 
 ## Resume notes
 - Prod: `ssh konnex-data` (204.168.198.203) → `sudo -u postgres psql -d market_intelligence` (peer auth). DB 31GB, / has 451G free.
