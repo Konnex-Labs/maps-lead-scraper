@@ -42,7 +42,14 @@ Authority (VALID): Matt original Phase-0/1 GO `54248e8e3859546f`; Matt LIVE 'go 
 
 ## Remaining
 - **Cooling (passive):** ≥7-day window running; Phase-3 hard-purge (IRREVERSIBLE) = separate 3rd Matt GO after 2026-07-15. DFS NSW+3 pilot spend (~USD100-150) = separate spend GO.
-- **B** NOTE-3 read-path scoping (own cross-repo PR + Rajesh QA): add `AND archived_at IS NULL` to prod views/MVs (nsw_trades_stats, v_verified_active_silver, explorer_suburb_agg + pg_matviews/pg_views scan), konnex-data-api serving queries, pipeline stage filters. LIVE before Phase-1 go-live. Safe order: archive-first done (archived rows still served), now scope. NOT started.
+- **B** NOTE-3 read-path scoping (own cross-repo PR + Rajesh QA). DISCOVERY DONE 2026-07-08T17:1x:
+  - **Prod pg scan → exactly 3 objects reference businesses/entities (all served off `businesses`, filtered `is_active=true` only, NOT archived_at):**
+    - `explorer_suburb_agg` (MATVIEW): NO industry filter → **LEAKS archived**. Needs `AND b.archived_at IS NULL` in main WHERE + in `sab_attribution` CTE.
+    - `v_verified_active_silver` (VIEW): NO WHERE archived filter (emits all businesses) → **LEAKS archived**. Add `WHERE b.archived_at IS NULL`.
+    - `nsw_trades_stats` (VIEW): filters industry to 3 KEEP trades (electrician/plumber/carpenter) which the delete-set excludes → effectively safe, but add `AND businesses.archived_at IS NULL` to biz CTE for correctness/defence.
+  - **KEY FINDING (leak is real & LIVE):** archive sets `archived_at` only, NOT `is_active`. 1,989,884 archived businesses still `is_active=true` → currently served by explorer_suburb_agg + v_verified_active_silver (pre-existing since 07-02 v1 cut). Explorer suburb counts inflated by archived non-trade rows.
+  - **Entities layer:** none of the 3 prod views read `entities`. STILL TODO: grep konnex-data-api serving queries + pipeline stage filters for direct `entities` reads (1,661,427 archived entities also is_active=true).
+  - **Remaining B work:** (1) code grep konnex-data-api + pipeline for businesses/entities serving reads; (2) author cross-repo PR (view/MV redefs + code filters); (3) Rajesh QA; (4) deploy + REFRESH explorer_suburb_agg. LIVE before Phase-1 go-live. Matt to confirm priority/urgency (touches live Explorer serving MV).
 
 ## Resume notes
 - Prod: `ssh konnex-data` (204.168.198.203) → `sudo -u postgres psql -d market_intelligence` (peer auth). DB 31GB, / has 451G free.
