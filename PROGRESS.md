@@ -49,7 +49,9 @@ Authority (VALID): Matt original Phase-0/1 GO `54248e8e3859546f`; Matt LIVE 'go 
     - `nsw_trades_stats` (VIEW): filters industry to 3 KEEP trades (electrician/plumber/carpenter) which the delete-set excludes → effectively safe, but add `AND businesses.archived_at IS NULL` to biz CTE for correctness/defence.
   - **KEY FINDING (leak is real & LIVE):** archive sets `archived_at` only, NOT `is_active`. 1,989,884 archived businesses still `is_active=true` → currently served by explorer_suburb_agg + v_verified_active_silver (pre-existing since 07-02 v1 cut). Explorer suburb counts inflated by archived non-trade rows.
   - **Entities layer:** none of the 3 prod views read `entities`. STILL TODO: grep konnex-data-api serving queries + pipeline stage filters for direct `entities` reads (1,661,427 archived entities also is_active=true).
-  - **Remaining B work:** (1) code grep konnex-data-api + pipeline for businesses/entities serving reads; (2) author cross-repo PR (view/MV redefs + code filters); (3) Rajesh QA; (4) deploy + REFRESH explorer_suburb_agg. LIVE before Phase-1 go-live. Matt to confirm priority/urgency (touches live Explorer serving MV).
+  - **Code surface (grep done):** broad. Serving-read candidates needing per-file triage: konnex-data-api `server.js`, `lib/brand-explorer.js`, `lib/tool-handlers/{search_records,aggregate_records,filter_records,get_record_detail,compare_records,find_recent_activity}.js`; pipeline `explorer-api.js`. Many other matches are write/enrichment/one-off scripts (out of scope). Per-file read = the PR-authoring work itself.
+  - **Remaining B work:** (1) triage serving-read files above vs write scripts; (2) author cross-repo PR (view/MV redefs + code filters); (3) Rajesh QA; (4) deploy + REFRESH explorer_suburb_agg. LIVE before Phase-1 go-live.
+  - **HELD pending Matt's (a) ship-now vs (b) fold-into-Phase-1 call** (asked 2026-07-08T17:1xZ; Jack leans (b) since Explorer v1 deprecated). Do NOT author/push the prod-serving PR until Matt answers.
 
 ## Resume notes
 - Prod: `ssh konnex-data` (204.168.198.203) → `sudo -u postgres psql -d market_intelligence` (peer auth). DB 31GB, / has 451G free.
