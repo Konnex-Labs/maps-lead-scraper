@@ -3,8 +3,8 @@ task_id: v2-phase-2-clean-cut-au-trades-scope-reduction
 agent: jack
 session_id: 2026-07-08T15Z-phase2-clean-cut-build
 model: claude-opus-4-8
-status: context-exit
-last_updated: 2026-07-08T16:18:00Z
+status: blocked
+last_updated: 2026-07-08T16:27:00Z
 notion_task_id: 3912300f-2ecb-8159-a300-ec7bd5009746
 context_needed:
   files:
@@ -42,7 +42,15 @@ context_needed:
 - DDL applies as postgres/superuser (mig 021 header). market_intel/serving roles are NOT table owners.
 - NO DFS spend. NO hard-purge.
 
+## ✅ DONE THIS SESSION (fresh context 2026-07-08T16:2xZ)
+- Verified Matt GO `54248e8e3859546f` = VALID (matt→jack). Rajesh relayed GO unrevoked (monitored through exit).
+- **Step A DONE**: PR #60 MERGED → origin/main (squash `bfad0e4`, 16:25:52Z, branch deleted). Fixed failing `uuid` CI check by adding `Ticket: 3912300f-...5009746` to PR body (via `gh api PATCH` — `gh pr edit` aborts on deprecated projectCards GraphQL). Both checks green pre-merge.
+- Rajesh WIP-gap resolved: market-intelligence uncommitted spike WIP committed + pushed (`697247d` on wip/t6-ws1-market-pulse; creds-safe, .matt-readonly.env gitignored).
+- **HOLDING at step C** — sent Matt gate msg requesting live 'go prod' before ANY prod DML. Awaiting reply.
+- NOTE (follow-up, non-blocking): local konnex-data-pipeline `main` diverged 7/7 vs origin/main — my 7 local commits are SUPERSEDED pre-squash versions (mig014 merged_into folded into origin mig015/019; WS-ii envelope on origin mig021/scripts). Preserved on `backup/local-main-presquash-20260708` (b216c38). Reconcile local main to origin/main later; NOT needed for prod psql runbook.
+
 ## ▶️ ORDERED PROD EXECUTION RUNBOOK (fresh session runs this top-to-bottom)
+**⛔ Step A COMPLETE. Resume at Step B/C. Do NOT re-merge PR #60.**
 **Pre-flight:** re-verify Matt GO `54248e8e3859546f`; re-read contract v2 §6/§7/§11; confirm target = prod market_intelligence on konnex-data (NOT staging).
 
 - **A. Merge PR #60 → main** (code-only, reviewer-approved, Matt GO'd): `gh pr merge 60 --squash` in konnex-data-pipeline. Lands mig 021 + scripts + runbook on main.
