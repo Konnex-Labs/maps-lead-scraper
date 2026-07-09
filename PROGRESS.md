@@ -4,8 +4,8 @@ agent: jack
 session_id: 2026-07-08T22Z-phase1-kickoff
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-09T06:20:00Z
-notion_task_id: TBD-confirm-or-create
+last_updated: 2026-07-09T08:18:00Z
+notion_task_id: 3982300f-2ecb-8172-ab8a-c418ea5913b8
 context_needed:
   files: ["konnex-data-api/server.js", "konnex-data-api/lib/brand-explorer.js", "konnex-data-api/lib/tool-handlers/", "konnex-data-pipeline/explorer-api.js"]
   branches: [main]
@@ -18,15 +18,14 @@ Phase-2 entity archive is CLOSED + QA-PASSED (history at bottom). This task is t
 thin read models feeding the 4 new surfaces (Ask Konnex / Developer API / MCP Server / Insights Hub), with
 Step B `archived_at IS NULL` scoping built in from the start.
 
-## ⏳ ACTIVE BUILD — session-restore stale-inject fix (context-exit handoff 2026-07-09T06:20Z @ 77% ctx)
+## ✅ CLOSED — session-restore stale-inject fix DEPLOYED + QA-PASSED (2026-07-09T06:49Z)
 Spun-off Tier-2 shared-bin ticket. **Matt GO + epic=state-consolidation** (sigs 2c7ed779b68d2bfb, 62566a94953a3cd4). **Rajesh design-concurred** (sig e4c333f18d1fc252). Source repo `/home/jack/projects/ops/shared-bin` (deploy `ops/deploy.sh konnex-ops`; source==deployed verified).
 
-### ✅ CODE COMPLETE + TESTS GREEN — PR #130 OPEN, AWAITING RAJESH GH REVIEW
-- Branch `fix/session-restore-stale-inject`, commit **a4a56ca** (verified on remote via gh API). PR: https://github.com/Konnex-Labs/konnex-ops/pull/130 (Rajesh pulling it for review as of 06:18Z, sig a63df946d7b3ef78).
-- **All 3 fixes implemented** exactly per the design below (A/B in agent-checkpoint-save, C in agent-session-restore). **Full shared-bin suite: 644 pass / 0 fail / 13 pre-existing skips.** New tests: FIX A (succession adopt / same-task recency unchanged / foreign-cwd guard), FIX B (buildFrontmatter unit + real-save integration), FIX C (cwd-override + currentTaskId population / HOME-only fallback / handoff exclusion / pickup suppression / stale-non-null heal), A+C loop-replay integration (1-relaunch convergence).
-- **REFINEMENT during build (important, not in original design):** FIX C part-2 currentTaskId population is gated to `cwdOverrode || currentTaskId-absent`. Do NOT populate on a plain $HOME resume with a present-but-divergent currentTaskId — that would silence the G1 content-stale signal (broke 2 existing G1 tests until gated; now green). In-memory `aHealth.currentTaskId` is mirrored after heal so the downstream G1 reconcile is coherent with the override.
-- **NEXT SESSION:** (1) address any Rajesh PR-review feedback; (2) file Notion ticket (epic=state-consolidation, session-estimate 2-3, note the part-2 gating refinement + propagate-source-lu detail) — NOT yet created; (3) after Rajesh GH approval: `.bak` snapshot + `ops/deploy.sh konnex-ops` + 6-agent rollback verify. **Matt GO for deploy already given, conditional on Rajesh QA approval** (sig e77a2d296cfd11d8). Matt back for Phase-1 parent track ~08:00Z.
-- Do NOT run agent-offline on this exit (relaunch continues the task). Original design preserved verbatim below for reference.
+### ✅ DEPLOYED + 6/6 VERIFY PASS — TICKET DONE (fix arc fully closed)
+- PR #130 **squash-merged to main `8396137`** ([WIP] stripped; ticket-UUID CI gate green). Notion ticket **3982300f-2ecb-81f2-9df2-df1a77a5426f** (epic=Agent State Machine, est 2-3) → **Done**. Test-hygiene follow-up ticket **3982300f-2ecb-8168-84ea-c6c0ac5d5b33** (TODO, Rajesh non-blocker #1: vacuous stderr assert in stale-non-null test).
+- `ops/deploy.sh konnex-ops` ran clean. **source==deployed sha256 MATCH**: agent-checkpoint-save=870da338…, agent-session-restore=ef41336a…; both CHANGED from pre-deploy .bak; both +x & node-syntax-valid. Rollback `.bak`: `/home/jack/deploy-rollback/session-restore-fix-20260709T0636Z/`. Deploy shipped ONLY the 2 fix files (loop wrapper + current-sprint.txt byte-identical → **no service restart needed**).
+- **6/6 rollback verify PASS:** Rajesh ran rajesh/olivia/carlos (binaries execute, valid hookSpecificOutput JSON, currentTaskId populated; EPERM cross-user smoke artifacts non-fatal). Jack-self: home==cwd task_id (both v2-phase-1-read-model-build/context-exit) → cwd-override correctly **no-fires** (healthy steady state); deployed module exports all FIX-C helpers. Grace-observed + Alex-self readiness clean. Deployed suite re-run **165/0**.
+- **This exit is a LIVE VALIDATION:** FIX C now governs my own next relaunch resume. Do NOT run agent-offline on this exit (Rajesh concurred). Fix design (ROOT CAUSE / FIX A/B/C / TESTS) preserved below as **shipped-reference** (all "REMAINING" items there are DONE).
 
 ROOT CAUSE: `agent-health` jack.currentTaskId=NULL → checkpoint-save adopt guard (task_id-match, sig e4e491715a39b019) falls back to stale canonical task_id → live cwd never adopted. **Blunt "task_id differ ⇒ cwd wins" is UNSAFE** (regresses e4e49171 foreign-cwd-clobber protection) — do NOT do it.
 
@@ -47,9 +46,13 @@ DO NOT: hand-edit `$HOME/PROGRESS.md`; implement the blunt task_id-diff rule; de
 - State captured: memory `capacity-layer-vision` written; Phase-2 archive record folded to history below.
 
 ## In Progress / Awaiting
+- **✅ Matt GO on all 4 read-model decisions (sig ffa25f93c52f619c, 2026-07-09T08:00Z):** (1) NSW+3={NSW,VIC,QLD,SA}; (2) liveness=is_active=true; (3) ONE shared read-model layer for all 4 surfaces; (4) trade×region×time first-class shared dimensions.
+- **✅ CONTRACT APPROVED v1.0 — GREEN TO BUILD** — `/home/jack/projects/konnex-ops/sprint-contract-v2-phase-1-read-models.md`. Rajesh QA PASS (sig d1b372e817122816) + Matt final GO (sig 0701d4c08ac29efa, 2026-07-09T08:15Z). Ground-truth 180,443 exact-verified. v0.2 notes folded (NT 152 context; nsw_trades_stats FOUND as prod VIEW with archived_at leak → WS4 build action).
+- **✅ Notion ticket CREATED** = `3982300f-2ecb-8172-ab8a-c418ea5913b8` ("[V2 Foundation] Phase-1 read-model build — 4 surfaces"), parent DB 3132300f-2ecb-81f8-9081-c8d0cc30d0b6. Body has estimate 4+/epic/reviewer/ground-truth/WS list. **STRUCTURED PROPS NOT SET** (Notion integration finicky — data_source search returns empty, known briefing 401 issue): Status/Epic(V2 Pipeline Rebuild)/Owner(Jack)/Reviewer(Rajesh)/Model still NULL on the page — set them via patch-page (props: Status/Epic/Owner/Reviewer are select/multi_select; need exact option names + jack/rajesh Notion user-ids) OR let board-hygiene fill. Est 4+ is in the body + contract header.
+- **⏭️ NEXT ACTION on relaunch = WS1 (NO CODE WRITTEN YET).** Build kicked off but exited at 75% ctx BEFORE touching code. WS1 = add `archived_at IS NULL` to `konnex-data-api/lib/shared/where-builder.js` (~L111, currently `is_active=TRUE` only) → scopes all 6 tool-handlers + 3 API surfaces at once. Then WS1 regression test (archived+is_active row returns from ZERO surfaces). Then `lib/brand-explorer.js` 7 queries (L62/112/162/198/244/449/554). Full WS1-4 detail + ACs in the contract. Milestone QA pings to Rajesh at WS2 (mv_trades_footprint vs 180,443) + deploy-gate. NOTHING to prod without Matt deploy sign-off.
+- **Recon done (Explore agent):** 3 API surfaces (Ask Konnex/DevAPI/MCP) share ONE chokepoint `konnex-data-api/lib/shared/where-builder.js:111` (is_active=TRUE only, NO archived_at) → add `archived_at IS NULL` there scopes all 3. Insights Hub = `lib/brand-explorer.js` 7 direct businesses queries (L62/112/162/198/244/449/554), own fix. Leaky objects: `v_verified_active_silver` (pipeline mig 004), `mv_verified_active_silver` (mig 005) — is_active only, no archived_at. `nsw_trades_stats` NOT FOUND in either repo (flag). Empty grain table `market_metrics` (mig 015: suburb_id/trade/period) — align new mv grain to it.
 - **Apprentice spike CLOSED** — Matt GO (0b6b9c3eccbc6106) + confirm (e0e5f7e75a3db1c7, 884c4c34b5683125). Hook-only in Phase-1, ingest built later.
-- **Session estimate to Notion = MANDATORY before build proper.** Phase-1 read-model build = 4+ estimate. Post before coding. Notion task TBD (candidate: [V2-Trades][DFS] Phase-1 branch integration, or new; SP-3 mig019 = "Phase-1 sub-phase 3 of 4 done").
-- **AWAITING Matt confirm** on the NSW+3 footprint reading below before locking the contract.
+- **Session estimate = 4+** recorded in contract header. Post to Notion ticket at ticket-creation (contract-approval time, per convention), before coding. NO ticket exists yet (frontmatter notion_task_id points at the CLOSED session-restore fix ticket). New ticket epic = V2 Pipeline Rebuild, reviewer Rajesh.
 
 ## Phase-1 footprint ground-truth — PULLED FROM PROD 2026-07-09T00:0xZ (read-only)
 Scope predicate for live read-model footprint = `archived_at IS NULL AND is_active = true` (+ industry in trades + state in NSW+3). Region column = `businesses.address_state`.
