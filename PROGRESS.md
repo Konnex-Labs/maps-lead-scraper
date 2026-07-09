@@ -4,7 +4,7 @@ agent: jack
 session_id: 2026-07-08T22Z-phase1-kickoff
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-09T04:33:00Z
+last_updated: 2026-07-09T06:20:00Z
 notion_task_id: TBD-confirm-or-create
 context_needed:
   files: ["konnex-data-api/server.js", "konnex-data-api/lib/brand-explorer.js", "konnex-data-api/lib/tool-handlers/", "konnex-data-pipeline/explorer-api.js"]
@@ -18,8 +18,15 @@ Phase-2 entity archive is CLOSED + QA-PASSED (history at bottom). This task is t
 thin read models feeding the 4 new surfaces (Ask Konnex / Developer API / MCP Server / Insights Hub), with
 Step B `archived_at IS NULL` scoping built in from the start.
 
-## ⏳ ACTIVE BUILD — session-restore stale-inject fix (context-exit handoff 2026-07-09T04:33Z)
-Spun-off Tier-2 shared-bin ticket. **Matt GO + epic=state-consolidation** (sigs 2c7ed779b68d2bfb, 62566a94953a3cd4). **Rajesh design-concurred** (sig e4c333f18d1fc252). Source repo `/home/jack/projects/ops/shared-bin` (deploy `ops/deploy.sh konnex-ops`; source==deployed verified, repo on main). **CODE WRITTEN = NONE** (was reading source at 70% exit). Design FINAL — next session implements directly.
+## ⏳ ACTIVE BUILD — session-restore stale-inject fix (context-exit handoff 2026-07-09T06:20Z @ 77% ctx)
+Spun-off Tier-2 shared-bin ticket. **Matt GO + epic=state-consolidation** (sigs 2c7ed779b68d2bfb, 62566a94953a3cd4). **Rajesh design-concurred** (sig e4c333f18d1fc252). Source repo `/home/jack/projects/ops/shared-bin` (deploy `ops/deploy.sh konnex-ops`; source==deployed verified).
+
+### ✅ CODE COMPLETE + TESTS GREEN — PR #130 OPEN, AWAITING RAJESH GH REVIEW
+- Branch `fix/session-restore-stale-inject`, commit **a4a56ca** (verified on remote via gh API). PR: https://github.com/Konnex-Labs/konnex-ops/pull/130 (Rajesh pulling it for review as of 06:18Z, sig a63df946d7b3ef78).
+- **All 3 fixes implemented** exactly per the design below (A/B in agent-checkpoint-save, C in agent-session-restore). **Full shared-bin suite: 644 pass / 0 fail / 13 pre-existing skips.** New tests: FIX A (succession adopt / same-task recency unchanged / foreign-cwd guard), FIX B (buildFrontmatter unit + real-save integration), FIX C (cwd-override + currentTaskId population / HOME-only fallback / handoff exclusion / pickup suppression / stale-non-null heal), A+C loop-replay integration (1-relaunch convergence).
+- **REFINEMENT during build (important, not in original design):** FIX C part-2 currentTaskId population is gated to `cwdOverrode || currentTaskId-absent`. Do NOT populate on a plain $HOME resume with a present-but-divergent currentTaskId — that would silence the G1 content-stale signal (broke 2 existing G1 tests until gated; now green). In-memory `aHealth.currentTaskId` is mirrored after heal so the downstream G1 reconcile is coherent with the override.
+- **NEXT SESSION:** (1) address any Rajesh PR-review feedback; (2) file Notion ticket (epic=state-consolidation, session-estimate 2-3, note the part-2 gating refinement + propagate-source-lu detail) — NOT yet created; (3) after Rajesh GH approval: `.bak` snapshot + `ops/deploy.sh konnex-ops` + 6-agent rollback verify. **Matt GO for deploy already given, conditional on Rajesh QA approval** (sig e77a2d296cfd11d8). Matt back for Phase-1 parent track ~08:00Z.
+- Do NOT run agent-offline on this exit (relaunch continues the task). Original design preserved verbatim below for reference.
 
 ROOT CAUSE: `agent-health` jack.currentTaskId=NULL → checkpoint-save adopt guard (task_id-match, sig e4e491715a39b019) falls back to stale canonical task_id → live cwd never adopted. **Blunt "task_id differ ⇒ cwd wins" is UNSAFE** (regresses e4e49171 foreign-cwd-clobber protection) — do NOT do it.
 
