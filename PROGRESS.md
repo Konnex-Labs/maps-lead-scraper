@@ -4,7 +4,7 @@ agent: jack
 session_id: 2026-07-08T22Z-phase1-kickoff
 model: claude-opus-4-8
 status: in_progress
-last_updated: 2026-07-09T08:51:00Z
+last_updated: 2026-07-09T08:54:00Z
 notion_task_id: 3982300f-2ecb-8172-ab8a-c418ea5913b8
 context_needed:
   files: ["konnex-data-api/server.js", "konnex-data-api/lib/brand-explorer.js", "konnex-data-api/lib/tool-handlers/", "konnex-data-pipeline/explorer-api.js"]
@@ -61,7 +61,11 @@ DO NOT: hand-edit `$HOME/PROGRESS.md`; implement the blunt task_id-diff rule; de
   - (1) ROUTE TO mv: industry×state footprint counts (Insights Hub) + `aggregate_records` AC2 grand-total (= SUM(in_scope_live_count) from mv, no businesses scan).
   - (2) KEEP ON WS1-scoped businesses: suburb group-by (`aggregate_records` normalizedKey grain) + all record-level handlers (search/get_record_detail/filter/compare/find_recent_activity) — mv physically can't answer sub-state grain.
   - (3) REGRESSION GUARD: assert mv total == scoped-businesses total == 180,443 (consistency + scope-table-drift sentinel).
-  - Files: `lib/tool-handlers/aggregate_records.js` (total query L131 → mv-source), `lib/brand-explorer.js` (Insights Hub aggregate endpoints). Add WS3 regression test. Then PR → Rajesh WS3 QA.
+  - Files: `lib/tool-handlers/aggregate_records.js` (L131), `lib/brand-explorer.js` (Insights Hub aggregate endpoints). Add WS3 regression test. Then PR → Rajesh WS3 QA.
+  - **⚠️ WS3 DESIGN REFINEMENT — PAUSED pending Rajesh re-concurrence (sent 08:54Z, sig 0d474bf571cf32cd).** Two correctness findings on the concurred point (1):
+    - **F1:** `aggregate_records.total` (L131) = `COUNT(*)` over `buildWhere(params)` — scoped by ARBITRARY caller filters (min_rating, name, single-industry…), NOT the fixed footprint. Equals `SUM(mv)` ONLY when filters are pure industry∈scope + state∈scope. Blind mv-routing ⇒ WRONG counts for filtered queries. **Rec: leave aggregate_records fully on WS1-scoped businesses; do NOT mv-route its total.**
+    - **F2:** the only exact mv match in Insights Hub is `brand-explorer` **`/brands/aggregate` STATE branch** (L149-164 = `COUNT(*) GROUP BY address_state, industry`), and only when requested industries ⊆ 9 scope + states ⊆ NSW+3 (else businesses fallback). `/brands/{summary,ratings,coverage}` carry status/rating/hours/distinct metrics the mv lacks → stay on businesses. Suburb branch (L194-200) stays on businesses.
+    - **REVISED WS3 (recommended to Rajesh):** (1) wire `/brands/aggregate` state-branch → mv with scope-subset guard + businesses fallback; (2) everything else stays on WS1-scoped businesses; (3) keep regression guard mv total == businesses footprint total == 180,443. Smaller, correct serving surface. **DO NOT code until Rajesh concurs on dropping the aggregate_records fast-path.**
   - **⏭️ AFTER WS2 deploy: WS3** — wire the 4 surfaces (Insights Hub aggregate endpoints + aggregate_records tool-handler) to source counts from mv_trades_footprint, not ad-hoc businesses scans (konnex-data-api repo).
     - **WS1 NOT YET MERGED** — PR #26 approved but origin/main still at base `04cfcdd`. WS3 branch stacks on `feat/v2-phase-1-read-models` (or merge WS1 first). Coordinate WS1+WS3 API deploy with Matt sign-off alongside WS2 DB migration.
     - **⚠️ WS3 GRAIN-MISMATCH FINDING (raised to Rajesh, pre-code):** `aggregate_records.js` groups at SUBURB grain (normalizedKey=suburb, L105-131); `mv_trades_footprint` grain is STATE `(industry, address_state, period)`. The mv CAN serve industry×state footprint totals + the AC2 `total` (=SUM in_scope_live_count); it CANNOT serve suburb-level aggregates → those stay on the WS1-scoped `businesses` table. WS3 wiring routes only the mv-answerable reads to the mv; needs Rajesh/Matt nod on that split before coding (mirrors the WS1 where-builder contract-gap pattern).
