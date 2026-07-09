@@ -3,8 +3,8 @@ task_id: v2-phase-1-read-model-build
 agent: jack
 session_id: 2026-07-08T22Z-phase1-kickoff
 model: claude-opus-4-8
-status: in_progress
-last_updated: 2026-07-08T22:52:00Z
+status: context-exit
+last_updated: 2026-07-09T04:33:00Z
 notion_task_id: TBD-confirm-or-create
 context_needed:
   files: ["konnex-data-api/server.js", "konnex-data-api/lib/brand-explorer.js", "konnex-data-api/lib/tool-handlers/", "konnex-data-pipeline/explorer-api.js"]
@@ -17,6 +17,21 @@ context_needed:
 Phase-2 entity archive is CLOSED + QA-PASSED (history at bottom). This task is the next gate: build the
 thin read models feeding the 4 new surfaces (Ask Konnex / Developer API / MCP Server / Insights Hub), with
 Step B `archived_at IS NULL` scoping built in from the start.
+
+## ⏳ ACTIVE BUILD — session-restore stale-inject fix (context-exit handoff 2026-07-09T04:33Z)
+Spun-off Tier-2 shared-bin ticket. **Matt GO + epic=state-consolidation** (sigs 2c7ed779b68d2bfb, 62566a94953a3cd4). **Rajesh design-concurred** (sig e4c333f18d1fc252). Source repo `/home/jack/projects/ops/shared-bin` (deploy `ops/deploy.sh konnex-ops`; source==deployed verified, repo on main). **CODE WRITTEN = NONE** (was reading source at 70% exit). Design FINAL — next session implements directly.
+
+ROOT CAUSE: `agent-health` jack.currentTaskId=NULL → checkpoint-save adopt guard (task_id-match, sig e4e491715a39b019) falls back to stale canonical task_id → live cwd never adopted. **Blunt "task_id differ ⇒ cwd wins" is UNSAFE** (regresses e4e49171 foreign-cwd-clobber protection) — do NOT do it.
+
+FIX = 3 parts + currentTaskId population, via Rajesh ordering (injection decision made BEFORE + independent of currentTaskId):
+- **FIX C — agent-session-restore:** (1) add near L39 `const OVERRIDE_ELIGIBLE = new Set(['in_progress','blocked','context-exit']);` (EXCLUDES handoff/complete; SEPARATE from INJECTABLE_STATUSES@L39 which includes handoff); export at L739+/L763. (2) In `main()` after L567 (progressPath=$HOME): read pickupTaskId early; if `!pickupTaskId`, read cwd/PROGRESS.md; if `fs.existsSync(cwd) && lintOk(cwd) && cwdTaskId && !taskIdsMatch(cwdTaskId, homeTaskId) && OVERRIDE_ELIGIBLE.has(cwdStatus)` → reassign `progressPath = cwdProgress` (LOUD stderr). Reuse helpers: taskIdsMatch@L434, readStatusFromProgressMd@L67, readTaskIdFromProgressMd@L89, lintOk@L117. (3) After status confirmed injectable (L625) + body extracted, if `!pickupTaskId` set `agent-health.currentTaskId = readTaskIdFromProgressMd(progressPath)` via `healthLib.updateAgent(agent, e => ({...e, currentTaskId}))` (do NOT clobber a dispatcher pickup's --task-id).
+- **FIX A — agent-checkpoint-save adopt block L779-797:** compute `liveTaskId = taskIdNorm(aHealth.currentTaskId)` (RAW, no canonical fallback), `canonTaskId = taskIdNorm(canonData.task_id)`; `succession = liveTaskId && taskIdsMatch(liveTaskId, cwdData.task_id) && !taskIdsMatch(liveTaskId, canonTaskId)`; if succession → `sourcePath = cwdProgress` (recency-independent), else keep existing taskIdsMatch(refTaskId,…) block. SAFE: succession requires trusted currentTaskId matching cwd but not canon → foreign cwd can't clobber.
+- **FIX B — agent-checkpoint-save buildFrontmatter L138 + call L901:** add optional `lastUpdated` param, use if valid-ISO else now(); at L901 pass `lastUpdated: oldData.last_updated` (propagate source's; body==null auto-capture ⇒ oldData={} ⇒ now()). Rajesh: always propagate, no byte-compare.
+
+TESTS (shared-bin/test/, node-assert harness; models: agent-checkpoint-save.test.js, agent-session-restore.test.js, session-restore-ac6-samearc.test.js): (a) diff task_id + currentTaskId=cwd ⇒ adopts cwd recency-independently; (b) same task_id ⇒ recency unchanged; (c) LOOP REPLAY {HOME.task_id=old,lu=now; cwd.task_id=new,lu=earlier; currentTaskId=null} ⇒ restore override injects cwd + sets currentTaskId=new ⇒ next Stop adopts (1-relaunch); (d) HOME-only, no cwd ⇒ unchanged fallback; (e) foreign cwd (task_id != currentTaskId) ⇒ NOT adopted (e4e49171 preserved); (f) heal preserves last_updated; (g) buildFrontmatter propagates source last_updated.
+
+REMAINING: 1) implement A/B/C+currentTaskId; 2) write+run tests (full suite green); 3) Notion ticket (epic=state-consolidation, session-estimate 2-3, note propagate-source-lu detail); 4) WIP branch+commit+push+PR; 5) send Rajesh PR link for GH review; 6) after his approval + Matt GO: .bak snapshot + deploy + 6-agent rollback verify (Jack self; Rajesh self+Olivia+Carlos; Alex self; Grace Jack-observed).
+DO NOT: hand-edit `$HOME/PROGRESS.md`; implement the blunt task_id-diff rule; deploy before Rajesh GH approval.
 
 ## Done
 - Phase-1 GO received from Matt 2026-07-08T22:46Z (sig e12b7484b3163626 VALID). Rajesh notified + aligned.
@@ -83,6 +98,21 @@ Scope predicate for live read-model footprint = `archived_at IS NULL AND is_acti
   the dimension hook (trade × region × time) so this attaches later with no rebuild.
 
 ## Resume notes
+- **SESSION-RESTORE STALE-INJECT BUG (found 2026-07-09, caused 3x stale relaunch today).** session-restore hook
+  reads canonical `$HOME/PROGRESS.md` (line 567), synced from this cwd copy on Stop via checkpoint-save
+  `cwdIsStrictlyNewer` (pure last_updated+mtime recency). `$HOME` held a stale Phase-2 body stamped NEWER than
+  this live Phase-1 file → comparator refused to adopt → loop. IMMEDIATE FIX APPLIED: synced this file → `$HOME/PROGRESS.md`
+  (lint OK; stale backed up `$HOME/PROGRESS.md.superseded-stale-phase2-*`).
+  - **REFINED ROOT CAUSE (after reading source, 2026-07-09):** true trigger = `agent-health.currentTaskId` was NULL, so
+    checkpoint-save's EXISTING Rajesh-approved task_id-match adopt guard (sig e4e491715a39b019, ticket 38e2300f, L748-797
+    in ops/shared-bin/agent-checkpoint-save) fell back to the stale canonical task_id → live Phase-1 cwd never matched →
+    never adopted. Blunt "task_id differs ⇒ cwd wins" would REGRESS that guard (foreign-cwd clobber). Do NOT implement it.
+  - **PROPER FIX (Tier 2 shared-bin; Matt GO given, epic=state-consolidation; source repo /home/jack/projects/ops/shared-bin):**
+    (A) succession-adopt keyed on currentTaskId — adopt cwd recency-independently when currentTaskId matches cwd but NOT
+    canonical; (B) propagate source last_updated on \$HOME sync, no now() stamp (buildFrontmatter L147); (C) session-restore
+    OVERRIDE_ELIGIBLE={in_progress,blocked,context-exit} cwd-override gate (separate from INJECTABLE_STATUSES which incl handoff);
+    PLUS reliably populate currentTaskId on resume. Deploy via `ops/deploy.sh konnex-ops`; PR → Rajesh GH review → .bak + 6-agent
+    rollback verify. AWAITING Rajesh design concurrence on (A)+currentTaskId-population path before coding. DO NOT hand-edit `$HOME/PROGRESS.md`.
 - Prod: `ssh konnex-data` (204.168.198.203) → `sudo -u postgres psql -d market_intelligence` (peer auth).
 - **Phase-2 cooling still running:** 7-day window from 2026-07-08T17:12Z. Phase-3 hard-purge (IRREVERSIBLE)
   earliest 2026-07-15, needs a SEPARATE 3rd Matt GO. Do NOT purge before then.
