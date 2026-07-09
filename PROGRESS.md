@@ -4,7 +4,7 @@ agent: jack
 session_id: 2026-07-08T22Z-phase1-kickoff
 model: claude-opus-4-8
 status: in_progress
-last_updated: 2026-07-09T08:48:00Z
+last_updated: 2026-07-09T08:51:00Z
 notion_task_id: 3982300f-2ecb-8172-ab8a-c418ea5913b8
 context_needed:
   files: ["konnex-data-api/server.js", "konnex-data-api/lib/brand-explorer.js", "konnex-data-api/lib/tool-handlers/", "konnex-data-pipeline/explorer-api.js"]
@@ -56,7 +56,12 @@ DO NOT: hand-edit `$HOME/PROGRESS.md`; implement the blunt task_id-diff rule; de
 - **✅ WS1 DONE — PR #26 QA PASS + APPROVED** (Rajesh 08:35:45Z, sigs 9458e8c11859b29b/bf366bed4b0c413a). https://github.com/Konnex-Labs/konnex-api/pull/26 (branch feat/v2-phase-1-read-models @ 6f28a34). Suite 130/0. `archived_at IS NULL` scopes all 6 tool-handlers + brand-explorer 7 queries; find_recent_activity is_active added.
 - **✅ WS2 DEPLOYED + VERIFIED IN PROD (2026-07-09T08:47Z).** Migration `konnex-data-pipeline/migrations/017_mv_trades_footprint.sql`, branch `feat/v2-phase-1-ws2-mv-trades-footprint` @ commit **d9deed5**, pushed → **PR #61** https://github.com/Konnex-Labs/konnex-data-pipeline/pull/61. MATERIALIZED VIEW grain (industry, address_state, period), period=date_trunc('month',now())::date=2026-07-01, metric=count(*) in_scope_live_count; scope archived_at IS NULL AND is_active=true; unique idx on grain for REFRESH CONCURRENTLY + period idx. **Data-driven scope via NEW tables read_model_scope_industry/state** (seeded 9 trades + NSW+3; expand = INSERT row + REFRESH, no code change → WS2 AC; carry LOAD-BEARING/not-truncate warning).
   - **QA + deploy:** Rajesh WS2 QA PASS + scope-table design concurrence (sig 59ec5180e5c84628). Matt deploy GO (sig d7e3b602d5ee91ff VALID). Applied clean (additive/reversible via DROP, zero existing rows touched). **REFRESH CONCURRENTLY verified; mv total re-verified from the view = 180,443 ✓, 36 grain rows, all 9 industries exact.**
-  - **⏳ AWAITING Rajesh:** independent post-apply 180,443 re-verify + PR #61 GH review (non-blocking to WS3 start; he greenlit WS3).
+  - **✅ WS2 FULLY CLOSED.** Rajesh post-apply QA PASS (base-table re-verify 180,443 + migration 017 code review PASS, sig 955002f3db0771a2) + **PR #61 APPROVED** (08:49Z). GRANT prereq RESOLVED: `GRANT SELECT ON mv_trades_footprint TO market_intel` applied to prod + in 017 (commit 9388c17); verified via SET ROLE market_intel (180,443/36). Scope tables stay postgres-only. **Remaining housekeeping: merge PR #61** (Rajesh-approved; not yet merged).
+- **▶️ WS3 IN PROGRESS — wire 4 surfaces to mv_trades_footprint** (konnex-data-api, build on `feat/v2-phase-1-read-models` — WS1 not merged). Design CONCURRED by Rajesh (sig dbcd445762420e53), GRANT prereq DONE. **Grain-split (locked):**
+  - (1) ROUTE TO mv: industry×state footprint counts (Insights Hub) + `aggregate_records` AC2 grand-total (= SUM(in_scope_live_count) from mv, no businesses scan).
+  - (2) KEEP ON WS1-scoped businesses: suburb group-by (`aggregate_records` normalizedKey grain) + all record-level handlers (search/get_record_detail/filter/compare/find_recent_activity) — mv physically can't answer sub-state grain.
+  - (3) REGRESSION GUARD: assert mv total == scoped-businesses total == 180,443 (consistency + scope-table-drift sentinel).
+  - Files: `lib/tool-handlers/aggregate_records.js` (total query L131 → mv-source), `lib/brand-explorer.js` (Insights Hub aggregate endpoints). Add WS3 regression test. Then PR → Rajesh WS3 QA.
   - **⏭️ AFTER WS2 deploy: WS3** — wire the 4 surfaces (Insights Hub aggregate endpoints + aggregate_records tool-handler) to source counts from mv_trades_footprint, not ad-hoc businesses scans (konnex-data-api repo).
     - **WS1 NOT YET MERGED** — PR #26 approved but origin/main still at base `04cfcdd`. WS3 branch stacks on `feat/v2-phase-1-read-models` (or merge WS1 first). Coordinate WS1+WS3 API deploy with Matt sign-off alongside WS2 DB migration.
     - **⚠️ WS3 GRAIN-MISMATCH FINDING (raised to Rajesh, pre-code):** `aggregate_records.js` groups at SUBURB grain (normalizedKey=suburb, L105-131); `mv_trades_footprint` grain is STATE `(industry, address_state, period)`. The mv CAN serve industry×state footprint totals + the AC2 `total` (=SUM in_scope_live_count); it CANNOT serve suburb-level aggregates → those stay on the WS1-scoped `businesses` table. WS3 wiring routes only the mv-answerable reads to the mv; needs Rajesh/Matt nod on that split before coding (mirrors the WS1 where-builder contract-gap pattern).
