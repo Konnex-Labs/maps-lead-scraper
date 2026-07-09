@@ -6,17 +6,14 @@ model: claude-opus-4-8
 status: context-exit
 last_updated: 2026-07-09T11:31:00Z
 context_needed:
-  files:
-    - /home/shared/media/1783593795039-matt-to-jack.md  # Vision & Product Strategy doc (== 1783594009952, identical). Fact/Signals/Pulse framework; 5 delivery channels (L198-203); Gemini 09-07 section (L304-489)
-  branches:
-    - main
-  collaborators:
-    - matt   # requester; watching my context, approved scope A/B + both follow-ups; suggested this clean stop at 67%
-    - rajesh # reviewer
-  notion:
-    - 3792300f-2ecb-8148-9087-ee9195eb2953  # Market Intelligence DB — Schema Diagram (THE doc being reworked)
-    - 3942300f-2ecb-8149-9d15-cb8326007871  # Konnex v2 Foundation — Architecture & Data Model design doc (§5 diagram = style ref + reconciliation target; design-LOCKED)
+  files: ["/home/shared/media/1783593795039-matt-to-jack.md"]
+  branches: [main]
+  collaborators: [matt, rajesh]
 ---
+
+<!-- Notion pages: 3792300f-2ecb-8148-9087-ee9195eb2953 (schema diagram, being reworked); 3942300f-2ecb-8149-9d15-cb8326007871 (v2 Foundation design doc, §5 style ref + reconciliation target, design-LOCKED). -->
+<!-- Vision/Strategy MD file: Fact/Signals/Pulse framework; 5 delivery channels L198-203; Gemini 09-07 section L304-489. -->
+
 
 # Market Intelligence DB — Schema Diagram V2 rework (ad-hoc Matt request, 2026-07-09)
 
