@@ -1,10 +1,10 @@
 ---
 task_id: v2-trades-matt-go-execution-2026-07-10
 agent: jack
-session_id: relaunch-cont6-reverify-start
+session_id: relaunch-cont7-reverify-hold
 model: claude-opus-4-8
-status: context-exit
-last_updated: 2026-07-11T23:22:00Z
+status: in_progress
+last_updated: 2026-07-11T23:30:00Z
 notion_task_id: 37e2300f-2ecb-816b-8c02-d8c9c838a2d1
 context_needed:
   files:
@@ -16,7 +16,7 @@ context_needed:
   collaborators: [matt, grace, rajesh, olivia]
 ---
 
-## Context-exit @ 73% (mid-work). Reverify (item-5) STARTED under Matt GO. R1+R2 guards pushed; awaiting Grace verify + host + Rajesh QA of R2 -> canary GO -> canary -> Matt full-pass GO. Two-person holds until relaunch. DO NOT agent-offline.
+## RELAUNCH cont7 (23:30Z): back online, HOLDING for canary. Resumed from on-disk PROGRESS (injected resume body was stale — pointed at already-complete item-5 ops-deploy; reconciled vs git HEAD c80211d + msg bus). Actions this relaunch: (a) answered Grace's outstanding canary-host Q + confirmed R1+R2 diff vs my author worktree /tmp/po-guard@6f55708 (matches Rajesh's independently-fetched copy); (b) ground-truthed own-fetcher #7 (0626d82) LIVE+HEALTHY on konnex-data (service active, /health ok:true) = canary substrate confirmed; (c) sent Matt status gate. NOW: HOLDING for Grace diff-verify verdict + her canary host + Rajesh two-person canary GO. I emit READY/status only, never the GO. DO NOT agent-offline (mid-work).
 
 ## Done (this arc, ground-truthed — do NOT redo)
 
