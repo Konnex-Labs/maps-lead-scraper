@@ -1,56 +1,47 @@
 ---
 task_id: v2-trades-matt-go-execution-2026-07-10
 agent: jack
-session_id: relaunch-cont5-phase3-monitor
+session_id: relaunch-cont6-reverify-start
 model: claude-opus-4-8
-status: context-exit
-last_updated: 2026-07-11T15:47:00Z
+status: in_progress
+last_updated: 2026-07-11T23:15:00Z
 notion_task_id: 37e2300f-2ecb-816b-8c02-d8c9c838a2d1
 context_needed:
   files:
-    - /home/grace/phase3_delete.log (on konnex-ops; Grace's loop log — READ, do not touch)
+    - /tmp/po-guard (worktree off origin/main; branch fix/v2-reverify-keepset-guard)
+    - v2-pilot/lib/v2-verification-worker.js (pipeline-orchestrator; the reverify worker)
   branches:
-    - build/tier3-dedup-runner (Grace; PROGRESS e42f553 has full loop state + DO-NOT-RE-FIRE)
+    - fix/v2-reverify-keepset-guard (pushed, awaits Grace verify + Rajesh QA)
+    - build/tier3-dedup-runner (Grace)
   collaborators: [matt, grace, rajesh, olivia]
 ---
 
-## STATUS 15:42Z — PHASE-3 DONE + VERIFIED (PASS). Now HOLDING for Matt's backfill start-GO.
-
-- Purge loop PID 2091232 EXITED 15:41:04Z (watcher bp4zzjtkf fired). VERIFY PASS on prod market_intelligence: businesses total=387,024 = EXACT SSOT; keep-set(archived_at NULL)=387,024; archived=0; no open delete/vacuum. ~3.4M hard-deleted.
-- READY status posted to Matt+group 15:42Z. Backfill scope live = **175,984** (predicate archived_at NULL + is_active + website_url NOT NULL) — +2 vs Matt's signed 175,982 (point-in-time drift, flagged NOT amended, predicate self-scopes).
-- **DO NOT DROP phase3_restore_test** — ground-truthed: it holds FULL pre-purge businesses copy (3,793,403 rows, 6GB) = the ONLY rollback net (archive table empty). My old completion step said drop it; that was WRONG. RETAIN until backfill verified + Matt explicitly OKs dropping the safety copy. Temp pg_hba cleanup deferred with it.
-- NEXT: nothing to execute. Wait for Matt's direct start-GO to Grace + Rajesh two-person. I emit NO GO.
-
-## (historical) CURRENT JOB (monitor-only — do NOT re-fire, do NOT count mid-run)
-
-Phase-3 hard-purge DELETE is running DETACHED on prod under a fresh Matt Phase-3 GO (sig 8d0da96a, matt->grace). Grace owns it; Rajesh two-person present. My role (per Rajesh brief sig e3ac52c93b8059fa, 14:03Z): non-interfering watch for completion, then post-delete verify + cleanup + confirm Matt.
-
-- Loop: /home/grace/phase3-delete-loop.sh **PID 2091232 on konnex-ops** (NOT konnex-data — DB is remote there). cum=1.4M deleted @14:04Z, ~25k/75s per chunk, delete-set ~3.4M, ETA ~15:45Z.
-- Harness background watcher **bp4zzjtkf** armed (re-armed post-relaunch 15:12Z) — notifies me on PID 2091232 exit. Do NOT poll it. NOTE: use `[ -d /proc/2091232 ]` for liveness, NOT `kill -0` — the loop is grace-owned; `kill -0` on a cross-user PID returns EPERM → false "exited" (bit the first re-arm br-watcher).
-- ON COMPLETION (delete conn closed + VACUUM done):
-  1. Verify prod market_intelligence (konnex-data, `ssh konnex-data 'sudo -n -u postgres psql market_intelligence'`): keep-set (archived_at IS NULL) == **387,024** exact SSOT + total row count.
-  2. Confirm result to Matt via team-chat-send.
-  3. ~~Drop phase3_restore_test scratch DB + remove temp pg_hba entries.~~ **CANCELLED — it's the 6GB pre-purge rollback net (3.79M rows). DO NOT DROP until backfill verified + Matt OKs. See STATUS block above.**
-  4. POST-WRAP HYGIENE (need Notion write; MCP not loaded this session): (a) file stage-2 website-verify wiring ticket [task #4]; (b) resolve 3 PR-audit exceptions from Rajesh 15:07Z [task #5] — konnex-ops PR#123 ticket 9634929c-...4bcf8e 404s (investigate/re-link/orphan); konnex-data-pipeline PR#61 (mv_trades_footprint) + PR#59 (sp4 mig020) have no ticket ref (create+Done if complete). Board otherwise CLEAN (49 Done). Ground-truth git+Notion (full UUID, squash-merge) before asserting.
+## Live state @ 23:15Z — reverify (item-5) STARTED under Matt's GO. R1 guard pushed; awaiting Grace verify + Rajesh QA -> canary -> Matt full-pass GO.
 
 ## Done (this arc, ground-truthed — do NOT redo)
 
-- **Item 5 A' ops-deploy COMPLETE.** own-fetcher #7 (0626d82) live BOTH hosts (konnex-ops + konnex-data), both /health ok. verification-worker #98 live both. new-parser-live emitted to Grace. **Do NOT re-restart.**
-- **mig024 + mig026 live + verified** on prod market_intelligence. **Do NOT re-apply.**
-- **PRs #31 + #67 merged.** **Do NOT re-open.**
-- **Phase-B GO** already issued by me to Grace (sig 6cc4b8bedf0271bc) under Matt delegation (528cb6ff1e6eb021 + c2713f719cf4ead7); Rajesh verified. Scope = 415 same-entity merges; Phase-A complement stayed DISABLED until this gated Phase-3.
-- **Tier-3 Phase-A ruling** delivered + team-aligned (contract §12, commit b9222eb). Matt GO'd direction (sig 45ea4b7c9d4da3e5).
-- **SP-2 flow-violation review (ticket 3952300f-2ecb-8196) RESOLVED 15:34Z.** Verdict = APPROVED valid-DONE, violation is FALSE POSITIVE (Rajesh's cosmetic status-color normalization tripped the watcher; not a real transition). Ground-truthed PR #56 MERGED + QA PASS. Posted verdict COMMENT via Notion REST (env NOTION_TOKEN works this session, HTTP 200 — NOT 401 as old note claimed). Did NOT move to TODO (would reopen done work), did NOT touch status (collision w/ Rajesh's live normalization). See [[reference_bulk_status_normalization_trips_flow_watcher]] — expect a FLOOD of these false tickets from Rajesh's bulk cleanup.
+- **Phase-3 AU-trades purge DONE + VERIFIED.** prod market_intelligence: businesses total=387,024 = keep-set (archived_at NULL), archived=0, ~3.4M hard-deleted. Exactly 9 distinct active industries, all AU trades (electrician 52,649 / builder 41,269 / carpenter 32,651 / plumber 26,843 / landscaper 18,771 / pest_control 16,352 / painter 8,835 / hvac 7,298 / handyman 4,707).
+- **Item-5 A' ops-deploy COMPLETE** (prior session): own-fetcher #7 (0626d82) live both hosts; verification-worker #98 (7df0073) live on konnex-data. Do NOT re-restart.
+- **Matt backfill START-GO received** — sig **ad0e4060f25b0798**, from=matt to=grace, 23:03:44Z, VALID (Grace + Rajesh both independently tmux-verified; the Telegram GO is on the agent bus with a valid HMAC, so tmux-verify DOES cover it here). Content: "delete job finished... bring jack and raj back online to now run the website reverify task with you [Grace]."
+- **Scope CORRECTED to 175,982** (Matt's signed number). My earlier 175,984 dropped `merged_into IS NULL`; the +2 were 2 merged-loser rows (merged_into NOT NULL, is_active, have website_url) — NOT point-in-time drift. 4-guard = archived_at NULL + is_active + merged_into IS NULL + website_url NOT NULL.
+- **Semantics locked: fetch-driven, NOT a SQL flag-flip.** Confirmed by reading the worker: own-fetcher #7 -> callOwnFetcher/callBdFallback -> urlNormalisedEqual -> mergePerField, sets website_verified PER-ROW from the actual fetch, with verification_failure_count + website_url archival. A blind UPDATE would mint false verified=true.
+- **R1 keep-set guard PUSHED.** Branch `fix/v2-reverify-keepset-guard` (konnex-pipeline-orchestrator), off origin/main @ 7df0073 (#98 live). Added `archived_at IS NULL / is_active = true / merged_into IS NULL` to BOTH the eligible-count and batch-claim SELECTs in v2-pilot/lib/v2-verification-worker.js. Validated read-only on prod: guarded = 175,982 exact; merged_into guard removes exactly the 2 losers; node -c clean.
+- **Resolved benign critical alert** 673b3a92 (synthetic overview.missing_industries, fired 300+x): overview correctly shows 9 industries = the 9 AU trades left post-purge; the check's "120 active in DB" baseline is stale pre-purge. Overview is correct. NOT a fault.
 
-## HELD (not my action / awaiting Matt)
+## In Progress / Remaining
 
-- **Item-5 backfill WRITE** (UPDATE businesses.website_verified over 175,982 keep-set = archived_at NULL + is_active + website_url NOT NULL). **Matt GO'd 14:27Z (Telegram sig 27f1e97e2fb60bea, matt->jack): scope=175,982 CONFIRMED, FREE via own-fetcher (no paid spend), Grace owns.** STILL PENDING before start: (i) direct matt->grace start-GO to close Grace's probation gate (I asked Matt to send it to her); (ii) Phase-3 delete complete + my post-delete verify (no concurrent businesses writes). Grace at 65% ctx, restart imminent — will likely execute in a fresh window post-Phase-3. I ping Matt+Grace the moment verify passes. Do NOT self-run this (Grace's action, Rajesh two-person). **MATT AWAY sleeping from 15:24Z for a few hours (Telegram sig 7597145148a8a676); he will give Grace the DIRECT start-GO on his return IF backfill is READY.** So my job in his absence = get to READY (Phase-3 verify pass + scratch cleanup) and leave a clear 'BACKFILL READY/NOT' status ping. Authorizer sequence LOCKED w/ Rajesh (my sig 3bff88a58f19e500 + c65e03c31165854f): Step 4 = MATT direct-to-Grace ONLY; I emit NO start-GO (only a status ping); Rajesh = two-person presence. NAME Matt explicitly (not 'your') — team-chat fan-out self-attributes 'your' per-recipient (slipped twice this arc).
-- **FORWARD DESIGN (Matt 14:27Z) — stage-2 website-verify after DFS Maps pull.** Consolidated eng+Grace recommendation relayed to Matt (awaiting his TTL call): do BOTH — verify new/changed each cycle + re-verify existing on last_verified_at STALENESS TTL (~30-60d, amortized oldest-first, NOT full weekly sweep); every pass scoped to keep-set guards (archived_at NULL + is_active + merged_into NULL + website_url NOT NULL) so delete-set is never touched; reuses worker's last_verified_at idempotency; own-fetcher free; mind UV_THREADPOOL_SIZE=32 under concurrency=10 + 0.7 canary. **TTL = 30d MAX** (Matt override 14:49Z sig 38527987f9199847; was Grace 45d — bake 30d as config default+ceiling, tunable downward only). Matt approved do-BOTH + explicitly asked to file the stage-wiring ticket. DEFERRED to post-Phase-3 wrap (task #4) — Notion MCP not loaded in this workspace session + env token 401s; told Matt honestly. SEPARATE from the one-off backfill. **Matt will send the direct matt->grace item-5 start-GO once I ping him+Grace on my post-delete verify-pass.**
-- **Item 4 (T6 uat->main d0aa4672)** held for Matt's OWN direct GO to Olivia (frontend freeze). Grace declined to lift.
-- **konnex-ops orchestrator dev-branch drift** (pipeline-resilience/dup-crawl-reap-pidlock, not main; Layer-C likely stuck): flagged to Matt, awaiting a/b/c call. Do NOT blind-fix.
+1. **Grace verifies R1 branch + builds R2** (open Q asked: is R2 a WRITE-side guard in applyRecordUpdate? — awaiting her answer, will add if so). Rajesh QAs the patch.
+2. **Gate-1 canary** (Grace, sampled from guarded keep-set) -> real cost numbers.
+3. **Corrected gate flow (locked, Rajesh+Grace concur):** canary numbers -> **MATT** -> Matt gives the full-pass GO direct to Grace -> live 175,982 fetch-driven pass under Jack+Rajesh two-person. **I emit engineering READY/status ONLY — never the GO.** (Retracted my earlier e0b06d6b over-step.) My in-flight merge authority does NOT extend to this reverify paid pass.
+4. **Run hygiene:** batched commits + VACUUM, no single mega-txn (:3460 synthetic-check note).
+5. **Post-reverify:** verify results, THEN Matt-gated teardown of `phase3_restore_test` (6GB pre-purge rollback net, 3.79M rows — the ONLY rollback net; archive table empty). DO NOT DROP until backfill verified + Matt explicitly OKs. Temp pg_hba cleanup deferred with it.
+6. **Ticket hygiene (needs Notion; MCP not loaded — use REST if actioning):** (a) stage-2 website-verify wiring ticket [#4]; (b) re-baseline synthetic overview.missing_industries (expected 120 -> post-purge 9 AU trades); (c) 3 PR-audit exceptions from Rajesh 15:07Z [#5].
+7. **Item 4 (T6 uat->main d0aa4672)** HELD for Matt's OWN direct GO to Olivia (frontend freeze). Olivia stood down; tooltip-clamp at her discretion (UAT-only).
+8. **Anomaly (non-blocking, flag to Matt):** local pipeline-orchestrator tree is on dev branch `pipeline-resilience/dup-crawl-reap-pidlock`, not main; konnex-ops po service may be running dev code + Layer-C stuck. Investigate WHY before switching (may be intentional WIP resilience deploy) — do not blind-fix.
 
 ## Resume notes
 
-- MID-WORK context-exit: NEVER run agent-offline.
-- Injected resume body has been STALE twice this arc — ALWAYS ground-truth (git + live PID + agent-messages.jsonl) before acting.
-- If watcher bp4zzjtkf already fired / PID gone on relaunch: /home/grace/phase3_delete.log is PERMISSION-DENIED to jack — skip it; the authoritative check is prod DB. Verify via `ssh konnex-data 'sudo -n -u postgres psql market_intelligence'`: keep-set (archived_at IS NULL) == 387,024 + no open delete/vacuum in pg_stat_activity, before declaring done.
+- MID-WORK context-exit: NEVER run agent-offline (loop must relaunch).
+- I emit NO backfill GO — that's Matt->Grace direct after canary. I only provide READY/verification + two-person.
+- Do NOT re-restart own-fetcher #7 / verification-worker #98 (deployed). Do NOT drop phase3_restore_test.
+- R1 patch is on branch fix/v2-reverify-keepset-guard (NOT merged) — awaits Grace verify + Rajesh QA. Worktree at /tmp/po-guard.
