@@ -3,8 +3,8 @@ task_id: v2-trades-matt-go-execution-2026-07-10
 agent: jack
 session_id: relaunch-af45fa9f-cont4
 model: claude-opus-4-8
-status: in_progress
-last_updated: 2026-07-11T03:12:00Z
+status: context-exit
+last_updated: 2026-07-11T03:25:00Z
 notion_task_id: 37e2300f-2ecb-816b-8c02-d8c9c838a2d1
 context_needed:
   files:
@@ -78,3 +78,14 @@ context_needed:
 - **CONTRACT AUTHORED 03:18Z (item-5, forward pre-work while holding):** konnex-data-pipeline/ITEM5-WEBSITE-REVERIFICATION-CONTRACT-v1.md on branch wip/jack-item5-recrawl-contract-20260711 (pushed, off origin/main). Scope 175,982; canary-first; code-grounded on v2-verification-worker.js; 6 ACs; reversible. Handed to Rajesh (QA) + Grace aligned.
 - **CONTRACT v1.1 03:2xZ (469e008) — QA loop + code/prod ground-truth:** Grace + Rajesh flagged AC6 idempotency; checking the ACTUAL worker SELECT (v2-verification-worker.js:1104-1188) surfaced findings: (1) idempotency keys off last_verified_at window (NOT website_verified) + always-bump; ALL 175,982 have last_verified_at NULL (prod) → full pool first run, idempotent on resume; do NOT add website_verified IS NOT TRUE (would re-fetch dead URLs forever). (2) **HARD R1 scope-safety blocker:** stock worker predicate LACKS archived_at/is_active/merged_into guards → matches 2,951,623 rows (2,682,161 archived Phase-3 + 380 merged + 93K inactive) vs intended 175,982; must add keep-set predicate to worker SELECT before any run (else re-verifies gated Phase-3 set + ~A$13K blowout). R2: worker is industry-partitioned → iterate industries. R1/R2 = pre-build blockers, do NOT block Matt scope/spend GO. Rajesh Gate-1 was CONDITIONAL PASS → resolved. NOTE for Matt's eventual GO: item-5 build now has a small worker patch (R1+R2) as precondition before canary.
 - Did NOT re-ping Matt (avoid noise pre-reply); the R1 finding is an impl precondition, not a decision-input change — surface it when Matt responds/GOs.
+- **RAJESH Gate-1 PASS on contract v1.1 (03:22Z, sig 2144e6d79c08d22d VALID).** All conditionals closed. Build BLOCKED only on R1+R2 (Jack's pre-build worker patch) — does NOT block Matt's GO. Rajesh also posted Gate-1 PASS + R1 to Matt's Telegram group, so Matt has R1 context directly. QA loop CLOSED.
+- **NEXT ON MATT GO:** (a) implement R1 (keep-set guards on worker SELECT) + R2 (industry iteration) as a worker patch PR → Rajesh QA; (b) canary (500-1000, cap ~A$10-20) → measure real cost → report AC4 → Matt full-run spend GO; (c) dispatch Grace for full run under two-person. Contract branch wip/jack-item5-recrawl-contract-20260711 (469e008).
+- **Contract v1.2 (4e1d43c):** Grace point baked in — canary sample must draw from §2 keep-set (R1 gates the canary too). R1 now confirmed THREE times independently (Jack ~2.95M/2.68M; Grace ~2.78M/2.51M — predicate-definition delta, same conclusion; Rajesh corroborated). Grace OWNS R1+R2 build once Matt GOs; Rajesh QAs the patch + Gate-1s the canary.
+- **CONTEXT-EXIT 03:25Z (~71%, cont4):** clean settling point — nothing actionable until Matt's GO. Contract v1.2 Gate-1 PASS, all peers aligned + holding. Mid-work exit → NO agent-offline (loop relaunches).
+
+## RESUME (cont5) — exact state
+- **HOLDING for Matt's item-5 scope + canary-spend GO.** Nothing fires without it. Zero spend/writes this whole arc.
+- ON MATT SCOPE-GO: Grace implements R1 (embed §2 keep-set predicate in v2-verification-worker.js SELECT lines ~1104 + ~1170, or dedicated wrapper) + R2 (per-industry iteration) → worker patch PR → Rajesh QA → canary (500-1000 from keep-set, cap ~A$10-20) → AC4 cost report → Matt full-run spend GO → dispatch Grace under Rajesh two-person.
+- Contract: konnex-data-pipeline/ITEM5-WEBSITE-REVERIFICATION-CONTRACT-v1.md, branch wip/jack-item5-recrawl-contract-20260711 (tip 4e1d43c), Rajesh Gate-1 PASS (sig 2144e6d79c08d22d).
+- DONE/do-not-touch: item-5 A' deploy, Phase-B (415 merges), migs 024/026, PRs #31/#67. Item-4 T6 FROZEN (frontend, Matt→Olivia). Phase-3 purge gated (export + Matt Phase-3 GO + Olivia blast-radius).
+- On relaunch: this repo PROGRESS.md is authoritative (home-dir copy stales via exit hook). Verify peer sigs. Do NOT re-ping Matt if still no reply — just hold.
