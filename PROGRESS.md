@@ -1,10 +1,10 @@
 ---
 task_id: v2-trades-matt-go-execution-2026-07-10
 agent: jack
-session_id: relaunch-af45fa9f-cont3
+session_id: relaunch-af45fa9f-cont4
 model: claude-opus-4-8
-status: context-exit
-last_updated: 2026-07-11T03:04:00Z
+status: in_progress
+last_updated: 2026-07-11T03:12:00Z
 notion_task_id: 37e2300f-2ecb-816b-8c02-d8c9c838a2d1
 context_needed:
   files:
@@ -74,3 +74,4 @@ context_needed:
 - **Phase-B GO ALREADY FIRED + authorized** (Matt 528cb6ff extends Jack's authority to Phase B). It is now in a FIX LOOP after a pre-flight fail — do NOT re-issue a GO and do NOT ask Matt for a fresh one; the standing GO re-fires on clean pre-flight. My job: review Grace's coalescing build, then let Rajesh re-review + Grace re-dry-run.
 - On relaunch: item-5 A' deploy + Phase-B GO are DONE — ground-truth git (origin/wip/jack-coalesce-design-20260711) + agent-messages before acting. The SessionStart-injected resume body LAGGED this file badly (said "NO RESTARTS YET" when both were done) — trust this file + git + peer sigs, not the injected body.
 - Verify all peer sigs on relaunch; trust remote wip branches + git over the home-dir PROGRESS.md copy (stale-body hook bug).
+- **RELAUNCH 03:12Z (cont4):** reconciled — injected body was the stale home copy; this repo file is authoritative. Ground-truthed: item-5 A' + Phase-B + migs + PRs all DONE/verified, nothing re-run. Pushed PROGRESS journal to origin wip/jack-progress-20260711 (origin=quenito/google-maps-scraper → redirects Konnex-Labs/maps-lead-scraper; that's why Rajesh's 5-repo check missed 490e31b — it's PROGRESS.md-only, no code). Re-sent Matt gate (item-5 scope+canary-spend = his 2 calls). Grace + Rajesh acked, all holding. HOLDING for Matt's item-5 re-scope decision — no unblocked work fires without it.
