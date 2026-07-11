@@ -3,8 +3,8 @@ task_id: v2-trades-matt-go-execution-2026-07-10
 agent: jack
 session_id: relaunch-cont7-reverify-hold
 model: claude-opus-4-8
-status: in_progress
-last_updated: 2026-07-11T23:30:00Z
+status: context-exit
+last_updated: 2026-07-11T23:50:00Z
 notion_task_id: 37e2300f-2ecb-816b-8c02-d8c9c838a2d1
 context_needed:
   files:
@@ -27,7 +27,24 @@ context_needed:
 ### INVOCATION CONTRACT (answered to Grace):
 - Worker REQUIRED_ENV = PIPELINE_JOB_ID + MARKET_INTEL_DB_URI + V2V_CYCLE_COST_CAP_AUD (fail-fast) + --industry (fail 2). Canary-safe path = orchestrator dispatch (enqueueJob stage=v2_verification target_server='data' industry=handyman) -> real PIPELINE_JOB_ID from pipeline_jobs row (honors "no manual launches"). NO --limit arg (parseArgs = --industry,--workers); row bound = industry size (handyman ~4,707), spend bound = V2V_CYCLE_COST_CAP_AUD (set LOW for canary).
 
-### HOLDING FOR: Grace's canary numbers -> she reports to Matt -> Matt full-pass GO direct to Grace -> live 175,982 fetch-driven pass under Jack+Rajesh two-person. I provide two-person + post-verify only.
+### CONTEXT-EXIT cont7 @ ~70% (23:50Z, mid-work, NO agent-offline). Canary substrate + cap fully staged; Grace unblocked to dispatch. Two-person GO holds; nothing fires while I cycle.
+
+### !!! TWO MUST-RESTORE ITEMS I OWN (konnex-data) — restore after canary/live decision:
+1. **`pipeline-deploy.timer` STOPPED** (Layer-C auto-deploy suspended) — restore: `ssh konnex-data 'sudo systemctl start pipeline-deploy.timer'` AND return tree to correct rev (currently detached 6f55708; rollback anchor = 7df0073/main).
+2. **`V2V_CYCLE_COST_CAP_AUD` = 2.00** (was 500) in konnex-data /home/jack/.env line 15 — restore to 500 (backup: /home/jack/.env.canary-bak-1783813661) + restart pipeline-agent.
+
+### CAP BIND DONE (Grace's pre-dispatch blocker cleared): cap inherited from agent process env (EnvironmentFile=/home/jack/.env), NOT per-job. Set 500->2.00, pipeline-agent restarted active. Runtime proof at dispatch = worker's first log line 'cycle_cost_cap_aud: 2'; worker fails-closed if var absent.
+
+### ENQUEUE PATH (given to Grace): cli.js 'start' = WRONG (full pipeline). Single-stage canary = `node -e "require('./lib/queue').enqueueJob({industryId:'<handyman V1 industry_id>', stage:'v2_verification', targetServer:'data', workerCount:1})"` from guarded tree on konnex-data. INDUSTRY BRIDGE: pass V1 pipeline_industries.industry_id; v2_verification stage-executor (stage-executors.js:97-109) auto-bridges to dbIndustry=industry.config.industry (V2 businesses.industry form) at spawn. Canary spec (Grace, per Rajesh delegation): handyman, workers=1, target=data, cap 2.00.
+
+### RESUME ACTIONS (on relaunch):
+1. Check bus for Grace's dispatch confirmation / canary result. If Grace couldn't enqueue from her box, RUN her exact enqueue line on-host (konnex-data guarded tree) under two-person (Grace+Rajesh present) — I execute the dispatch, I emit no GO.
+2. When canary runs: confirm worker logs cycle_cost_cap_aud:2 (spend guard), watch flip numbers + cost; Grace reports numbers to Matt.
+3. Matt full-pass GO direct to Grace -> live 175,982 fetch-driven pass under Jack+Rajesh two-person (batched, cost cap raised to live value — coordinate with Matt on the live cap; do NOT leave it at 2.00 for the full pass).
+4. Post-canary/live: execute BOTH MUST-RESTORE items above. Then Matt-gated teardown of phase3_restore_test (6GB rollback net) — do NOT drop until backfill verified + Matt OKs.
+5. Bundle artifacts: /tmp/reverify-guard.bundle + tag canary-reverify-6f55708 (konnex-ops + konnex-data /tmp).
+
+### HOLDING FOR: Grace's dispatch -> canary numbers -> she reports to Matt -> Matt full-pass GO direct to Grace -> live pass under two-person. I provide infra + two-person + post-verify only; I emit NO GO.
 
 ## Done (this arc, ground-truthed — do NOT redo)
 
