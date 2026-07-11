@@ -16,7 +16,18 @@ context_needed:
   collaborators: [matt, grace, rajesh, olivia]
 ---
 
-## RELAUNCH cont7 (23:30Z): back online, HOLDING for canary. Resumed from on-disk PROGRESS (injected resume body was stale — pointed at already-complete item-5 ops-deploy; reconciled vs git HEAD c80211d + msg bus). Actions this relaunch: (a) answered Grace's outstanding canary-host Q + confirmed R1+R2 diff vs my author worktree /tmp/po-guard@6f55708 (matches Rajesh's independently-fetched copy); (b) ground-truthed own-fetcher #7 (0626d82) LIVE+HEALTHY on konnex-data (service active, /health ok:true) = canary substrate confirmed; (c) sent Matt status gate. NOW: HOLDING for Grace diff-verify verdict + her canary host + Rajesh two-person canary GO. I emit READY/status only, never the GO. DO NOT agent-offline (mid-work).
+## RELAUNCH cont7 (23:40Z): CANARY SUBSTRATE DEPLOYED. Two-person canary GO issued (Grace 83f7a98c2fb1cc00 + Rajesh 6a4777a4149c48bd, both VALID). I completed the host deploy; Grace now executing the capped handyman canary. I emit NO GO. DO NOT agent-offline (mid-work).
+
+### DEPLOY DONE (konnex-data /home/jack/projects/pipeline-orchestrator):
+- on-host rev == **6f55708c2e7e** (detached checkout; was main/7df0073 = ROLLBACK ANCHOR). Keep-set guard present in deployed worker. pipeline-agent restarted (active). own-fetcher #7 (0626d82) /health ok:true.
+- Deploy transport: git bundle /tmp/reverify-guard.bundle (tag canary-reverify-6f55708) from my worktree /tmp/po-guard -> fetched on konnex-data (its origin is a LOCAL bare mirror, lacks my branch, so bundle not GitHub).
+- **!! MUST-RESTORE: I STOPPED konnex-data `pipeline-deploy.timer`** (Layer-C) to hold the detached guarded tree — else it reverts to main/7df0073 within 5min. **Auto-deploy on konnex-data is SUSPENDED. I own restoring it (`sudo systemctl start pipeline-deploy.timer`) after the canary/live decision + returning tree to the right rev.**
+- HOST-AFFINITY VERIFIED (ops anomaly is NOT a canary risk): getTargetServers('v2_verification') -> ['data'] only (lib/stage-executors.js:166). konnex-ops agent claims target_server='ops' -> can NEVER claim reverify. Deterministic guarded run on konnex-data.
+
+### INVOCATION CONTRACT (answered to Grace):
+- Worker REQUIRED_ENV = PIPELINE_JOB_ID + MARKET_INTEL_DB_URI + V2V_CYCLE_COST_CAP_AUD (fail-fast) + --industry (fail 2). Canary-safe path = orchestrator dispatch (enqueueJob stage=v2_verification target_server='data' industry=handyman) -> real PIPELINE_JOB_ID from pipeline_jobs row (honors "no manual launches"). NO --limit arg (parseArgs = --industry,--workers); row bound = industry size (handyman ~4,707), spend bound = V2V_CYCLE_COST_CAP_AUD (set LOW for canary).
+
+### HOLDING FOR: Grace's canary numbers -> she reports to Matt -> Matt full-pass GO direct to Grace -> live 175,982 fetch-driven pass under Jack+Rajesh two-person. I provide two-person + post-verify only.
 
 ## Done (this arc, ground-truthed — do NOT redo)
 
