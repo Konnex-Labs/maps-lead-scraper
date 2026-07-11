@@ -24,6 +24,7 @@ Phase-3 hard-purge DELETE is running DETACHED on prod under a fresh Matt Phase-3
   1. Verify prod market_intelligence (konnex-data, `ssh konnex-data 'sudo -n -u postgres psql market_intelligence'`): keep-set (archived_at IS NULL) == **387,024** exact SSOT + total row count.
   2. Confirm result to Matt via team-chat-send.
   3. Drop **phase3_restore_test** scratch DB + remove temp pg_hba entries.
+  4. POST-WRAP HYGIENE (need Notion write; MCP not loaded this session): (a) file stage-2 website-verify wiring ticket [task #4]; (b) resolve 3 PR-audit exceptions from Rajesh 15:07Z [task #5] — konnex-ops PR#123 ticket 9634929c-...4bcf8e 404s (investigate/re-link/orphan); konnex-data-pipeline PR#61 (mv_trades_footprint) + PR#59 (sp4 mig020) have no ticket ref (create+Done if complete). Board otherwise CLEAN (49 Done). Ground-truth git+Notion (full UUID, squash-merge) before asserting.
 
 ## Done (this arc, ground-truthed — do NOT redo)
 
