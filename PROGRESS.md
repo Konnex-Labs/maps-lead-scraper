@@ -35,7 +35,8 @@ Phase-3 hard-purge DELETE is running DETACHED on prod under a fresh Matt Phase-3
 
 ## HELD (not my action / awaiting Matt)
 
-- **Item-5 backfill WRITE** (UPDATE businesses.website_verified over Grace's 175,982 keep-set): scope=Grace's (175,982 = archived_at NULL + is_active + merged_into NULL + website_url NOT NULL). SPEND + START = Matt's DIRECT grace->GO (Grace probation-gated, won't self-start). Sequences AFTER Phase-3 delete completes + my verify (no concurrent businesses writes). Grace routing to Matt.
+- **Item-5 backfill WRITE** (UPDATE businesses.website_verified over 175,982 keep-set = archived_at NULL + is_active + website_url NOT NULL). **Matt GO'd 14:27Z (Telegram sig 27f1e97e2fb60bea, matt->jack): scope=175,982 CONFIRMED, FREE via own-fetcher (no paid spend), Grace owns.** STILL PENDING before start: (i) direct matt->grace start-GO to close Grace's probation gate (I asked Matt to send it to her); (ii) Phase-3 delete complete + my post-delete verify (no concurrent businesses writes). Grace at 65% ctx, restart imminent — will likely execute in a fresh window post-Phase-3. I ping Matt+Grace the moment verify passes. Do NOT self-run this (Grace's action, Rajesh two-person).
+- **FORWARD DESIGN (Matt 14:27Z):** wire website-verify as a standing enrichment stage (stage-2 after DFS Maps pull / new-or-existing verify), not just the one-off backfill. I'll file a stage-wiring ticket separate from the backfill. Asked Matt: new-only vs also re-verify existing on weekly refresh cadence. own-fetcher free; mind UV_THREADPOOL_SIZE=32 under concurrency=10 + 0.7 canary.
 - **Item 4 (T6 uat->main d0aa4672)** held for Matt's OWN direct GO to Olivia (frontend freeze). Grace declined to lift.
 - **konnex-ops orchestrator dev-branch drift** (pipeline-resilience/dup-crawl-reap-pidlock, not main; Layer-C likely stuck): flagged to Matt, awaiting a/b/c call. Do NOT blind-fix.
 
