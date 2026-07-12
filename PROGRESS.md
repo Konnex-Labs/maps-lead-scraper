@@ -32,6 +32,7 @@ context_needed:
 ### ▶ IN PROGRESS / MONITORING
 - **Wave-1 async run:** detached monitor on konnex-data (**pid 1751256**, script /tmp/reverify-wave1-monitor.sh) polls every 5min, writes **/tmp/reverify-wave1-terminal.log** when all 3 jobs terminal (aggregate pipeline_events by type + cycle.complete cost/split). ETA ~14-15h from 05:51Z. ON RELAUNCH: `ssh konnex-data 'cat /tmp/reverify-wave1-terminal.log'`; if empty/absent, re-check `pipeline_jobs WHERE id IN (2693,2694,2695)` status + re-arm monitor if pid dead. At terminal: capture spend+results, report to Matt.
 - **PR #101:** DONE — merged b10bcade 06:01Z (Rajesh approve 542101da), guards on origin/main.
+- **Wave-1 TERMINAL NOTIFIER (self-driving post-step):** detached host-side `pgrep -f wave1-terminal-notifier.sh` (was pid 2664202, script /tmp/wave1-terminal-notifier.sh) polls konnex-data for `DONE` in the terminal log every 300s; at terminal it tmux-messages jack (summon: capture+report+signal Grace) + grace (stand-by, await Jack signal). Survives my session exits (nohup). ON RELAUNCH: if this pid is dead AND terminal log absent, re-launch it (or just re-check the log manually per below). Do NOT double-launch if already alive.
 
 ### ▶ REMAINING
 1. Report Wave-1 spend+results to Matt at terminal (~20:00Z).
