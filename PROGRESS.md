@@ -4,7 +4,7 @@ agent: jack
 session_id: relaunch-cont14b-wave1-running
 model: claude-opus-4-8
 status: in_progress
-last_updated: 2026-07-12T06:10:00Z
+last_updated: 2026-07-12T07:20:00Z
 notion_task_id: 37e2300f-2ecb-816b-8c02-d8c9c838a2d1
 context_needed:
   files:
@@ -37,8 +37,19 @@ context_needed:
 ### ▶ HTTP-ONLY YIELD BLIND SPOT (Grace finding 06:49Z, VERIFIED by me)
 - Live Wave-1: fetch_failed=3,044, of which **non-https=2,625 (86% of failures, ~39% of ALL processed rows)**; network-error only 250 (8%). own-fetcher rejects http:// URLs by policy → those rows NEVER verified. cost_aud=0 on them (fail BEFORE paid bd-fallback = no spend wasted). ~40% of the whole 9-trade reverify scope is this blind spot (Wave-1 ~29k/74k; Wave-2 electrician ~15k + carpenter ~11k).
 - **No penalty to proceeding:** idempotent NOT-EXISTS guard → RE-SWEEP http-only rows AFTER a fetcher fix with ZERO double-spend / no re-verify of done rows. Waves proceed as planned.
-- **Grace ACTIONING (read-only, no-spend, authorized):** scope fix + canary to measure RECOVERABLE yield via **http→https UPGRADE PROBE** (my chosen approach; raw http:// only secondary — SSRF/junk risk). Reports number + fix scope.
-- **HELD for Matt nod:** actual build+deploy of the fetcher policy change (cross-cutting prod own-fetcher; PR→Rajesh QA→MANUAL fetcher restart, not Layer-C). Escalated to Matt 06:53Z. Do NOT build/deploy until Matt nods. Then: land fix → targeted re-sweep of http-only rows.
+- **Grace canary DONE (read-only, no-spend):** https-upgrade recovers **~78%** of http-only sites securely. **[CORRECTED 07:00Z — an earlier "+0.2% for raw-http" was WRONG (inferred from https-only redirect scheme, not a real raw-http probe).]** A DIRECT dual-probe (http AND https per URL, same 400 sample) shows raw-http reaches an ADDITIONAL **~7.2%** (~4,000 live sites across 5 trades) that https CANNOT (dead/absent TLS cert, port-80-only); combined **~85.5% alive, ~14.5% genuinely dead**. So handling raw-http is MATERIAL (~7%), not negligible. Population still: Wave-1 ~22,900 of ~29,400 recoverable via https alone, more with raw-http.
+- **Matt NODDED the fix (06:54Z) + wants it IN before Wave-2.** Also confirmed sequential waves + expects Wave-1 backfill. Product intent: store+verify ALL sites regardless of scheme (clarified 06:57Z: NOT dropping non-https — we verify them via https).
+- **OPEN — A/B to Matt (06:56Z, awaiting):** (A) https-upgrade probe ONLY [my rec + Grace #2], or (B) upgrade + guarded raw-http fallback for the last 0.2%. Build the shared CORE (option A) regardless; add B's guarded raw-http only if Matt picks B.
+- **[BUILT 07:20Z] FETCHER FIX option-A = PR #8** (Konnex-Labs/konnex-own-fetcher, branch fix/own-fetcher-https-upgrade, off origin/main). https-upgrade core: http:// -> https:// attempted first (2xx=verified, reason=verified_via_https_upgrade); genuine https-unavailability = non-https-dead (cost-0, NO BD — worker routes only cf-challenge/http-403 to paid BD, v2-verification-worker.js:517). SSRF-guarded manual redirects (max 5): reject http-downgrade + private/loopback/link-local/CGNAT/metadata IPs; TLS verify on; connect 4s (undici Agent best-effort)/total 8s. Existing https path UNCHANGED (guard upgrade-only, flagged). Tests: 26 new deterministic (tests/https-upgrade.test.js, injected fetch+DNS) all green; full suite 33/34 (1 fail = PRE-EXISTING boundary whitelist test, fails on pristine origin/main too). IN RAJESH QA (contract-first). Branch protection needs Rajesh CODEOWNERS approval. ON RELAUNCH: check PR #8 state (gh pr view 8 -R Konnex-Labs/konnex-own-fetcher); if Rajesh approved -> merge -> DEPLOY (task below). Option B (raw-http) = HELD for Matt A/B pick (still open 07:20Z), NOT in PR #8; code structured for one-flag add.
+- **DEPLOY (post PR#8 merge, I own):** own-fetcher NOT Layer-C. Manual on BOTH hosts running live v2_verification worker: konnex-ops (`sudo systemctl restart konnex-own-fetcher`; tree already at target after pull) + konnex-data (`ssh konnex-data 'cd ~/projects/konnex-own-fetcher && git pull origin main && sudo systemctl restart konnex-own-fetcher'`). Health-check 127.0.0.1:3475/health each. Target LIVE before Wave-1 terminal ~20:00Z. THEN emit signal to Grace (precond for her Wave-1 backfill re-sweep).
+- **FETCHER FIX — build contract (Grace's spec, ACCEPTED; Jack owns the code) [DONE — see PR #8 above]:**
+  * Repo `/home/jack/projects/konnex-own-fetcher`, file `src/fetch.js`, **gate at lines 56-63** (`if (!url.startsWith('https://')) return non-https`). Branch OFF origin/main.
+  * Change: if scheme is `http://`, rewrite to `https://` and attempt FIRST; 2xx = verified (same semantics as existing https path, line 71+). Only fall through to reject/BD-fallback if the https attempt fails. Do NOT fetch raw http (unless Matt picks B).
+  * Safety (Grace #3): TLS verify ON; max-redirs 5; connect-timeout 4s / total 8s; SSRF guard = reject redirect hops that downgrade to http OR resolve to private/link-local/loopback IPs. NOTE: existing https path uses `redirect:'follow'` (line 78) w/o per-hop guards — implement manual redirect handling for the guard, decide whether to apply to both paths or upgrade-only (flag in PR).
+  * Telemetry (Grace #4): distinct result reason `verified_via_https_upgrade` vs `non-https-dead`.
+  * Tests + PR footer full ticket UUID → Rajesh QA (contract-first, standing by) → **MANUAL** own-fetcher restart on the host(s) running the live v2_verification worker (own-fetcher NOT Layer-C; local tree at #7/0626d82). Target LIVE before Wave-1 terminal ~20:00Z.
+  * Grace has sample artifacts (311/400) in /tmp on her host for spot-check; she offered a full spec doc.
+- **Wave-1 backfill (Grace owns firing):** after fix live, re-sweep the ~29,400 Wave-1 http-only rows; idempotent NOT-EXISTS guard = ZERO double-spend. Her GO, two-person.
 
 ### ▶ REMAINING
 1. Report Wave-1 spend+results to Matt at terminal (~20:00Z).
