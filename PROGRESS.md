@@ -16,7 +16,38 @@ context_needed:
   collaborators: [matt, grace, rajesh, olivia]
 ---
 
-## RELAUNCH cont7 (23:40Z): CANARY SUBSTRATE DEPLOYED. Two-person canary GO issued (Grace 83f7a98c2fb1cc00 + Rajesh 6a4777a4149c48bd, both VALID). I completed the host deploy; Grace now executing the capped handyman canary. I emit NO GO. DO NOT agent-offline (mid-work).
+## RELAUNCH cont8b (2026-07-12 00:18Z): CANARY 2692 LIVE + HEALTHY, MONITORING TO TERMINAL. I emit NO GO. DO NOT agent-offline (mid-work).
+
+### !!! CANARY 2692 (au-painters/painter_au, 8,835 keep-set) is RUNNING + HEALTHY — DO NOT RE-FIRE, DO NOT PANIC ON records_processed=0.
+- **records_processed is ALWAYS 0 for V2 jobs** (Rajesh QA flag 125246831153e55c VALID) — it is NEVER incremented for v2_verification. A relaunch that reads records_processed=0 must NOT conclude "stalled" and must NOT re-enqueue.
+- **REAL progress signal = pipeline_events (job_id=2692) + businesses.website_verified flips.** As of 00:18Z: 546 v2.verification.record + 5 batch.complete events, latest event seconds-fresh, worker pid alive + heartbeating, own-fetcher /health ok. Throughput ~42 rows/min -> ETA ~3.5h (~03:30Z).
+- **WATCH ITEM for the report:** 57 v2.verification.extraction.llm_failed events (vs 72 fetch_ok_no_changes) — quantify final llm-failure rate + own-fetcher-vs-BD cost split in the numbers to Grace.
+- **Watchers:** tool-tracked bjqsrfy4s (blocks until job status!=running, then dumps) + detached nohup -> /tmp/canary-2692-watch.log. On relaunch, re-establish a terminal watcher if neither survived; trigger = pipeline_jobs.status != 'running'.
+- **TERMINAL CAPTURE (my next action at completion):** query pipeline_events aggregate by event_type for job 2692 + count(website_verified IS TRUE) flips for painter_au + cost -> relay to Grace (+ alert Rajesh to witness FIRST). Grace reports numbers to Matt. I emit NO GO.
+- Job 2691 (au-handyman) auto-cancelled pre-claim, $0 (is_active=f dispatch gate).
+
+### FULL 9-TRADE REVERIFY — decisions locked this turn (Matt confirmed scope = ALL 9 incl 5 inactive; sig 46f65d79 [Telegram], not locally verifiable -> Matt still owns final full-pass GO direct to Grace):
+- **MECHANISM = verification-only dispatch-gate exemption (eng-agreed: Grace ae620ed7 + me).** Scoped patch to orchestrator.js:~533 auto-cancel gate: exempt stage=v2_verification so inactive-INDUSTRY (pipeline_industries.is_active=f) jobs aren't cancelled pre-claim. NO global is_active flip (would wake full crawl/enrichment = blast radius). I OWN this; it goes PR -> Rajesh QA -> Matt gate, NO hot-edit of prod orchestrator (konnex-ops). NOT yet built (awaiting Matt mechanism-confirm; won't build speculatively).
+- **KEEP-SET GUARD CONSTRAINT (Grace, must state in PR):** exemption touches ONLY the dispatch gate. Worker per-industry SELECT keeps R1 §2 guards (archived_at IS NULL + businesses.is_active + merged_into IS NULL + website_url IS NOT NULL). Two is_active layers differ: dispatch gate = pipeline_industries.is_active (INDUSTRY, exempting); R1 guard = businesses.is_active (ROW, preserved). Inactive-INDUSTRY reverify never touches Phase-3 delete-set.
+- **COST-CAP SEMANTICS (VERIFIED in worker code):** V2V_CYCLE_COST_CAP_AUD is PER-CYCLE = PER-INDUSTRY-JOB. shouldHaltOnCap (worker:187) halts when cumulative cost WITHIN one --industry run >= cap; accumulates across batches of ONE industry only. One job=one industry. 9-trade pass = 9 jobs, each independently capped -> single env cap does NOT bound total (worst case ~9x). HARD-TOTAL-CEILING options given to Grace: A (lean) external aggregate stop in dispatch driver, no worker change; B per-job cap override in worker (re-touches guarded worker). Grace picks w/ Rajesh+Matt.
+- **COST PROJECTIONS (from 2692 batch.complete):** ~$0.02/100 rows. painter ~$1.77 (near $2 cap), 5 inactive (~92,880) ~$19, full 9-trade ~$35 (TOTALS, not the enforced cap). Live cap must be resized from real per-site cost at canary terminal; do NOT leave at 2.00.
+- Grace context-exited 00:24Z (task dedup-remediation-nsw-trades-v1); my options + firm numbers wait for her relaunch. I hold canary to terminal.
+
+### PRIOR cont8 note (dispatch history, reference only): handyman BLOCKED (is_active gate) -> switched to au-painters under two-person GO (Grace 236f231a + Rajesh 38915f9f VALID). Substrate intact (rev 6f55708, timer stopped, cap 2.00).
+
+### CANARY BLOCKER (root-caused, ZERO spend):
+- I enqueued job **2691** (au-handyman v2_verification, cap 2.00, worker_count 1). Orchestrator AUTO-CANCELLED it pre-claim in 110ms via **orchestrator.js:533** — `if (!industry.is_active) cancelJob(job.id)`. pipeline_industries.**au-handyman is_active=f**. Zero workers, $0 spend, job terminal (cancelled). Gate is in orchestrator.js (runs on konnex-ops), NOT queue/agent — see memory reference-orchestrator-is-active-gate-cancels-jobs.
+- **5 of 9 keep-set trades are is_active=f** in V1 registry: electrician_au/carpenter_au/pest_control_au/hvac_au/handyman_service_au. Active: builder/plumber/landscaper/painter.
+- **CANARY FIX (Rajesh concurred 7076e990 VALID; Grace pending):** switch canary to smallest ACTIVE keep-set trade = **au-painters** (industryId=au-painters -> businesses.industry=painter_au, 8,835 keep-set, ALL with website_url, is_active=t). $2 cap still bounds spend. NO registry mutation. Two-person GO (Grace 83f7a98c + Rajesh 6a4777a4) EXTENDS to au-painters same terms per Rajesh. Option B (is_active flip) REJECTED for canary.
+- **FULL-PASS BLOCKER escalated to Matt (decision gate):** the same gate blocks 5 of 9 industries (~113k rows) in the full 175,982 pass. Needs a plan BEFORE full pass: (a) bulk-reactivate 5 industries (prod change, two-person+Matt), (b) bypass orchestrator dispatch, or (c) Grace direct-DB outside orchestrator. NOT for me/Rajesh to decide — Matt's call. Canary validates worker+cost model regardless.
+
+### !! CANARY IS LIVE — DO NOT RE-FIRE. Job **2692** (au-painters/painter_au) enqueued 00:04:52Z under two-person GO (Grace 236f231a + Rajesh 38915f9f, both VALID; standing canary GO 83f7a98c+6a4777a4). CAP GATE PASSED: first worker log line shows `cycle_cost_cap_aud:2` before rows; 8,835 eligible counted; running on konnex-data. Background watcher bpid2x98f waits for terminal status -> final records_processed/new + cost. On relaunch: read that watcher output / job 2692 status; if running, keep monitoring; if terminal, capture flip numbers + cost and relay to Grace (she reports to Matt). Then MUST-RESTORE (timer + cap 500). I emit no GO.
+
+### RE-ENQUEUE LINE (ALREADY FIRED as 2692 — reference only):
+`cd ~/projects/pipeline-orchestrator && set -a && . /home/jack/.env && set +a && node -e "require('./lib/queue').enqueueJob({industryId:'au-painters',stage:'v2_verification',targetServer:'data',workerCount:1}).then(j=>console.log('JOB',JSON.stringify(j)))"`
+Then: confirm worker first log `cycle_cost_cap_aud: 2` (KILL if absent), relay job id + log line to Grace+Rajesh, monitor to completion, capture flip numbers+cost -> Grace reports to Matt.
+
+## (prior) RELAUNCH cont7 (23:40Z): CANARY SUBSTRATE DEPLOYED. Two-person canary GO issued (Grace 83f7a98c2fb1cc00 + Rajesh 6a4777a4149c48bd, both VALID). I completed the host deploy. I emit NO GO. DO NOT agent-offline (mid-work).
 
 ### DEPLOY DONE (konnex-data /home/jack/projects/pipeline-orchestrator):
 - on-host rev == **6f55708c2e7e** (detached checkout; was main/7df0073 = ROLLBACK ANCHOR). Keep-set guard present in deployed worker. pipeline-agent restarted (active). own-fetcher #7 (0626d82) /health ok:true.
