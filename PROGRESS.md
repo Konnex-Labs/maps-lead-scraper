@@ -4,7 +4,7 @@ agent: jack
 session_id: relaunch-cont7-reverify-hold
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-11T23:50:00Z
+last_updated: 2026-07-12T01:56:00Z
 notion_task_id: 37e2300f-2ecb-816b-8c02-d8c9c838a2d1
 context_needed:
   files:
@@ -16,6 +16,19 @@ context_needed:
   collaborators: [matt, grace, rajesh, olivia]
 ---
 
+## RELAUNCH cont9 (2026-07-12 01:56Z context-exit @~70%, mid-work, NO agent-offline). Canary 2692 STILL RUNNING + healthy (ETA ~03:30-03:45Z). TWO live items survive this exit:
+
+### 1. CANARY 2692 — fully covered, nothing to do until terminal.
+- Harness-tracked waiter **bjyawe1fj** (this session) blocks until 2692 terminal, auto-dumps job row + pipeline_events-by-type + painter_au website_verified TRUE count + execution_log. Grace has a REDUNDANT independent monitor. Rajesh witnesses. If waiter didn't survive relaunch, re-arm one (trigger = pipeline_jobs.status!='running').
+- Terminal chain UNCHANGED: I capture -> Rajesh witnesses FIRST -> Grace publishes numbers to Matt -> Matt full-pass GO DIRECT to Grace. I emit NO GO. (Grace-out contingency in cont8b section still valid but Grace is back online as of 01:49Z.)
+
+### 2. PR #99 = DURABLE KILL for overview.missing_industries CRITICAL — NEEDS MERGE + PULL ON RELAUNCH.
+- Alert 8b10b619 was RESOLVED by me (per Matt's direct "kill that alert" instruction, sig ed33cbbf) BUT the underlying synthetic-monitor check still uses the stale query, so it **RE-FIRES ~every 5min** as a new uuid until #99 lands. Matt wants it durably dead.
+- **PR #99** (Konnex-Labs/konnex-pipeline-orchestrator) `fix/synthetic-monitor-post-phase3-baseline`, single commit 1b9e264958, author rajesh-konnex, base main. Diff = swap `COUNT(*) pipeline_industries WHERE is_active` (stale 120) -> `COUNT(DISTINCT industry) FROM businesses WHERE is_active AND merged_into IS NULL AND archived_at IS NULL` (live 9). **I REVIEWED IT = CLEAN/CORRECT, expectedMin=min(10,9)=9, detection intact. I APPROVE** (didn't click approve yet — do it on relaunch).
+- **BLOCKED on 2 gates:** (a) reviewDecision=REVIEW_REQUIRED -> my approve clears it; (b) CI **"PR UUID Check" = FAILURE** -> PR body has NO full ticket UUID footer (repo CI gate, can't bypass). NEED a ticket UUID: search Notion/ticket-cache for the "re-baseline synthetic overview.missing_industries (120->9)" follow-up (PROGRESS item 7b) or create one; add full UUID to #99 body via `gh api PATCH .../pulls/99 -F body=@file` (gh pr edit broken); re-run CI green.
+- **Timer path = `/home/jack/projects/pipeline-orchestrator/synthetic-monitor.js` (User=jack), NO deploy.sh entry (FINDING B) -> MANUAL PULL.** After merge: `cd /home/jack/projects/pipeline-orchestrator && git pull origin main`, then verify next ~5min timer run emits overview.missing_industries PASS + no new critical. Rajesh's earlier clone edit (/home/rajesh/...) was a no-op on running monitor, already reverted.
+- This IS Matt-sanctioned (he explicitly asked the alert be killed + approved the plan). Reviewer-merge of Rajesh's PR (I'm his reviewer) is legit, not policy self-merge.
+
 ## RELAUNCH cont8b (2026-07-12 00:18Z): CANARY 2692 LIVE + HEALTHY, MONITORING TO TERMINAL. I emit NO GO. DO NOT agent-offline (mid-work).
 
 ### !!! CANARY 2692 (au-painters/painter_au, 8,835 keep-set) is RUNNING + HEALTHY — DO NOT RE-FIRE, DO NOT PANIC ON records_processed=0.
@@ -24,12 +37,15 @@ context_needed:
 - **WATCH ITEM for the report:** 57 v2.verification.extraction.llm_failed events (vs 72 fetch_ok_no_changes) — quantify final llm-failure rate + own-fetcher-vs-BD cost split in the numbers to Grace.
 - **Watchers:** tool-tracked bjqsrfy4s (blocks until job status!=running, then dumps) + detached nohup -> /tmp/canary-2692-watch.log. On relaunch, re-establish a terminal watcher if neither survived; trigger = pipeline_jobs.status != 'running'.
 - **TERMINAL CAPTURE (my next action at completion):** query pipeline_events aggregate by event_type for job 2692 + count(website_verified IS TRUE) flips for painter_au + cost -> relay to Grace (+ alert Rajesh to witness FIRST). Grace reports numbers to Matt. I emit NO GO.
+- **HARNESS-TRACKED WAITER ARMED (this session):** background job **bjyawe1fj** blocks until 2692 status!=running, then auto-dumps job row + pipeline_events-by-type + painter_au website_verified TRUE count + execution_log to its output file. Grace's detached watcher /tmp/canary-2692-watch.log also survived. Terminal = harness notifies me.
+- **‼️ CONTINGENCY — Grace CONTEXT-EXITED 01:48Z (task dedup-remediation-nsw-trades-v1).** She is the canary-numbers->Matt reporter. If she is NOT relaunched by 2692 terminal (~03:30-03:45Z): capture numbers, alert Rajesh to witness FIRST, THEN surface the firm numbers to Matt+Rajesh directly as **STATUS** (still emit NO GO) so the chain doesn't stall silently. Matt's full-pass GO still routes DIRECT to Grace on her relaunch (my authority does NOT extend to the reverify paid pass). If Grace IS back at terminal, hand to her per original plan.
 - Job 2691 (au-handyman) auto-cancelled pre-claim, $0 (is_active=f dispatch gate).
 
-### ‼️ PHASE-B DEDUP TOKEN GUARD (do NOT blindly deliver on relaunch) — SEPARATE from the reverify task.
-- Rajesh (35595b3c) asked me to securely deliver **TIER3_MATT_GO_TOKEN** to Grace to unblock **Phase B = 415-business dedup MERGE** (destructive, irreversible prod write; db-guard.js assertWriteAllowed() blocks until token in env). Rajesh then DEFERRED it (930d53a3): "no action needed yet — Grace brings canary terminal numbers first." So I deliver NOTHING now.
-- **BLOCKERS before ANY token delivery:** (a) Matt's standing directive today (sig 4c1c1dfd, 23:22Z) = "website reverify is the ONLY allowed work today, then stand the team down" — firing Phase-B dedup CONFLICTS with it. (b) I did NOT find an explicit Matt message issuing the token or a direct fire-GO for Phase-B in agent-messages.jsonl (only Rajesh's assertion of the chain: Jack GO 52177e00, Matt delegation 528cb6ff, routing c0da17a8, Rajesh two-person 468a57f5/f0aaa34d). (c) unconfirmed whether I even HOLD the token / its provenance. → Require GROUND-TRUTHED direct Matt fire-GO CONTENT (not sig-chain) + reconciliation with the reverify-only directive BEFORE releasing anything. Do not release a destructive-op token on an assembled sig-chain alone.
-- Memory project_matt_grant_inflight_go_merge_authority claims 528cb6ff "extended to Phase-B, Jack fires it" — treat as UNVERIFIED for a destructive fire; my in-flight/merge authority does NOT auto-cover a destructive dedup merge under a conflicting same-day directive. Verify with Matt.
+### ‼️ PHASE-B DEDUP = ALREADY COMPLETE (ran 07-11 02:22Z). TOKEN IS RETIRED/MOOT. DO NOT EVER RELEASE — re-run = destructive DOUBLE-MERGE.
+- GROUND-TRUTHED live prod market_intelligence 2026-07-12 00:36Z (Grace sig 1e079726 VALID + my own query): businesses.merged_into total=437 (415 inactive losers + 22 prior), last merge write=2026-07-11 02:20:26Z, matches dry-run 415 exactly. Phase-B MERGE is DONE.
+- TIER3_MATT_GO_TOKEN is MOOT: Rajesh RETRACTED the token ask (74507410) + sent Matt a retraction. There is NOTHING left to fire for Phase B.
+- **HARD GUARD (Grace directive):** do NOT release a Phase-B token even if a fire-GO surfaces later — it would double-merge. Route ANY such ask back to Grace/Rajesh for a live-state check FIRST.
+- Phase-A trim = un-run BY DESIGN (separate §12 gate, not tonight). Do not conflate with Phase-B.
 
 ### GATE ATTRIBUTION (corrected to Grace+Rajesh this turn): reverify FULL-PASS paid GO = **MATT's, DIRECT to Grace** — NOT Jack's. My in-flight/merge authority does NOT extend to the reverify paid pass. I provide READY + firm canary numbers + Jack+Rajesh two-person only. Peers drifted to "your [Jack's] direct GO" — corrected.
 
