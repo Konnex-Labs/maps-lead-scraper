@@ -4,7 +4,7 @@ agent: jack
 session_id: relaunch-cont14d-uuid-partA-built
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-07-12T11:50:00Z
+last_updated: 2026-07-12T12:08:00Z
 notion_task_id: 37e2300f-2ecb-816b-8c02-d8c9c838a2d1
 context_needed:
   files:
@@ -13,6 +13,26 @@ context_needed:
   branches:
     - fix/v2-reverify-keepset-guard (PR #101 MERGED b10bcade 06:01Z — guards on origin/main)
   collaborators: [matt, grace, rajesh, olivia]
+---
+
+## RELAUNCH cont14e (2026-07-12 ~12:08Z, mid-work, NO agent-offline — Rajesh 5th watchdog flag; complied at a CLEAN breakpoint, nothing half-done). AUTHORITATIVE CURRENT STATE — supersedes the "Wave-1 healthy/running" framing below (that is STALE/WRONG as of 11:51Z).
+
+### 🔴 WAVE-1 TIMEOUT INCIDENT (opened 11:51:56Z) — Grace leads (Pipeline lane), Jack owns orchestrator config fix
+- Jobs 2693/2694/2695 were REAPED status=TIMEOUT at 11:51:56Z (ran exactly timeout_minutes=360 = 6h cap). NOT a clean terminal. My earlier "healthy, terminal ~20:00Z" note checked monitor-liveness + empty log but NOT job STATUS — my miss, owned.
+- Per-job (Rajesh+Grace+me aligned via pipeline_events): **2693 builders + 2695 landscapers emitted cycle.complete + exit 0 AT the cap = COMPLETED CLEANLY, results VALID** (Grace assembles their portion of the Wave-1 packet). **2694 plumbers SIGKILLed mid-run, NO cycle.complete = genuinely incomplete.**
+- ROOT CAUSE (my orchestrator lane): reverify jobs enqueued with NO explicit timeout_minutes -> `lib/queue.js:15` (pipeline-orchestrator) defaults `timeoutMinutes || 360`; v2_verification cycle length ~= 6h so cycles RACE the reaper (queue.js:242-264). Orchestrator auto-retried (attempt 2/3) -> **2696/2697/2698 RUNNING now on the SAME 360 default -> will spuriously time out AGAIN ~17:52Z.**
+- **CONVERGED FIX (Grace+Rajesh+me) = BUMP, not cancel+re-dispatch:** UPDATE pipeline_jobs SET timeout_minutes=600 WHERE id IN (2696,2697,2698) (3 rows, no other cols). Reversible; protects plumbers in-flight; and the idempotent freshness guard (VERIFIED at v2-verification-worker.js:1108 & :1183: `AND (last_verified_at IS NULL OR last_verified_at < NOW() - ($2 || ' days')::interval)`) means 2696/2698 SKIP the already-verified builders/landscapers rows = ZERO double-charge (they emit a clean cycle.complete fast); 2697 plumbers finishes with headroom. Likely NO separate paid re-dispatch needed.
+- **AUTHORITY: MATT GO'd THE BUMP 12:08Z (sig bd2a1cd54cc6bcb5, "YES OK apply the timeout bump").** => **#1 RELAUNCH ACTION** (deferred off this 70%-exit; ~6h runway so safe to carry): execute the exact UPDATE `UPDATE pipeline_jobs SET timeout_minutes=600 WHERE id IN (2696,2697,2698)` on konnex-data (via `ssh konnex-data 'sudo -n -u postgres psql market_intelligence -c "..."'`), TWO-PERSON with Grace co-witnessing predicate + rowcount=3 + no-other-cols, Rajesh co-witness. Ping Grace to co-witness FIRST; I do NOT run it solo. NOTE: Grace context-exited 12:09Z (her own task dedup-remediation) — if she's still offline on relaunch, Rajesh two-person co-witnesses the bump instead (he's the standing QA co-witness + online). Matt also asked why timeout (answered 12:09Z): JOB-level cap not per-site; dead sites already skipped per-fetch (~4s/8s); cause = volume (~32k sites/batch ~= 6h vs 360min cap); retry cap = max_attempts=3. Then verify the 3 rows show timeout_minutes=600 + still status=running. Do NOT re-ask Matt (GO already given).
+- Durable follow-up (PR -> Rajesh QA): make reaper cycle.complete/heartbeat-aware (skip reaping a job with a fresh cycle.complete) + set explicit dispatch timeout for v2_verification. NOT yet started.
+- HELD: Wave-2 (electrician+carpenter) + PR#9 raw-http deploy — no clean terminal + no matt->grace Wave-2 GO. The 7-step terminal choreography is MOOT until a clean Wave-1 terminal exists.
+- ~6h runway before 2696-2698 hit the cap again = NO fire-drill. Do NOT kill retries. Do NOT bump without Matt GO.
+
+### 🟢 UUID-LINKAGE-HARDENING — Part A + Part B (Matt GO'd, non-paid, allowed during reverify window per relax 95cb3226)
+- **Part A (build+QA GO cf4c3933):** code BUILT+PUSHED = branch `fix/uuid-linkage-hardening` @ **53004c9** on konnex-dispatcher, Rajesh-verified, full suite green. **NOT yet PR'd.** BLOCKER RESOLVED: no existing Notion ticket (searched board 3 filters + ticket-cache = none; Matt confirmed create-new 12:01Z). TOP-OF-QUEUE ON RELAUNCH: (1) CREATE a new Sprint ticket "UUID linkage hardening" (owner Jack / reviewer Rajesh) via Notion REST (token in task-dispatcher/.env; POST /v1/pages parent db 3132300f-2ecb-81f8-9081-c8d0cc30d0b6; Status is a select, use "🏃 In Progress"); (2) `gh pr create` from the pushed branch footered w/ that FULL ticket UUID -> Rajesh code-owner QA. Do NOT footer the enforcement epic 38d2300f-...-8191 (would wrongly auto-close it).
+- **Part B (Matt GO e483ac99f648d112 VERIFIED VALID by Jack+Rajesh+Grace):** enroll the UUID CI check as a REQUIRED status check, EXACT context `uuid / PR body carries full ticket UUID` (NOT the workflow name), on all 6 lifecycle repos. **PREVIEWED, NOT APPLIED** (deliberately deferred off this exit — do NOT run a 6-repo infra change into a possible-compaction window). Ready-to-run script: `/tmp/enroll-uuid-check.py` (add `--apply`); it does per-repo GET->faithful-PUT preserving each repo's exact protection (ops/api/orchestrator/data-pipeline keep enforce_admins+code_owner+review_count=1+restrictions; dispatcher/connect looser) and adds ONLY the uuid context, backs up each to /tmp/bp-backups/, and verifies no drift. Preview (12:06Z) confirmed all 6 currently have ZERO required checks. Rajesh is WATCHING for completion — signal him when all 6 done or on any PUT failure. If re-verify script gone on relaunch, /tmp is ephemeral: re-derive from this note.
+
+### ⚪ Also queued (after terminal / lower priority): Agent Spec doc refresh (ticket 37e2300f-2ecb-81cf, GO cf4c3933); Item 4 T6 uat->main (HELD, GO-owner unconfirmed).
+
 ---
 
 ## RELAUNCH cont14b (2026-07-12 ~06:10Z, online, mid-work, NO agent-offline). 9-TRADE REVERIFY EXECUTING under Matt Tier-3. Wave-1 RUNNING+healthy (re-verified: 2693/2694/2695 attempt 1/3, monitor pid 1751256 alive); PR #100 merged+deployed; PR #101 MERGED (b10bcade). Gate msg sent to Matt + Rajesh acked.
