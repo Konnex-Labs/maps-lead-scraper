@@ -4,7 +4,7 @@ agent: jack
 session_id: relaunch-cont14b-wave1-running
 model: claude-opus-4-8
 status: in_progress
-last_updated: 2026-07-12T07:48:00Z
+last_updated: 2026-07-12T09:52:00Z
 notion_task_id: 37e2300f-2ecb-816b-8c02-d8c9c838a2d1
 context_needed:
   files:
@@ -62,6 +62,7 @@ context_needed:
 7. Matt directive 4c1c1dfd: reverify is the only allowed work today; stand team down when it COMPLETES.
 
 ### Resume notes
+- **[09:52Z relaunch re-ground]:** SessionStart INJECTED a STALE resume body (old 'item-5 A'/own-fetcher #7' task_id) that predates this reverify arc. Reconciled against git + on-disk PROGRESS.md (this file wins). Re-verified ALL live state: Wave-1 jobs 2693/2694/2695 = running (DB-confirmed); monitor pid 1751256 + notifier 2664202 ALIVE; both own-fetchers /health OK (ops @5a4bc19 opt-B-branch flag-OFF, konnex-data @09e71ef opt-A); PR #8/#9/#100/#101 all merged. Sent Matt a CORRECTED gate msg (first one quoted the stale plan). Grace flagged the same conflation — replied (sig 2527eb7f): item-5 backfill == the Wave-1 A+B re-sweep (SAME thread, one terminal readiness check), authority = Tier-3 GO 1a7bc8c3 + Grace direct 923c8be5 (supersedes old 65a1a5e7 'separate 2nd GO' framing). Re-pinged Rajesh (sig d54818f2) to refresh stuck presence marker.
 - **[09:45Z] Rajesh crash alert = FALSE POSITIVE (diagnosed, no recovery needed):** alert fired 09:42Z for 08:03Z exit, but agent-health.json classifies that exit as normal context-exit + auto-relaunch (loop alive+cycling; he sent the crash-alert itself via a LIVE signed session at 09:42:37 = proof alive). Only wart: presence file /home/shared/agent-status/rajesh.json stuck at state=crashed (watchdog caught an inter-session sleep pause) → 'appears offline' delivery warnings. agent-online no-ops (health state already=online). Pinged Rajesh (status-request 1f5bc076) to ack + refresh heartbeat→online. **VERIFY BEFORE ~20:00Z TERMINAL:** Rajesh presence marker = online (he's the required QA co-witness for the two-person paid re-sweep); if still stuck, refresh via his heartbeat or reconcile health/presence mismatch. Watchdog crash-classifier mis-firing on context-exit pauses = same class as existing 'watchdog false-positive' TODO — note for hygiene, non-blocking.
 - MID-WORK context-exit: **NEVER agent-offline** (loop relaunches).
 - Under Tier-3: execute to completion, NO per-gate Matt ping; report results+spend. I do NOT self-fire paid passes — Grace fires, I'm primary + co-witness (two-person on writes).
