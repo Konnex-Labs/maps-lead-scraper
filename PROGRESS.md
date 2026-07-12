@@ -34,6 +34,12 @@ context_needed:
 - **PR #101:** DONE — merged b10bcade 06:01Z (Rajesh approve 542101da), guards on origin/main.
 - **Wave-1 TERMINAL NOTIFIER (self-driving post-step):** detached host-side `pgrep -f wave1-terminal-notifier.sh` (was pid 2664202, script /tmp/wave1-terminal-notifier.sh) polls konnex-data for `DONE` in the terminal log every 300s; at terminal it tmux-messages jack (summon: capture+report+signal Grace) + grace (stand-by, await Jack signal). Survives my session exits (nohup). ON RELAUNCH: if this pid is dead AND terminal log absent, re-launch it (or just re-check the log manually per below). Do NOT double-launch if already alive.
 
+### ▶ HTTP-ONLY YIELD BLIND SPOT (Grace finding 06:49Z, VERIFIED by me)
+- Live Wave-1: fetch_failed=3,044, of which **non-https=2,625 (86% of failures, ~39% of ALL processed rows)**; network-error only 250 (8%). own-fetcher rejects http:// URLs by policy → those rows NEVER verified. cost_aud=0 on them (fail BEFORE paid bd-fallback = no spend wasted). ~40% of the whole 9-trade reverify scope is this blind spot (Wave-1 ~29k/74k; Wave-2 electrician ~15k + carpenter ~11k).
+- **No penalty to proceeding:** idempotent NOT-EXISTS guard → RE-SWEEP http-only rows AFTER a fetcher fix with ZERO double-spend / no re-verify of done rows. Waves proceed as planned.
+- **Grace ACTIONING (read-only, no-spend, authorized):** scope fix + canary to measure RECOVERABLE yield via **http→https UPGRADE PROBE** (my chosen approach; raw http:// only secondary — SSRF/junk risk). Reports number + fix scope.
+- **HELD for Matt nod:** actual build+deploy of the fetcher policy change (cross-cutting prod own-fetcher; PR→Rajesh QA→MANUAL fetcher restart, not Layer-C). Escalated to Matt 06:53Z. Do NOT build/deploy until Matt nods. Then: land fix → targeted re-sweep of http-only rows.
+
 ### ▶ REMAINING
 1. Report Wave-1 spend+results to Matt at terminal (~20:00Z).
 2. ~~Merge PR #101~~ DONE (b10bcade).
