@@ -62,6 +62,7 @@ context_needed:
 7. Matt directive 4c1c1dfd: reverify is the only allowed work today; stand team down when it COMPLETES.
 
 ### Resume notes
+- **[09:45Z] Rajesh crash alert = FALSE POSITIVE (diagnosed, no recovery needed):** alert fired 09:42Z for 08:03Z exit, but agent-health.json classifies that exit as normal context-exit + auto-relaunch (loop alive+cycling; he sent the crash-alert itself via a LIVE signed session at 09:42:37 = proof alive). Only wart: presence file /home/shared/agent-status/rajesh.json stuck at state=crashed (watchdog caught an inter-session sleep pause) → 'appears offline' delivery warnings. agent-online no-ops (health state already=online). Pinged Rajesh (status-request 1f5bc076) to ack + refresh heartbeat→online. **VERIFY BEFORE ~20:00Z TERMINAL:** Rajesh presence marker = online (he's the required QA co-witness for the two-person paid re-sweep); if still stuck, refresh via his heartbeat or reconcile health/presence mismatch. Watchdog crash-classifier mis-firing on context-exit pauses = same class as existing 'watchdog false-positive' TODO — note for hygiene, non-blocking.
 - MID-WORK context-exit: **NEVER agent-offline** (loop relaunches).
 - Under Tier-3: execute to completion, NO per-gate Matt ping; report results+spend. I do NOT self-fire paid passes — Grace fires, I'm primary + co-witness (two-person on writes).
 - Do NOT re-fire Wave-1 (2693/2694/2695 running). Do NOT re-merge #100 (88d3776). Do NOT re-open #100/#101 if already merged.
