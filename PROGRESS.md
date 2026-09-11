@@ -1,43 +1,49 @@
 ---
-task_id: NSW-SUPPLY gap-closing canary (declared-ID never-blend lane)
+task_id: Ask Konnex UAT Q&A backend (WP 3d82300f-2ecb-81a5-b549-f6e2a2d1e7e8, epic 81a3)
 agent: jack
-session_id: ce1005be-f85b-43a3-8d2f-67cd5b3ee5b2
+session_id: 3f3b9266-129c-4e4a-87c3-a627670148ed
 model: claude-opus-4-8
 status: context-exit
-last_updated: 2026-09-10T18:05:00Z
-notion_task_id: 3d52300f-2ecb-8194
+last_updated: 2026-09-11T06:56:00Z
+notion_task_id: 3d82300f-2ecb-81a5-b549-f6e2a2d1e7e8
 context_needed:
-  files: [/tmp/037_gap_closing.sql, /tmp/037_grants.sql, /tmp/037_test.sql]
-  branches: [main @4cfa9ba (konnex-data-pipeline, PR #104 merged)]
-  collaborators: [rajesh (QA/release gate), grace (corroboration builder/spec), marcus (route/steward), matt (§8 + WC_API_KEY founder cred)]
+  files: [lib/ask-konnex.js, lib/tool-handlers/get_supply_stat.js, /home/shared/uat-supply-readiness/SERVICED-AREA-KOGARAH-CONFIRMATION.md]
+  branches: [konnex-api main@0c6624d (PR #31+#32 MERGED+DEPLOYED); konnex-website PR #21 (Olivia FE) APPROVED, merging to uat]
+  collaborators: [rajesh (QA closed+APPROVED, context-exited), olivia (FE #21 merge to uat), grace (serviced-area data, context-exited), marcus (§8 routing), matt (§8 serviced-area pick)]
 ---
 
 ## RESUME HERE (do this first)
->>> PRIORITY 1 — SYSTEMIC AGENT-OPS FIX (Matt-authorized 2026-09-10, sig df49bf4ae4b0a134: "I trust you to resolve both these issues... cut this time and token wastage"). This is the LEAD build. Two parts, both Rajesh-QA'd before deploy:
->>>   (1a) FIX-C strictly-newer gate in /home/shared/bin/agent-session-restore (~line 884-887). ROOT CAUSE FOUND: FIX-C adopts a different-task, override-eligible cwd PROGRESS.md over $HOME "REGARDLESS of timestamp" (its own F3 comment). A COMMITTED stale cwd copy (google-maps-scraper/PROGRESS.md, was commit f05e8a3 Sept-5, diff task) overrode my correct Sept-10 $HOME + memory.json at restart. FIX: never adopt a cwd copy whose last_updated is OLDER than $HOME's; align to "$HOME is the sole resume basis" (Matt's stated design). Edit in the OPS repo, `node --test`, PR, Rajesh QA, then deploy (agent-session-restore deploy is delicate — check its REPO-MAP/deploy pattern first). NOTE the repo re-commits [WIP] PROGRESS.md snapshots on every exit, so deleting the file is NOT durable — the code gate is.
->>>   (1b) progress-md-lint rule: reject unverified external-fact claims in PROGRESS.md, esp. "blocked on Matt for credential/key X". A carried note must be a POINTER-TO-VERIFY, never asserted as current truth. [[feedback_verify_credential_state_before_telling_matt_he_owes_a_key]]
->>>   STOPGAP ALREADY DONE (commit 3b35b55): synced repo google-maps-scraper/PROGRESS.md to canonical $HOME so task_ids match + FIX-C won't override THIS resume. (Do NOT redo.)
->>> PRIORITY 2 — CANARY (unblocked, Grace-led, gated; do NOT re-block on WC_API_KEY): WC_API_KEY IS PROVISIONED at /home/grace/.config/workclear/pro.key (mode-600, fired the 387 Sept-3 WP-4 calls; I can't ls /home/grace = 750, that inability fooled the old "missing" note — I + Grace both wrongly escalated to Matt, corrected). REVISED ROLES (agreed w/ Grace, my konnex-data exec lane STANDS DOWN): Grace runs the WHOLE canary from her process on konnex-ops — DB write is market_intel over MARKET_INTEL_DB_URI (network, verified INSERT on all 3 037 tables), WorkClear/DFS/ABR all callable from konnex-ops, WC key stays in her process (WP-4 precedent). NO token transfer, no konnex-data. MY open eng requirement before LIVE: the caller/harness that wires WC_API_KEY + enforces <=$0.40 hard-cap + dup/retry guards is NOT in PR #104 (only pure modules QA'd) — Grace stages the harness alongside evidence so my + Rajesh's dry-run sanity check covers the ACTUAL firing path. Criterion (ii) sufficiency is RAJESH's call (his independent gate). SEQUENCE: Grace stages Rajesh-(ii) evidence + harness ($0) -> Rajesh full PASS -> Grace dry-run numbers (count, projected cost, <=$0.40 cap, guards) posted for me+Rajesh sanity -> Grace fires LIVE. Under §6 (<=$0.40) no fresh Matt GO. [[feedback_verify_credential_state_before_telling_matt_he_owes_a_key]]
+>>> ASK KONNEX UAT DEMO = LIVE ✅ (06:47Z). FULL CHAIN SHIPPED: backend 3 PRs (/v2/ask + 5 metrics incl service_area, main@18d8be6, prod :3457) + FE PR #21 merged to uat (commit 5f7ea00, Rajesh QA PASS+APPROVE). UAT health GREEN. Matt celebrated (screenshot: 42.7% website-presence grounded answer rendering live). NO open backend items.
+>>> NEXT = TWO MATT-OWNED DECISIONS (both routed, awaiting his word — do NOT self-issue):
+>>>   (1) WC-failover canary SEQUENCING GO — precondition (UAT go-live) now MET; I routed to Matt 06:47Z (no-rush). On his GO: green-light Grace -> harness build -> Rajesh 3-pt QA PASS -> numbers-GO -> only THEN WC_API_KEY spend (≤$30/run, $0 to date). Grace+Rajesh standing by, NOT self-starting.
+>>>   (2) PROD/main promotion of Ask Konnex — §8-HELD per Matt's standing hold. His call when ready; on GO I do the in-contract prod deploy.
+>>> GOTCHAS: local box can't resolve konnex-data-api.konnexlabs.com (sandbox egress) — verify via ssh konnex-api :3457. market_intel DB via MARKET_INTEL_DB_URI (role 'jack' does NOT exist — use the URI creds, not peer auth). §8 canonical serviced-area query: /home/shared/serviced-area-declared-only-query-grace-2026-09-11.md.
+>>> FOLLOW-UP (mine, post-demo): ghost-recovery hardening — 2nd occurrence tonight (Carlos+Olivia). Ghost-check must SKIP intentionallyOffline=true OR offline transition must always set state=offline (stale state=online + parked = 641-fire loop). Root watchdog = agent-zombie-reaper. Matt agreed post-demo priority.
 
 ## Done
-- Gap-closing never-blend lane MERGED (PR #104, 4cfa9ba; rajesh-konnex-bot code-owner APPROVED + Rajesh qa-pass). Fixed PR-UUID CI check (needs FULL Notion UUID via gh api PATCH). [[reference_kdp_pr_uuid_check_needs_full_notion_uuid]]
-- Migration 037 APPLIED to prod (ssh konnex-data + sudo -u postgres): 3 tables (gap_closing_run_log/raw_snapshots/observation), 23 constraints. GRANTs applied+verified = {postgres=arwdDxt, matt=r, market_intel=ar}, EXACTLY matching sibling cap001_corroboration_state ACL; USAGE on both BIGSERIAL seqs. Real market_intel INSERT+ROLLBACK test PASSED (not dry-run), 0 rows persisted. Reported to Rajesh (sig 58b9a468c3a8ab62, GO 5e42f06458444d6f).
-- APPRENTICE-SUPPLY WP fully DONE+QA'd earlier: obs_apprentice_supply live. Publication HELD (future §8), $0.
+- PR #31 (backend: /v2/ask Haiku-routed grounded Q&A + /v2/tools/get_supply_stat, 4 metrics, never-fabricate, loop-cap 3) merged f605aaa. Rajesh QA CLOSED (20/20 + 5-Q E2E PASS).
+- PR #32 (vintage-anchor fix: SYSTEM_PROMPT echoes as_of verbatim, no training-year hallucination; keeps only fixed licence-snapshot 2023-12-04 as format example, apprentice stays dynamic) merged 0c6624d + DEPLOYED. Q4 re-run PASS.
+- Supabase auth outage (project dvdaabdlerqrdezhqwvd auto-paused -> all authed 500) RESOLVED by Matt unpause 04:49Z. [[reference_konnex_api_auth_pool_is_supabase_explorer_only]]
+- Anthropic credit CLEARED ($49.98). Contract: /home/shared/ask-konnex-endpoint-contract-jack-2026-09-11.md.
 
 ## In Progress
-- Systemic agent-ops fix (PRIORITY 1, see RESUME HERE): root-caused + stopgap committed (3b35b55); FIX-C code gate + progress-md-lint rule NOT yet built (deferred to next window per 70% ceiling). No mid-flight build — clean boundary.
-- Canary: unblocked, Grace-led from konnex-ops (see RESUME HERE P2). Both Jack + Grace context-exited this window. Grace confirms the spend-governing ORCHESTRATOR/harness does NOT exist yet (PR #104 = pure modules only) and must be BUILT next window (Grace's lane); until it exists there is nothing to dry-run/fire. $0 spent, nothing to roll back.
+- Olivia: live-verify FE #21 preview -> merge askkonnex-uat-live -> uat (demo go-live). Her lane, not mine.
+- Olivia RESTARTED per MATT go (FULL sig 4fadcbfa102bfb59, matt->jack verb=question 'restart olivia', verified VALID 06:39Z): claude live (opus-4.8), state=online, task retained. NOTE attribution: my '[Olivia] per your go' broadcast read ambiguously -> Grace audited thinking I cited HER; corrected on record 06:4xZ = it was MATT's go, Grace gave none. (Lesson reinforced: name role-holder, not 'your', in group sends.)
+- Olivia live-verified backend 06:42Z: apprentice prose now 'reference period ending 2025-12-31' (5,960), all 5 grounded cases PASS. Her earlier Q4 '2021' FAIL was a STALE pre-deploy preview — PR #32 (0c6624d, live :3457) already derives as_of dynamically from latest ref_quarter; NO backend patch needed. Grace data confirms latest=2025Q4, no 2021 row.
+- ASK KONNEX UAT GO-LIVE = COMPLETE ✅ (06:47Z): Rajesh formal QA GATE PASS + GitHub APPROVE (E2E Q1-Q5b all PASS), Olivia merged FE PR #21 -> uat (commit 5f7ea00) under in-contract authority. Post-merge UAT health GREEN (plumber 20,182, apprentice 5,960@2025-12-31, out-of-set answerable:false). Full chain shipped: backend 3 PRs (/v2/ask + 5 metrics) + FE #21. Reported to Matt. PROD/main promotion = §8-HELD per Matt's standing hold — untouched, his call.
 
-## Remaining (standby, not blocked on me)
-- CANARY ORCHESTRATOR (Grace's lane, next window): build the harness wiring WC_API_KEY + DB + DFS + 200-row spec + <=$0.40 hard-cap + dup/retry guards. My eng requirement: harness staged for my+Rajesh dry-run sanity (spend-cap enforcement lives in the CALLER, not the QA'd pure modules). Then Rajesh 3-point PASS -> dry-run numbers -> Grace fires live.
-- Ops-Monitoring Dashboard (3d52300f-2ecb-811b): /funnel + /sources LIVE. REMAINING = per-point deltas + /changes tab, gated on Grace's obs_change_*/snapshot layer (obs_change_* tables NOT yet in prod, verified 2026-09-10).
-- §8 ledger: coverage-supply + customer PUBLICATION = FUTURE §8, HELD.
-- Phase-2 NSW live-status re-key: gated on NSW Trades quota reset ~2026-10-01.
+## Remaining (standby)
+- WC-failover gap-closing probe (Grace-built, criterion ii): precondition (UAT go-live) NOW MET. Sequencing START = MATT's explicit on-record GO (NOT inferred from demo-live). ROUTED to Matt 06:47Z (framed no-rush, his call). Grace + Rajesh standing by; Grace will NOT self-start. On Matt GO: I green-light Grace -> harness build -> Rajesh 3-point QA PASS -> numbers-GO -> only THEN any WC_API_KEY spend (≤$30/run). $0 to date. Do NOT self-issue the sequencing GO.
+- CARLOS agent crash-loop (Tier-2 infra, mine): CONTAINED — RCA = OAuth token expired 2026-06-25, refresh token dead, can't auto-renew → 401 loop; ghost-recovery re-fired every 10min because health had state="online" while intentionallyOffline=true (ghost check keys off state, not flag). Ran agent-offline carlos (state=offline) → noise stops. IRREDUCIBLE FIX escalated to Matt: fresh claude login/setup-token on his Max acct (alex also dead, expired 06-14). WP-L2 supply-split blocked until re-auth. [[reference_konnex_fleet_oauth_and_ghost_recovery]]
+- OLIVIA ghost-loop (2026-09-11 06:3xZ, mine): CONTAINED. 641 ghost-recovery fires. RCA = she cleanly context-exited 04:53Z (31% budget, FE #21 code-complete@961b888a not merged), then parked offline 05:01Z but state field left STALE=online -> ghost-watchdog keys off state, force-recovered ~every 10min. NOT dead-token (her OAuth valid exp 11:30Z). Fixed via agent-offline olivia -> state=offline consistent, noise stopped, currentTaskId retained for resume. This is the 2nd hit of the ghost-hardening bug below -> raised priority w/ Matt.
+- GHOST-RECOVERY HARDENING (follow-up, mine, NOW 2ND OCCURRENCE Carlos+Olivia -> bumped): ghost-check must SKIP agents with intentionallyOffline=true (OR the offline transition must always set state=offline) so a parked/dead-token agent can't loop forever. Root-run watchdog (likely agent-zombie-reaper in /home/shared/bin). Recommended to Matt: prioritize post-demo.
+- §8 serviced-area service_area metric: SHIPPED + DEPLOYED + PROD-VERIFIED (PR #33, main@18d8be6). CLOSED.
+- SECURITY (post-demo, low pri): rotate UAT key ask-konnex-uat@konnexlabs.com (shared on agent bus, sha-only store, free key). `UPDATE api_profiles SET api_key='kx_live_'||encode(gen_random_bytes(24),'hex') WHERE email='ask-konnex-uat@konnexlabs.com'` on EXPLORER_DB_URL after demo.
+- Jack ACL PENDING (Rajesh req): rajesh:r on /home/grace + /home/marcus.
+- Canary (Grace-led, gated). Ops-Monitoring Dashboard /changes gated on Grace's obs_change_*.
 
 ## Resume notes
-- 037 rollback: DOWN block DROPs the 3 tables + deletes sources row 'dfs_gap_closing_serp_lead'; per-run cleanup by run_id. Add-only, no consumer yet, fully reversible.
-- workclear-client.js requires WC_API_KEY (env-only, apiKey ctor arg) — but the key is PROVISIONED (see RESUME HERE): /home/grace/.config/workclear/pro.key. It's a wiring step (export env), NOT a missing credential. Never re-assert "blocked on Matt for the key."
-- Prod DDL pattern: ssh konnex-data + sudo -u postgres; SET ROLE market_intel; GRANT SELECT TO matt. [[reference_market_intel_db_superuser_path_and_explorer_alias_stale]]
-- Role canon: Jack authors+deploys / Rajesh QAs (release gate) / Marcus routes+reconciles / Matt decides §8. [[feedback_s8_role_canon_dont_drift_peer_roles_in_relays]]
-- Don't deploy ahead of Rajesh's gate. [[feedback_dont_execute_ahead_of_agreed_failclosed_gate]]
-- MID-work exit: NO agent-offline (want auto-relaunch).
+- Role canon: Jack authors+deploys / Rajesh QAs (release gate) / Marcus routes / Matt decides §8. [[feedback_s8_role_canon_dont_drift_peer_roles_in_relays]]
+- VPS deploy = git bundle (no GH key on box); secrets in /home/jack/.env not repo. [[reference_konnex_api_vps_deploy_bundle_and_env_file]]
+- PR-UUID CI gate needs full 32-hex Ticket: UUID; reviewer = request rajesh-konnex-bot via REST. [[reference_kdp_pr_uuid_check_needs_full_notion_uuid]]
+- MID-work exit: NO agent-offline (want auto-relaunch on Matt §8 ruling / Olivia merge confirm).
