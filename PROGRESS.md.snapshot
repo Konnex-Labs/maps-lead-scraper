@@ -1,0 +1,35 @@
+---
+task_id: mmr-01-v1.6-implementation
+agent: jack
+session_id: 14da2f69-e34c-48b5-bdea-0ed06eff6212
+model: claude-opus-5-5
+status: context-exit
+last_updated: 2026-09-25T14:10:00Z
+notion_task_id: 3e52300f-2ecb-81ab-938d-f8d359c28e5e
+context_needed:
+  files: [/home/shared/jack-github-app-setup-2026-09-25.md, /home/shared/rajesh-work-by-task-qa-2026-09-25.md, /home/shared/jack-mmr01-p1-g2-eval-contract-2026-09-25.md]
+  branches: [ops:jack/dashboard-work-by-task, kdp:grace/supply-opt-01-t6-region-flag, kdp:grace/supply-opt-01-t5-run-economics]
+  collaborators: [matt, rajesh, grace, marcus]
+---
+
+## Done (live + verified; do NOT redo)
+- MMR-01 v1.6: protocol rules (delegation #311, large reads #317); message-verify + housekeeping hooks on 8/8; status command kdp #128/#130; router P0 (kdp #129 + mig 049, po #131/#132, required check 'llm-isolation / check'); dashboard Router tab ops #318 (/router).
+- Marcus back on Opus. P1 Sonnet run SKIPPED (Matt a02a2c4bf1897a08) → P1 = Gemini vs Haiku after keys; contract drafted.
+
+## In Progress
+- FIRST NEXT SESSION, GITHUB APP: key INSTALLED + VALID at /etc/konnex/github-app.pem (root:jack 640, 1675 B); App ID 5074142; INSTALLATION ID 164825542 (Konnex-Labs, selected repos) verified via a JWT probe (/tmp/claude-1000/gh-app-probe.js, HTTP 200). BUILD NOW: a token helper (JWT RS256 iss=5074142 → POST /app/installations/164825542/access_tokens → 1h token, cached with expiry) + a gh wrapper setting GH_TOKEN; git push stays SSH; test gh pr list; Rajesh QA; then retire the invalid personal token. Then open the queued PRs.
+- Then PRs to open (Grace, all with Rajesh): T6 grace/supply-opt-01-t6-region-flag @ f42ec7a (stacked on #131; Ticket 3e62300f-2ecb-81be-b7d9-e7db71df3539); T5 grace/supply-opt-01-t5-run-economics @ e681b21 (independent). #131 (T1) head a4bc0bb, awaiting PASS.
+- T1/T6 deploy window: T1 → mig 051 (2 parts: plain `psql -f`, NO outer tx / --single-transaction; dry-run the DDL part as postgres) → T6 code → MY consumer switch: predicate `address_state='NSW' AND NOT nsw_cohort_excluded` in the konnex-data-api verified-supply endpoint + status command check 4 (verbatim SQL) + checks 1/2/5/6 + Grafana #127 + DQ/agg; one window, dated annotation (Marcus ruling 1f1a1bec9ee8dc8b). Then the mi-weekly-cron checkout (detached 9bbdef5): deploy-class check before any ff.
+- Work by Task (ops jack/dashboard-work-by-task @ 2d3bee5): Rajesh QA PASS 0cef02d718eca668 (verdict of record /home/shared/rajesh-work-by-task-qa-2026-09-25.md UPDATE 1; no PR yet). Before deploy (his R6 condition): add an lstat/no-symlink refusal on the output dir + move the output to a root-only parent /var/lib/konnex/work-by-task (the tab reads it there); price opus-4-8 at 5/25 after verifying the published table; then PR + deploy (task-sessions dir root 1777, root cron, hook binary, dashboard restart) and send him the owner/mode/cron-user evidence. Out of scope: token-daily-aggregator MODEL_PRICING looks stale (opus-4-6, haiku-4-5).
+- Keys: Matt will rotate the Anthropic key + create the Gemini key, then ping. Send him the one-liner at /home/shared/jack-llm-router-key-install-2026-09-25.md (never via chat). After that: systemd drop-in EnvironmentFile for pipeline-orchestrator, remove old key copies, key-scan + sweeper crons (Rajesh QA). D3 approved (67eb0a48f73043a6).
+- P1 Gemini vs Haiku (after keys): contract /home/shared/jack-mmr01-p1-g2-eval-contract-2026-09-25.md → swap the candidate to gemini-3.5-flash-lite; registry PR (cap $25); Grace/Rajesh review; the tab shows usage live.
+- Headroom: interim read due ~14:30Z 25 Sep; full report 26 Sep (ops scripts/mmr01-turn-classify.py, deduped, since 2026-09-24T15:00, vs the v1.6 baseline; price-weighted units vs rate_7d_pct) before the 28 Sep x5 switch. Then close Notion 3e52300f-2ecb-8179.
+
+## Remaining
+- Legacy real-estate: retire the v2-verification-monthly timer + service only (fires 1 Oct; Grace blast radius f2448cde5a2c26a3).
+- Ask Grace: stale untracked .claude/worktrees/nsw-service-area-harness in the live po checkout.
+- Non-blocking follow-ups: hook timeouts in seconds fleet-wide; key-scan regex edge cases; status-command follow-ups (CHECK4 sha pin, ruling expiry, cohort-mismatch flag, SQL repo test); /home/shared/bin drift vs ops main.
+
+## Resume notes
+- Long messages via a file + "$(cat f)". Never drive another agent's tmux pane (classifier-blocked).
+- Stay ONLINE when idle.
