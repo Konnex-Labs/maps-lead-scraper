@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/home/shared/bin/tmux-message-verify *)",
+      "Bash(systemctl is-active *)",
+      "Bash(journalctl -u *)",
+      "Bash(/home/shared/bin/ctx-budget-check)",
+      "Bash(ctx-budget-check)",
+      "Bash(systemctl list-timers *)",
+      "Bash(systemctl cat *)",
+      "Bash(systemctl show *)",
+      "Bash(/home/shared/bin/konnex-memory-query *)",
+      "Bash(crontab -l)",
+      "Bash(systemctl status *)",
+      "Bash(/home/shared/bin/kdp-migration-claim --list)"
+    ]
+  }
+}
