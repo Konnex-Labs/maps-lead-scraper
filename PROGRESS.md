@@ -1,88 +1,55 @@
 ---
-task_id: reporting-dashboards-audit-supply-demand
+task_id: MARKET-PULSE-WWW-01
 agent: jack
-session_id: 7365e52b-a189-44d4-8156-ee3be45736cd
-model: claude-opus-4-8
+session_id: fd4e032e-28af-4b14-84d6-b0f4d9a82f2a
+model: claude-opus-5-5
 status: context-exit
-last_updated: 2026-09-12T10:24:00Z
-notion_task_id: null
+last_updated: 2026-10-16T16:11:00Z
+notion_task_id: 3fa2300f-2ecb-8102-b961-e98e3555e03a
 context_needed:
-  files: [/home/jack/PROGRESS.md, /home/shared/jack-dashboards-metrics-audit-2026-09-12.md]
-  branches: []
-  collaborators: [matt (requester — wants Notion doc, will share w/ Walter), grace (supply-lane input IN), ada (demand-lane input pending post-T-8; context-exited 78%), marcus (PM/steward input IN — review draft before Walter), rajesh (QA/Ops — pipeline-health/alerting input to ask)]
+  files: [/home/shared/jack-market-pulse-feed-contract-v0.1-20261015.md, /home/shared/jack-market-pulse-feed-fixtures-20261015/, /home/shared/jack-ak-p1-recapture-2026-10-15/]
+  branches: [konnex-api main (prod = cherry-pick tree, deploy worktree kapi-wt-deploy106 @6b96a97), kdp main]
+  collaborators: [matt, marcus, rajesh, grace, ada, olivia]
 ---
+## Done
 
-## RESUME HERE (do this first)
-Context-exit at session-verified GATE FAIL (29% < 35%, 10:24Z). NO agent-offline (Matt engaged; triggers
-pending on me). PRIMARY TASK (Matt 2026-09-12T10:07Z): dashboards/metrics audit -> Notion doc -> Walter.
+## In Progress (RESUME FIRST)
+- !! DEPLOY-ORDER HAZARD: do NOT ff /home/jack/projects/market-intelligence (runner checkout) until Grace mig 230 (PIPELINE-STATE G1/G3) is APPLIED on prod; her code needs its table/view or the 18:00Z/20:00Z recheck timers fail. Applies to every ff (incl. after #357).
+- RESUME FIRST (23:58Z): MARKET PULSE on uat with ALL 3 layers LIVE (feed api.konnexlabs.com; prod konnex-api 5bc984d tree 87b94f0; flag on; Marcus UAT GO e4b9c6ee). Migs 222/225/223/227 applied+QA'd; pulse_api login (NOINHERIT, member pulse_ro, pg_hba 151 hostssl 77.42.94.228). Rajesh: feed live probe PASS bdb49550, J4 uat page PASS c4721226, Olivia bundle c2d8832 on uat (edge age capped 300s VERIFIED). J5 stale-check expects 3 layers. Runbook rev3 /home/shared/jack-market-pulse-feed-golive-runbook-20261015.md (s4 off switch: flag + empty-commit Vercel redeploy; uat Olivia / www Jack). NEXT: off-switch DRILL on uat after Marcus shows Matt (I flip flag, Olivia 4.2, Rajesh verifies at edge). www OFF until drill + Matt. Grafana '<3' fix DONE (kdp #353 321ef32, installed to /var/lib/grafana/dashboards/konnex, live v2). C2 check 16 Oct 02:30Z.
+- AK-PRESENTATION-P1-01 parent 3fa2300f-2ecb-81a3-b07e-da77bbaa344c (Matt 6021cf9d; contract www docs/briefs v1.1 #62; fixtures /home/shared/rajesh-ak-p1-fixtures-2026-10-15.md). Phase 1 built+live (see below). Open on parent: step 3 = ad hoc allowlist on mig 217 coarse view (Grace) + registry entry nsw_plumber_business_coarse_counts.
+- website-facts v2 + abr_link + R1 merged, runner ff'd; W43 Mon 19 Oct 05:00Z (Grace checks exit + PII_SCAN). www HOLD (Matt via Marcus 1012d862, answer this evening). OPEN BUILDS: AK 'off' mode = withhold all Verified (Marcus 9299de21, low pri); ticket api_usage logging broken since 7 Apr; PROFILE_WEBSITE_CHANGES flip after Olivia's uat page; apex 307 -> Matt (Vercel). Use REST, never 'gh pr edit'.
+- PLANNING: konnex-monthly@planning.timer live; watch 5 Nov 03:00Z first real month (2026-10). TODO: MONTHLY_HC_URL in /home/shared/config/konnex-monthly-planning.env. GOV-D1 = Ada.
+- EXEC-REPORT-01 (3ed2300f-2ecb-814f-a15e-d211fe8a7298): live; TODO IVI freshness flag (Marcus b711acc1), exit-4 alert, EXEC_REPORT_HC_URL; Rajesh closes.
+- DEMAND TIMER live: first fire Tue 20 Oct 03:11Z (exit 75 if Sep unpublished); re-read DFS balance 19 Oct (need >= US$10.81); Nov run = v2.3 +40 (Botany replaces Hunters Hill; Ada contract v1.3, Rajesh PASS w/ conditions): before 20 Nov Rajesh verifies new DEMAND_RUN_APPROVED (v2.3/116/cap 12) + G3 probe (~US$3.60), then I re-read DFS >= US$12.81 (12 + 0.72 reserve + 0.09; Rajesh 0ba163b2), then timer PR; v2.3 merges only after Oct run validates; TODO RESULT line for 27/28 alert.
+- Agents GitHub PAT (/home/shared/secrets/github-pat-agents.token) = 401. Asked Matt: (a) agents use konnex-agents App (/etc/konnex/github-app.pem root:jack 640) or (b) new PAT. Meanwhile I open agents' PRs. Also hits konnex-qa: Rajesh push fails since fe2a845 (c7eea71e, 3 Oct 16:58Z); same fix.
 
-STATE: Audit DONE + synthesis DONE + Notion doc PUBLISHED + circulated for review. NOW WAITING on review
-feedback. Fresh-me RESUME:
-1. Collect review feedback (sent 10:24Z to Grace §4 supply-lane, Marcus §3.1/§5/§6/§7 PM+semantics, Rajesh
-   §7/§8 ops+alerting). Fold corrections into BOTH the Notion page AND the mirror
-   /home/shared/jack-dashboards-metrics-audit-2026-09-12.md. Notion page id 3d92300f-2ecb-81a3-b888-c895e60be4e4
-   (URL below) in canonical Docs Library (db 3132300f-2ecb-81b7-a93f-ff9d19190e15); update via API-update-page-markdown.
-2. Once peers pass, tell Matt it's READY to hand to Walter (external advisor). Optionally set Docs-Library
-   metadata props (Owner/Doc Type/Status/Version) if Matt wants it filed as a formal versioned doc.
-3. WATCH FOR Ada's item-4 DFS-locations pin request — she's routing it through Jack+Rajesh (probation spend-gate),
-   so I'll see the exact DFS call BEFORE it fires. My role = second-eyes + confirm; Rajesh gates. Also her DP-2
-   raw-evidence schema (optional eyeball pre-gate) + her canonical demand-lane list post-T-8 (fold into doc §5/§10).
-4. QUEUED (my Common-Protocol ownership, Marcus-validated): add one-liner to /home/jack/.claude/CLAUDE.md 70%-exit
-   section — 'after saving PROGRESS.md, immediately call agent-request-restart; do NOT rely on printing a summary
-   (session stays live until the loop exits it)'. Agents CANNOT self-emit /exit (operator-only). Propagate via
-   claude-md-push + verify (memory [[reference_claude_md_push_verify_peer_home_perms]]). Multi-step -> do fresh.
 
-NOTION URL: https://app.notion.com/p/Internal-Reporting-Monitoring-Audit-Recommendation-Supply-Demand-3d92300f2ecb81a3b888c895e60be4e4
 
-## Done (this session)
-- ADA 1:1 TELEGRAM — DONE + verified E2E. group:ada flipped stale -5044103116 -> live supergroup
-  -1003804418485 after Matt's HUMAN @ada post; Matt confirms send+receive, Ada confirms receipt. Told Marcus
-  to drop his standing relay. Bridge fix was 6ee13c4 (Rajesh PASS). Follow-up #4 (migrate handler) still open.
-- ADA RELAUNCH FIX (Matt-flagged) — Ada printed her ctx-exit summary + saved PROGRESS.md but never ran /exit,
-  so her live session sat at prompt + crept 78%->83% (auto-compact imminent). Sent /exit to her tmux pane ->
-  loop relaunched fresh claude 2168127 (v2.1.143), resuming from checkpoint, zero data loss. Also REAPED the
-  stale suspended orphan claude PID 1889591 (4h Tl+, manual sudo session, not the loop) = the dup I'd flagged.
-  Note: 'Auto-update failed' CLI banner is separate/non-fatal (running v2.1.143). Suggested to Matt: ctx-exit
-  protocol should END by actually running /exit. Memory [[feedback_declare_exit_then_immediately_self_restart]].
-- AUDIT SWEEP complete — key findings captured below (raw agent reports in this session's context).
-- DRAFT WRITTEN -> /home/shared/jack-dashboards-metrics-audit-2026-09-12.md (full synthesis, 10 sections).
 
-## AUDIT FINDINGS (raw material for the doc)
-INTERNAL DASHBOARDS (all on konnex-ops 89.167.72.210, vanilla Node HTTP unless noted, no auth, internal-only):
-- SEO Dashboard :3463 (systemd, LIVE) — GSC indexation/search/sitemap + rank; reads gsc_snapshots, gsc_page_index, rank_*
-- Observable-Layer :3465 (systemd, LIVE) — NSW supply funnel/freshness/change-detection; reads obs_* views (graceful-degrade if absent)
-- Pipeline Monitor :3460 (LIVE, NO systemd) — crawl/QA-dedup/enrichment + VPS CPU/mem/disk; reads pipeline_jobs/industries/alerts/events, businesses
-- Crawl Monitor :3459 (LIVE legacy, NO systemd) — superseded by pipeline-monitor
-- Ops Dashboard :3456 (Express, bearer-auth on control) — agent sessions/tasks/system health
-- Command Centre :3461 + Token Cost :3464 — token burn/cost (OVERLAP, candidates to merge)
-- Sprint Board Monitor (daemon) — Notion stuck-task poller (alert target hardcoded "Brian" = STALE)
-- Grafana v13.0.2 :3000 (systemd, LIVE) — 7 dashboards ~80 panels, ONE datasource (Postgres market_intelligence, read-only role), auto-provisioned from /home/jack/projects/market-intelligence/grafana/. Dashboards: Pipeline Command Centre, Data Intelligence, V2 Verification & Cost, Server Resources, Alerts & Ops, V2 Silver Observability, CX-7 Cortex Recall.
 
-TOP GRAFANA GAPS (headline): (1) ZERO Grafana-native alerting — 0 alert rules, 0 contact points, only 'empty' receiver; real alerting is the pipeline-alerter app service writing pipeline_alerts, Grafana only DISPLAYS -> Grafana/DB/host outage pages nobody. (2) Server Resources dashboard DEAD — server-metrics-collector.service FAILED (203/EXEC), script missing, server_metrics stale since 2026-06-13 (~91d). (3) single-Postgres SPOF, no synthetic datasource-up check. (4) no infra/system metrics (no Prometheus/node_exporter/Loki), no coverage for Node services (konnex-api/connect/telegram-bridge) despite recent auth-pool outage. (5) PG password plaintext in /etc/default/grafana-server + sslmode disable.
 
-DATA LANES (market_intelligence @ 204.168.198.203, 103 tables):
-- SUPPLY (Grace, PRODUCTION-REAL): businesses 388,541 (210,770 active), crawl_snapshots 661,831, LVO 414 (verified 12 = 2.9% structural sole-trader gap), cap001_declared_id_evidence (active 2,759), obs_apprentice_supply 20 (QUARTERLY, STATE-grain, 2021Q1-2025Q4), business_counts_by_area 149,206 (dashboard-ready rollup), business_merges 32,105 (7.6% dedup), dq_scores. Weekly/monthly off crawl_snapshots+businesses; quarterly off apprentice.
-- DEMAND (Ada) — BIFURCATED: (A) legacy tables EXIST but state-grain: keyword_volumes 31,093 (monthly, state only), search_volumes 9,994 (intent taxonomy, 3mo), market_pulse 340 (monthly 10mo), search_analytics 526 (real user demand), ga4/gsc_snapshots SPARSE. (B) contract demand_* tables (DP-1..DP-6) DO NOT EXIST — NSW-plumbers-first, monthly-only, gated on Rajesh T-8 + Ada adapter build. DO NOT design demand metrics assuming DP-1..6 exist.
-- SHARED SEAM = Suburb x Trade x Time; anchor cross-lane joins on Jack+Grace-governed locality canon, not either lane's private resolution.
+- VERIFIED option A (Matt 5f26e7a3): mig 228 APPLIED 16 Oct 10:05Z + Rajesh post-apply PASS; closed (Grace owns ticket + 2 nits; customer wording waits for Regulation read).
+- PIPELINE-STATE-01 (ticket 3fb2300f-2ecb-81ab-9a65-c615331b5f8f, est 2-3; spec /home/shared/marcus-pipeline-state-01-spec-v0.1-2026-10-16.md): my gaps G2,G4,G5,G7,G12 + registry/contract (start now, parallel). SVI-RETIRE DONE (timer disabled 16:07Z, mig 231 16:08:59Z, #357 merged 646b9f4, 12 Grafana titles live; left: briefing SVI line + /api/v1/search-volume 410 konnex-api PR). Grace G1/G3 = kdp #358 (229 sha 2ab07522, 230 sha 44e71bf7) in Rajesh QA: apply 230 BEFORE any MI ff. MATT APPROVED MOCK-UP FOR BUILD (e769d579 via Marcus 3f04657b). DO NOW on resume: build ops_source_registry + adapter column contract (spec s-sections; G12 = every run_kind except sample counts, kind shown; health defs from Marcus spec), then G2/G4/G5/G7 + per-host timer collector + ops_source_state; SVI = RETIRED row.
+- ONEGOV-NOV1-SWEEP-01: timer next 1 Nov 00:00Z. ON 1 NOV: licence_recheck_run <=1100 onegov calls, 0 WorkClear, Oct batch re-checked; tell Marcus + Grace.
 
-GRACE SUPPLY INPUT: 4 sources (Maps via DFS SERP; NSW HBL licence via onegov[exhausted]+WorkClear paid; ABR/ABN; NCVER quarterly manual CSV). Stage chain: DFS post/retrieve->raw snapshot->dedup->normalise/geocode->NSW service-area(conf>=0.75)->licence linkage->ABR/ABN declared-ID join->coverage/DQ anti-join. Metrics: dual-denom binding rate, ~22% SERP-retrieval gap, licence-attach %, 21.93% ABN active-attach, active dup-group count, coverage vs 5,063 residential. Cadence: DFS weekly(au-plumber ONLY)/NCVER quarterly/SVI monthly/GA4-GSC daily. Scope NSW x {electrician,plumber,carpenter}.
 
-MARCUS PM INPUT: must-haves = (1) per-WP delivery-state board (State Plane) w/ gate + evidence-class + CAPABILITY-DEPLOYED vs OUTCOME-REALIZED (deployed-but-inert bit WP-L1 count-0); (2) evidence-class ledger (Observed/Inferred/Verified) over FIXED labeled denominator; (3) delta/gap % vs FROZEN milestone denom w/ provenance labeled (2 legit totals circulate unlabeled -> misread); (4) demand-lane parity from day one (monthly series; presence x shape; insufficient_coverage as OWN state null!=zero!=suppressed); (5) Suburb x Trade x Time seam health view; (6) spend-vs-§6 per run; (7) pipeline health = last-good-run per stage + rowcount deltas + INERT-CAPABILITY flag. GUARD: bare 'Verified %' = self-asserted-corroborated NOT dual-independent-authority; Walter doc stays internal-feedback-scoped, no dashboard implying published/adoption claim (§8-HELD).
-
+- AGENT TOKENS (po #340): alex + jack lack token files (Matt runs save-agent-token; I restart konnex-agent-tmux@<agent>).
+- AK www re-flipped 15 Oct (Marcus 58eca0e7, Rajesh 0464bb35/4676d4d6). Follow-ups: plumber_count withhold into source control/deploy config; de-dupe 5,773 paragraph in next card PR; rollback rehearsal (quiet window).
+- MARKET PULSE (parent MARKET-PULSE-WWW-01 3fa2300f-2ecb-8102-b961-e98e3555e03a; Matt GO e39baaf6; www when Marcus done-list a-f met; www-ready ~21-22 Oct AEDT). J1 ABS DONE (run abs8731-202608-a, timer konnex-monthly@abs8731 live). J2 feed = mine NEXT (see RESUME FIRST). J4 page = Olivia (olivia/market-pulse-v2, with Rajesh; uses contract v0.1a). DA layer = Ada mig 222 (kdp #346) + 223 (blocked); pulse_ro role; C2 no totals over suppressed cells. Search layer = Ada (Marcus A: 4 readable/14 too few/16 not measured + 40 targets). Map = colour by demand state only (Marcus da8e0055). Reviews = MARKET-PULSE-REVIEWS-01 later.
+- AK P1 follow-ups (Marcus a381952f): held-region q -> UNSUPPORTED offer state (Rajesh e2235584); rollback rehearsal of www flip in quiet window; 217 allowlist.
+- NEXT CARDS (Matt 1c38546d, after re-flip): NSW total via new optional v1 'measures' template (Olivia dd73eaf2 shape + per-measure as_at), website presence, recent activity; MARKET-PULSE-REVIEWS-01 3fa2300f-2ecb-81af-a5b1-ed35bc9d3801 (mine, estimate on pickup).
+- MIG 224 APPLIED 20:42:34Z (sha c826c5c9 gate, Rajesh PASS 18239860); C1 MET set 22 5,773 20:55:57Z (told); kdp #348 MERGED 880d7c0 (21:00Z); C2 check 02:30Z slot + hourly backstop (set holds entity-map lock ~13 min).
 ## Remaining
-1. Write synthesis draft -> /home/shared/jack-dashboards-metrics-audit-2026-09-12.md (supply lane, demand lane, live monitoring, Grafana-vs-internal split, consolidation recs, alerting gap).
-2. Create Notion doc (find docs-library parent; use markdown API to keep tokens low).
-3. Get Ada demand-lane canonical list (post-T-8) + Rajesh pipeline-health/alerting input; targeted follow-up to Grace if needed.
-4. Circulate draft to Grace + Marcus (+Rajesh) for review, then hand to Matt for Walter.
-
-## Follow-ups (not blocking this task — from prior arc)
-- PAID DEMAND RUN (NOT my gate): Rajesh T-8 gate HELD — READY items accepted, items 4/5/6 pending Ada's adapter build (Ada context-exited 78%, resumes adapter next session). Runs under §6 after Rajesh PASS.
-- summon-offline-agents KNOWN_AGENTS omits ada+marcus (low pri, Rajesh-gated PR).
-- Telegram bridge migrate_to_chat_id handler missing (low pri, Rajesh-gated PR) — orphaned Ada's thread-state today.
-- deployed-not-merged hygiene: dashboards/ops checkout on wip/jack-demand-intel-01-step2 w/ uncommitted work.
+- ONEGOV-DETAILS: after 1 Nov pin PR, capture live details response, licensee-path allowlist, flip DETAILS_SHAPE_CONFIRMED.
+- Older watch items (REVIEW TOP-UP + LIVENESS 2 Nov, ENTITY-MAP-TWIN-GUARD-01, ops #329, GOV-D2 5 Nov, kdp #279, SUPPLY-PANELS-02, WorkClear): Cortex / git log 30a17a1.
+- MIG 216 (Grace, segment split_publishable): apply ONLY sha 107012a0 (@94b82f9) after Rajesh re-PASS (old gate ca2394ec stale). MIG 217 coarse ad hoc view (Grace) coming for the allowlist.
+- Ada DEMAND-EVIDENCE-01: ~25 Oct (before 1 Nov 03:07Z) 124 dry run -> apply -> merge kdp #191 -> cherry-pick konnex-api #70 onto prod (rollback #70 before 124).
+- Backlog bundle ticket 3ed2300f-2ecb-81f5-9049-dc04e0634c43 (dispatcher false REWORK, disk alert 90%, secret sweep, key hashing #40, etc.). SUPPLY-UNIVERSE-01 follow-ups on its ticket. Vercel bypass secret rotation = Matt.
 
 ## Resume notes
-- /home/ada, /home/grace permission-denied for jack — edit/read peer PROGRESS.md via `sudo -u <agent>`.
-- BROADCAST DISCIPLINE: name the role-holder (Matt/Marcus/Rajesh/Ada/Grace), never 'your'.
-- Walter doc = INTERNAL feedback scope only, §8-publication-HELD; no customer-facing/adoption framing.
-- MID-work -> NO agent-offline (stay online for triggers; Matt engaged).
+- Other open: AGENT-DEPLOY-API-01 (TODO), GRAFANA-SERVER-RESOURCES-01 (blocked on Phase-2 sweep), CLAUDE.md tier cleanup (via Marcus).
+- Standing: stamp Prod Verified At on every migration applied. Docs PRs kdp #261-#263 + #241 still await Rajesh light review.
+- Times to Matt in AEST; Telegram eats underscores (spell them out). Long msgs via file.
+- Migrations: `cat f.sql | ssh konnex-data 'sudo -u postgres psql -X -d market_intelligence -v ON_ERROR_STOP=1'`; dry run = forced rollback; scripts that write temp files: run the WHOLE script as postgres on konnex-data.
+- Merges: /home/jack/projects/ops/bin/konnex-gh pr merge --squash --match-head-commit <full sha>; body needs `Ticket: <full uuid>`; request rajesh-konnex-bot. Merging a Ticket-footer PR sets the ticket Done.
+- ops deploys: single-file install from the merge commit (local ops checkout is deliberately behind); back up first.
