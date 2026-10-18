@@ -1,10 +1,10 @@
 ---
 task_id: MARKET-PULSE-WWW-01
 agent: jack
-session_id: 4de99c83-7839-4a67-b461-63df54cbebb5
+session_id: 427ed00a-1319-4a62-b1af-b471c06bcbd4
 model: claude-opus-5-5
 status: context-exit
-last_updated: 2026-10-17T23:18:00Z
+last_updated: 2026-10-18T08:23:40Z
 notion_task_id: 3fa2300f-2ecb-8102-b961-e98e3555e03a
 context_needed:
   files: [/home/shared/jack-market-pulse-feed-contract-v0.1-20261015.md, /home/shared/jack-market-pulse-feed-fixtures-20261015/, /home/shared/jack-ak-p1-recapture-2026-10-15/]
@@ -20,15 +20,23 @@ context_needed:
 - DEMAND TIMER live: first fire Tue 20 Oct 03:11Z (after it validates: save feed JSON witness to /home/shared, Ada s9) (exit 75 if Sep unpublished); re-read DFS balance 19 Oct (need >= US$10.81). Nov (v2.3): DEMAND_RUN_APPROVED v2.3/116/cap 12 + G3 probe (~US$3.60), DFS >= US$12.81.
 - Agents GitHub PAT (/home/shared/secrets/github-pat-agents.token) = 401. Asked Matt: (a) agents use konnex-agents App (/etc/konnex/github-app.pem root:jack 640) or (b) new PAT. Meanwhile I open agents' PRs. Also hits konnex-qa: Rajesh push fails since fe2a845 (c7eea71e, 3 Oct 16:58Z); same fix.
 
-- DONE 17 Oct (history in git/Notion): PS01 v2 release, migs 249/251/253 (FP-READINESS live, ticket Done). ABOUT-EXAMPLE-01 (#70 Matt merge) + LAYOUT-WIDTH-01 (#71) live, Rajesh post-deploy PASS 3dfeb8a7. api.latency_sla 75f69ed1 auto-resolved (profile endpoint structural ~860ms p95; triage /tmp/pipeline-incident-75f69ed1-*/triage.md) -> ticket: cache profile payload in konnex-api or own SLA. Open from them: close #375/#376 (Matt); relabel CC panels 5/14 WorkClear calls->units; FP N3/N5/N6 + G4; Grace F1/F2 after W43.
-- INSIGHTS-HUB-01 (3fc2300f-2ecb-81ca-a097-fe6cb019fae7; Matt a87d75b6, Marcus 4869c489): my section 9 (serving view/endpoint + publication registry entry per AVAILABLE row) in /home/shared/marcus-insights-hub-step1-inventory-v0.1-2026-10-18.md rows 1-7 filled; section 9 WRITTEN 17 Oct ~17:15Z (J1-J6). Marcus rulings 9c5fba1d DONE 22:28Z: top_service_suburbs WITHHELD (konnex-api /home/jack/.env, bak .env.bak-20261017-ak-withhold); apprentice_count + recent_activity KEPT live; J1 DONE: konnex-api #117 deployed 22:36Z (prod 00b96ec = 5bc984d + git am; rollback git revert 00b96ec + restart); live AK answer has attribution x1; Rajesh live gate pending. Rajesh live gate PASS 699f656c. AK-SOURCE-LABELS-01 DONE: #117+#118 live (prod c00df70) + on main (d3ff13a); live gate PASS d14ccbb6. Follow-ups on ticket: website caveat can double (prose + code; make check semantic), badge date = snapshot, Verified wording vs Grace Q12; Olivia AK page copy (www).
-- SoD RULED: Matt a87ef392 option A: I may deploy my own builds iff Rajesh PASS bound to exact hash + hash-gated + Rajesh post-deploy check + rollback ready; my www builds = Matt's click (memory project_sod_exception_jack_deploys_own_builds); written into Notion Charter as Amendment A1 to s5 (Matt 14d86cbb); Cortex: active authority record now :1.3+A1 (id 22372c33, supersedes 1.3 row); v1.4 = Matt/Marcus.
-- MAPS WEEKLY (Matt 175690ef/0ac89a3f): sweep RUNNING crawl 6426 (service started by me 22:48:00Z, pid 4164550, ~US$19.68 proj, cap $30; Grace watches + reads back). Timer v2 UTC INSTALLED 22:50Z (Rajesh 928f4ab2; NEXT Sun 25 Oct 14:30Z; bak .timer.bak-20261017-monthly). Then: run-monthly-maps.sh header 'Monthly'->weekly (cosmetic), PIPELINE-STATE maps_sweep cadence/registry + FP inputs_due unaffected (25 Oct/1 Nov before 10 Nov).
-- FP gate events from the Step 1 audit inserted 23:15Z (rows 1, 3, R, P; Marcus f517c505). PS01 follow-up mig: maps_sweep registry cadence monthly->weekly. Verify crawl 6426 writes maps_sweep checked result on completion; abn_sweep first verdict Tue 20 Oct 21:00Z (mig 249).
-- DOCS: #72 (Matt brief) + #73 (Step 1 audit, merged 1a005f9) on main; folder link sent. Next docs PR when Marcus sends refreshed outputs (C2 base 3,149 still 4x in v1.2) / Step 2 pack.
+- Open from 17 Oct: api.latency_sla ticket (cache profile payload or own SLA); close #375/#376 (Matt); relabel CC panels 5/14; FP N3/N5/N6 + G4; Grace F1/F2 after W43.
+- INSIGHTS-HUB-01 3fc2300f-2ecb-81ca-a097-fe6cb019fae7: J1 + AK-SOURCE-LABELS-01 live (prod c00df70, gates PASS). Follow-ups on ticket: website caveat can double (make check semantic), badge date = snapshot, Verified wording vs Grace Q12; Olivia AK page copy (www). Docs #74/#75/#76 merged, links with Marcus.
+- MAPS WEEKLY: 6426 + v49 + migs 254/255 all DONE (tickets Done). Next sweep Sun 25 Oct 14:30Z (Matt tops up DFS first, 773b357b). konnex-ops 'restart required' (OS update): plan a quiet window with Marcus, not unilateral.
+- AK-SNAPSHOT-ALIGN-01 3fc2300f-2ecb-818b-840c-f8b69d8fbf18: 02:47Z re-check Rajesh PASS cc59b1ef. D2 fix kdp #387 LIVE (merged 83d3d8f; now @8e93af0 (wrapper blob e3f721d726c5); rollback b3d7370). VERIFY Sun 25 Oct 14:30Z run (log 4 steps OK + supply_snapshot_set cause_ref post-sweep + AK Q1=Q3) with Rajesh after 15:15Z.
 - PS01 v2 SHIPPED (245/246/247 live, #377). MY FOLLOW-UP PR (one): 246 F2/F3/F6; 247 N1-N5 (conditional seed, link TRUNCATE guard, issue_id check, hermetic A15/A17, RETIRED lineage) + G4 (state snapshot table, 9s views); automated serving_probe in ops-timer-collector (probes age out 24 Oct -> UNKNOWN); collector retention; 238 N1; entity_map stale_after (hourly, OK on 13 Oct check: Rajesh 29d7d15f); #375 nits (grid cols, freshness 90d, re-grant runbook). MY G2: run-website-crawl.sh job_run start+finish + website_crawl adapter -> validated (next crawl Mon 19 Oct; ':r2' re-run keys); supply change refresh ledger+adapter (ed.2). AK follow-up: Q9/Q13 'we don't have' wording for withheld views.
 - PIPELINE-STATE-01 parent 3fb2300f-2ecb-81ab-9a65-c615331b5f8f (est 2-3; spec /home/shared/marcus-pipeline-state-01-spec-v0.1-2026-10-16.md; Matt GO e769d579). My gaps G2,G4,G5,G7,G12. SVI-RETIRE done; left: briefing SVI line + /api/v1/search-volume 410 konnex-api PR.
 - ONEGOV-NOV1-SWEEP-01: timer next 1 Nov 00:00Z. ON 1 NOV: licence_recheck_run <=1100 onegov calls, 0 WorkClear, Oct batch re-checked; tell Marcus + Grace.
+- AK-ABN-YEARS-LABEL-01 DONE: #119 live prod d23c920 (= c00df70 + git am; main b5969b1), Rajesh live gate PASS 4cf4b8a7. NOTE prod konnex-api is now d23c920.
+- AK wording DONE: #120 (valid->observed) + #121 (search estimates + A8) LIVE, merged; prod konnex-api = 17c1521 (rollback 1f077e0). www #81 PROFILE-HERO + #82 SEARCH-ESTIMATE live, Rajesh post-deploy PASS. Dead preset code = AK-PRESET-DEAD-01 (Olivia).
+- MIG 258 DONE (#391 merged, Rajesh post-apply PASS). Grace follow-up BEFORE 21 Oct: jsa_ivi registry review_after 2026-10-28 + review_trigger wording (stale '14 Oct'), Rajesh bdfb7a5b.
+- VENDOR-NAME-OFF-01 (Matt 636451af): konnex-api #122 @8cfe324 (AK + Market Pulse feed + scrubVendorNames on query rows) awaiting Rajesh -> A1 deploy onto 17c1521 -> gate Q19 + feed -> merge. Durable: Ada drops '(DataForSEO)' from ak_nsw_plumber_demand_12m.basis. Olivia does www.
+- MIG 259 (Grace, kdp #392 @5838fc3, delta over Rajesh-passed 466d62b): Rajesh re-PASS 768bf888 @5838fc3; ASKED Matt /home/shared/apply-mig-259-2026-10-18.sh (no prod dry run: DROP matview would lock live reads; Rajesh replayed x2) -> Rajesh T1-T8 + ACL -> merge #392.
+- TOKEN WASTE (Matt): DONE. Rajesh items 1-2 in effect; item 3 = removed unused project notion server (reviewed, 1-line diff), no measurable startup change (~65K). Matt told.
+- PROFILE-HERO-01 LIVE (#81 merged 156058e, Rajesh post-deploy PASS a747e626).
+- MAPS-CLOSURE-01 LIVE: 256 applied (Matt ~07:00Z, Rajesh live PASS), #390 + #389 merged, mi-weekly-cron @8e93af0 (rollback 83d3d8f). 25 Oct check: ce317efc leaves cohort (-1).
+- MIG 257 LIVE (Matt ~07:07Z; set 26; tests ok; www 5,873 / V1,053 AC2,071 LO2,749; change card unchanged; #388 merged; Marcus+Matt told). Rajesh post-apply PASS 4c668c6f; AK tools on prod: universe 5,873, Verified 1,053, service-area base 5,873 (aligned). DONE.
+- Check abn_sweep first verdict Tue 20 Oct 21:00Z (mig 249).
 
 ## Remaining
 - ONEGOV-DETAILS: after 1 Nov pin PR, capture details response, licensee allowlist, flip DETAILS_SHAPE_CONFIRMED.
