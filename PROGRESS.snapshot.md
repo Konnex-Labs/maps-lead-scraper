@@ -1,54 +1,51 @@
 ---
-task_id: release-121-127-followups-2026-10-02
+task_id: LEGACY-RETIRE-01
 agent: jack
-session_id: 06c4f22a-d94a-4100-817b-29af86a854e5
+session_id: ea6df3d4-8562-48af-86e5-931e069cdbee
 model: claude-opus-5-5
 status: context-exit
-last_updated: 2026-10-14T06:55:19Z
-notion_task_id: 3eb2300f-2ecb-81c9-a9a5-d6fbc267c23a
+last_updated: 2026-10-28T12:14:00Z
+notion_task_id: 4032300f-2ecb-81e5-8658-fa215ff0c827
 context_needed:
-  files: [/home/shared/jack-grafana-ro-157/NOTES.md, /home/shared/jack-case5-dry/, /home/shared/ada-plumber-nsw-monthly-run-plan-20261003.md]
-  branches: [konnex-data-pipeline:jack/grafana-ro-role PR #237 (worktree /home/jack/projects/kdp-wt-grafana-ro), konnex-ops:jack/exec-report-01 (merged; worktree /home/jack/projects/ops-wt-exec-report removable)]
-  collaborators: [matt, marcus, rajesh, grace, ada]
+  files: [/home/shared/jack-market-pulse-feed-contract-v0.1-20261015.md, /home/shared/jack-market-pulse-feed-fixtures-20261015/, /home/shared/jack-ak-p1-recapture-2026-10-15/]
+  branches: [konnex-api main (prod = cherry-pick tree, deploy worktree kapi-wt-deploy106 @6b96a97), kdp main]
+  collaborators: [matt, marcus, rajesh, grace, ada, olivia]
 ---
-
 ## Done
 
 ## In Progress (RESUME FIRST)
-- AK-WWW-RELEASE-01 DONE 14 Oct 06:51Z (www #51 b3eb65b; Matt confirmed via Marcus c515c62e; ticket Done+stamped). API prod konnex-api f8bac68 (on c258c93 incident fix #97, base 4575564; rollback c258c93 / 4575564), env in /home/jack/.env (ASK_KONNEX_DAILY_LIMIT_USD=10, ASK_KONNEX_PUBLIC_KEY_IDS=daed5ed0-362a-4fa5-a1ad-40b5d5027f3b). Vercel konnex-labs-website env: ASK_KONNEX_KX_API_KEY/AK_VISITOR_SALT/ASK_KONNEX_API_BASE (secrets /home/jack/.secrets/). Usage dashboard AK-USAGE-DASH-01 live.
-  FOLLOW-UPS (mine): (1) port #97+#98 server.js to konnex-api main (main differs from prod line; PRs #97/#98 target main but must NOT merge as-is: build a main-based PR, Rajesh QA). (2) #97 nits: int range <=2147483647, transient error in row loop re-queue, class-42. (3) uat branch lacks proxy #50 9d793f8/8593912: open uat PR so UAT = www code. (4) remove worktrees kapi-wt-ak-guards, kapi-wt-events-fix, kw-wt-ak-guards, kdp-wt-ak-dash, ops-wt-purge-qq + konnex-data-api/.claude/worktrees/agent-a550ce456eee4aec2. (5) check purge RESULT lines (privacy-retention 03:40Z, query-log 17:10Z) include query_question. (6) Matt may revoke Vercel token jack-ak-www-release-2026-10-14 (/home/jack/.secrets/vercel-token).
-- NOW 02:55Z: AK #91+#92+#93 LIVE prod 57373f38 (rollback chain 038d4941<-90db7a40<-4f34fb12; deploy = git bundle ff on konnex-api, restart, /api/health). WEBSITE DONE 13 Oct (RELEASE STEP: scripts/www-strip-held-links.js after copy-from-uat). Apex 307->308 = Matt. Listed-only rename + ACTIVITY-FLAG-01 DONE 13 Oct (AK prod 4575564a, rollback a32f306c). LIVENESS TIMER LIVE (2 Nov 06:00Z). NEXT: kdp #330 MERGED 1d5e6fe 15:3xZ (Rajesh be03f3f8; MI ff); REVIEW TOP-UP: kdp #332 MERGED 209b5f6 (Rajesh ffa884f9), MI ff, unit+timer installed in /etc DISABLED; dry-run-only OK (9,595 places, <=US$23.51). ENABLE only after Grace confirms 2 Nov manual run reconciled. OnFailure DONE: kdp #333 merged 8579d66, installed + verified (backup /root/unit-backup-20261013T1541Z). Grace mig 212 = sort-17 row for #331. PANEL 31 + MIG 212 + DFS GUARD LIVE 16:16Z (kdp #334/#331/#335; tickets Done + stamped; mi-weekly-cron at b3d7370; dashboard backup .bak-pre-pr331-20261013T161609Z).
-- ESD-01 MIG 213 LIVE 18:27Z (kdp #336 8f88d8b; ticket Done+stamped; map v48 7,566; tiers 1,057/2,091/2,626 = 5,774; snapshots 18:38Z; CHECK validated). 
-- TODO: rotate market_intel pw + ask_konnex_app RO pw (exposed 14 Oct). Rajesh konnex-qa push 401 = agents PAT (Matt).
-- OPEN BUILDS: AK 'off' mode = withhold all Verified (Marcus 9299de21, low pri); ticket api_usage logging broken since 7 Apr; kdp #321 extractor v2 (Rajesh) before Mon 19 Oct 05:00Z; PROFILE_WEBSITE_CHANGES flip after Olivia's uat page; apex 307 -> Matt (Vercel). Use REST, never 'gh pr edit'.
-- ONEGOV-DETAILS (kdp #313 merged): AFTER 1 NOV pin PR: capture first live details response; exact licensee-path allowlist instead of BFS (nominee ABN risk), tighten cabn regex, holder_name object guard; flip DETAILS_SHAPE_CONFIRMED.
-- PLANNING: konnex-monthly@planning.timer live; watch 5 Nov 03:00Z first real month (2026-10). TODO: MONTHLY_HC_URL in /home/shared/config/konnex-monthly-planning.env. GOV-D1 = Ada.
-- EXEC-REPORT-01 (3ed2300f-2ecb-814f-a15e-d211fe8a7298): live; TODO IVI freshness flag (Marcus b711acc1), exit-4 alert, EXEC_REPORT_HC_URL; Rajesh closes.
-- DEMAND TIMER: DONE + LIVE 14:14Z (kdp #314 157c6aa, mig 202, pg_hba line 152 Matt OK 4b4aede1, ticket Done). WATCH first fire Tue 20 Oct 03:11Z (expect exit 75 if Sep unpublished; quiet <27th; re-read DFS balance 19 Oct, need >= US$10.81, was 37.10). TODO: RESULT line for 27/28 alert (Rajesh note 4); Nov run needs new DEMAND_RUN_APPROVED sig in /home/shared/config/konnex-monthly-demand.env; remove worktree kdp-wt-demand-runner.
-- Agents GitHub PAT (/home/shared/secrets/github-pat-agents.token) = 401. Asked Matt: (a) agents use konnex-agents App (/etc/konnex/github-app.pem root:jack 640) or (b) new PAT. Meanwhile I open agents' PRs. Also hits konnex-qa: Rajesh push fails since fe2a845 (c7eea71e, 3 Oct 16:58Z); same fix.
+- RESUME HERE = LEGACY-API-RETIRE-01 ticket 4072300f-2ecb-81af-8e8f-c6f7437041c4. API part LIVE + Prod Verified (Raj 5d057688; kapi prod 8c377eb, rollback LEGACY_API_ENABLED=1). UAT www: #104 merged into uat 65662022. PROD www: konnex-website #105 (main <- olivia/old-products-retire-prod @76da1475baf9262e3d68900eeb0a9d8e03f0c326) in Raj QA (he restarts fresh; asked him to check footer /help,/getting-started links). ON PASS + gh approval: konnex-gh pr merge 105 --squash --match-head-commit 76da1475baf9262e3d68900eeb0a9d8e03f0c326 (Vercel auto-deploys main) -> curl -I www.konnexlabs.com/{connect,api,api/docs,api-landing} = 301 to / -> tell Raj + Matt -> ticket Done. Matt GO bd748311. Olivia gh fix sent (agent-gh-auth). OWED: living-state brief eng review by Thu 29 Oct 03:00Z.
+- #126 rollback: CONTACT_REVEAL_ENABLED=1; backup ~/kapi-prod-pre-pr126-20261028T1147Z.tgz on konnex-api. Olivia CONNECT-REVEAL-HIDE-01 in UAT QA.
+- #124+#126 DONE (prod a3b5602, Raj probes PASS). Marcus API claims review /home/shared/marcus-api-proposal-claims-scope-review-2026-10-28.md (fold in before step 1).
+- API BRIEF: proposal DELIVERED 28 Oct (/home/shared/jack-self-serve-api-engineering-proposal-2026-10-28.md; audit /home/shared/jack-api-audit-2026-10-28.md); Matt + Marcus told. Matt decision pending: retire Connect contact-reveal routes. Next mine: measure cost per call type for rate card; later docs PR to konnex-api docs/reports. Follow-up tickets (Marcus, Backlog): SEC-V2-HELD-COUNT-01 813f, SEC-V2-ASK-SUPPLY-01 8173, SEC-STRIPE-DEDUPE-01 8107, SEC-PROFILE-RATELIMIT-01 81b2 (all 4072300f-2ecb-...). Marcus online, owns planning for both briefs (/home/shared/media/1793177239292 + 1793177268188 -matt-to-jack.md).
+- BOARD-RESET-01 triage answered (file /home/shared/jack-board-reset-01-triage-35-ANSWER-20261027.md; KEEP 1,2,17; kdp#375/376 closed superseded). Marcus applies. Then set BOARD_SWEEP_WAKE=1 when he says done.
+- Confirm tickets PLAN-CADENCE 4032300f-2ecb-8137-bcb8-cd426e05a2e0 + MARCUS-ROLE Done/stamped (both LIVE: #357 fbdc09b, #358 1eddef4). FOLLOW-UP tickets: add marcus/ada to summon-offline-agents KNOWN_AGENTS; agent-settings-deploy reject unknown flags + keep owner.
+- BOARD-SWEEP-WAKE-01 LIVE OFF (#359). Set BOARD_SWEEP_WAKE=1 when Marcus says BOARD-RESET-01 done.
+- RAJ ALERT LIVE (ops #356 2e294db). Ledger re-anchor pending Matt OK. Follow-up: USD text. Trial ticket 4032300f-...-81e5 stays In Progress. LEAN CLAUDE.md shrink, re-measure 28 Oct. Matt open: 2nd vendor, fleet plan after ~31 Oct invoice.
+- mig 266 DONE (#410 2c50f13; verify /home/shared/jack-mig266-postapply-20261026.txt; SIG B Raj 2190af1b). NEXT (Prod Verified already stamped 14:06Z, ticket Done): live DFS balance >= $12.81 read right before drop-in (needs DFS creds: auto-mode blocked me, operator decides) -> cap-12 drop-in -> re-enable demand timer before 20 Nov; Ada reconciles. Raj budget 100k DEPLOYED 06:30Z (Matt GO 2d745143; settings env, bak .pre-deploy-2026-10-26T06-30-03-209Z); live at his next session (verify agent-stats/rajesh-latest.json context_budget_tokens=100000); re-measure 28 Oct. OneGov replied 26 Oct (GSD-331572): sent Matt reply draft, 10k/mo ask; on approval raise NSW_TRADES_QUOTA_CAP (now 2500). HELD 1: Bondi Junction 9060915 -> Ada amendment PR (new manifest/registry shas) -> Raj QA -> sig B -> I install cap-12 drop-in before 1 Nov 00:00Z. Nothing on me until Ada PR. Node DB URL needs ?uselibpqcompat=true&sslmode=require; demand_runner from konnex-ops hostssl. 5,983 OVERSTATED ~47 (Grace dcd67507: 123 new entrants unscreened by cohort rules). Grace mig (rerun accepted excl rules + post-sweep step) -> Raj QA -> I apply -> manual snapshot_supply_set. Marcus decides note/hold (I rec none, 6e031c7d).
+- APEX DNS (Matt, after his domain-host login fix): set konnexlabs.com single A @ -> 216.150.1.1 (remove 216.198.79.1 + 76.76.21.21); verify with dig on his ping.
+- EXEC-REPORT-01 3ed2300f-2ecb-814f-a15e-d211fe8a7298: TODO IVI freshness flag, exit-4 alert, EXEC_REPORT_HC_URL.
 
+- TELL MATT (GH-APP): main required-reviews; revoke Raj old qa PAT.
+- MAPS TIMER 28-day LIVE (next Sun 22 Nov 14:00Z; END 2028-12-17, extend before). konnex-ops OS restart: plan quiet window with Marcus.
+- PIPELINE-STATE-01 parent 3fb2300f-2ecb-81ab-9a65-c615331b5f8f (est 2-3; spec /home/shared/marcus-pipeline-state-01-spec-v0.1-2026-10-16.md; Matt GO e769d579). My gaps G2,G4,G5,G7,G12. SVI-RETIRE done; left: briefing SVI line + /api/v1/search-volume 410 konnex-api PR.
+- MARKET-PULSE-REFRESH-01 (c): Raj checked 28 Oct, no new ABS month (last 2026-08); he rechecks after 1-5 Nov timer. Nothing on me.
+- ONEGOV-NOV1-SWEEP-01: timer next 1 Nov 00:00Z. ON 1 NOV: licence_recheck_run <=1100 onegov calls, 0 WorkClear, Oct batch re-checked; tell Marcus + Grace.
+- PS01 v2 FOLLOW-UP PR (mine, one): full item list in /home/shared/jack-ps01-v2-followups-2026-10-27.md (ticket PIPELINE-STATE-01 3fb2300f-2ecb-81ab-9a65-c615331b5f8f).
 
-
-- ops #329 pgBackRest repo2 (INCIDENT 3e82300f-2ecb-8133-8af2-f928075eaf9e): head 06cccba (Rajesh PASS abc89b8c on 00fd7c8, nits fixed; re-approve asked; diff Mon..Sat, 4h bound, exact-deb install by sha, archiver fails = box blips). repo1 verify OK 6 Oct. window Sun 11 Oct 03:00Z; merge LAST (closes incident). F2 alert ticket TODO.
-
-
-
-- ONEGOV-NOV1-SWEEP-01 INSTALLED: kdp #299 merged a8dff73 (Rajesh PASS 245aa30c), units == QA head 5aade74, timer enabled, next elapse 2026-11-01 00:00Z. ON 1 NOV: check licence_recheck_run (mode rolling, ~00:00Z) <= 1100 onegov calls, 0 WorkClear, 1 Oct batch re-checked; tell Marcus + Grace. Marcus 4db674e1: KEEP 00:00Z (move only if Grace confirms onegov resets on Sydney time). LATER: WorkClear fallback on the nightly expiring job.
-
-
-- AGENT TOKENS (po #340): alex + jack lack token files (Matt runs save-agent-token; I restart konnex-agent-tmux@<agent>).
-- WATCH/TODO (condensed 13 Oct): GOV-D2 silo timer first real fire 5 Nov; ROUTER next contract touch reword 3f32300f basis (Grace 010d2eb9); kdp #279 Grace docs -> Rajesh light review -> merge + ff MI; SUPPLY-PANELS-02 3f22300f-2ecb-81fa-8d89-c5b6b060c8e4; AK cost Haiku test ~16 Oct if spend >US$100/mo; WorkClear probes w/ Grace; website-facts weekly run check + 131 re-snapshot per Grace/Marcus.
 ## Remaining
-- CARLOS PR: konnex-seo docs/nsw-plumbers-seo-review-2026-10-10 (c9e2615); waits Matt adding konnex-seo to the App; then open (Rajesh light) + merge.
-- ABR sweep: abn-status-sweep-weekly.service --min-days 7->6 (12:26Z, backup .bak-20261010T1226Z); Grace verifies after Tue 13 Oct 21:00Z. TODO: put this /etc unit under source control.
-- TODO: token-cost dashboard weekly "use freely" card + carlos=Sonnet mis-attribution.
-- ENTITY-MAP-TWIN-GUARD-01 3f22300f-2ecb-816a-b80e-d887a45453c8: scope -> PR -> Rajesh.
+- ACTIVE-TRADING-SHARE (Grace 4f7d970e, Matt e7235e2a): my lane = API/AK wiring; spec /home/shared/grace-active-trading-share-spec-2026-10-27.md. Wait for Grace metric view (after mig 267) + Marcus ticket/ACs (Thu). UAT first; prod s8 hold.
+- MARCUS WAKE Thu 29 Oct ~22:00Z (9am AEDT Fri) for BOARD-RESET-01 if not already done this session: agent-online marcus --reason agent-handoff --prompt 'resume BOARD-RESET-01 PROGRESS; tell Jack BOARD_SWEEP_WAKE; then agent-offline'.
+- MARCUS TODO: trim his startup ctx (38%); check his Notion use on API key. TICKET: dedupe Stop-hook ckpt notices; exit banner says 'Agent: jack'.
+- ONEGOV-DETAILS: after 1 Nov pin PR, capture details response + allowlist, flip DETAILS_SHAPE_CONFIRMED.
+- MIG 216 (Grace, segment split_publishable): apply ONLY sha 107012a0 (@94b82f9) after Rajesh re-PASS (old gate ca2394ec stale). MIG 217 coarse ad hoc view (Grace) coming for the allowlist.
 - Ada DEMAND-EVIDENCE-01: ~25 Oct (before 1 Nov 03:07Z) 124 dry run -> apply -> merge kdp #191 -> cherry-pick konnex-api #70 onto prod (rollback #70 before 124).
-- Backlog bundle ticket 3ed2300f-2ecb-81f5-9049-dc04e0634c43 (dispatcher false REWORK, disk alert 90%, secret sweep, key hashing #40, etc.). SUPPLY-UNIVERSE-01 follow-ups on its ticket. Vercel bypass secret rotation = Matt.
 
 ## Resume notes
-- Standing: stamp Prod Verified At on every migration applied. Docs PRs kdp #261-#263 + #241 still await Rajesh light review.
-- Times to Matt in AEST; Telegram eats underscores (spell them out). Long msgs via file.
-- Migrations: `cat f.sql | ssh konnex-data 'sudo -u postgres psql -X -d market_intelligence -v ON_ERROR_STOP=1'`; dry run = forced rollback; scripts that write temp files: run the WHOLE script as postgres on konnex-data.
+- AGENT PLAN (Matt GO 76bf8d39): tracker 4032300f-2ecb-819d-9943-d99722b2ff95; week: AGENT-LEAN-01, AGENT-API-TRIAL-01, BOARD-RESET-01, PLAN-CADENCE-01, MARCUS-ROLE-01. Fleet re-mint HELD.
+- API TRIAL LIVE (Raj api-key, #349). Week-end tab vs Console ~31 Oct.
+- AGENT-LEAN-01 (4032300f-2ecb-8163-af43-f9578ec41e9b): (1) 150k budget LIVE 12:50Z (ops #355 c39172e, CLAUDE.md pushed 8/8; rollback agent-statusline.sh.bak-pre-pr355-*). Olivia on subscription (token fixed 13:01Z); Carlos -> API key (one key per agent in agent-runtime workspace, Matt creates 'carlos' key) + on-demand. (3) on-demand spec /home/shared/jack-agent-lean-on-demand-seats-spec-2026-10-24.md (now Alex+Carlos only; Olivia out). (2) my MEMORY.md shrunk 99->41KB; CLAUDE.md shrink TODO. Then measure.
+- Standing: stamp Prod Verified At on every migration applied.
+- Migrations: `cat f.sql | ssh konnex-data 'sudo -u postgres psql -X -d market_intelligence -v ON_ERROR_STOP=1'`; dry run = scripts/prod-dry-run.sh (main a097470; never by hand); scripts that write temp files: run the WHOLE script as postgres on konnex-data.
 - Merges: /home/jack/projects/ops/bin/konnex-gh pr merge --squash --match-head-commit <full sha>; body needs `Ticket: <full uuid>`; request rajesh-konnex-bot. Merging a Ticket-footer PR sets the ticket Done.
 - ops deploys: single-file install from the merge commit (local ops checkout is deliberately behind); back up first.
