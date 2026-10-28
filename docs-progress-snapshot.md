@@ -1,11 +1,11 @@
 ---
-task_id: BOARD-RESET-01-TRIAGE
+task_id: API-SELF-SERVE-01-S1
 agent: jack
-session_id: 6f92b31e-da3e-4f53-b508-cfcf640741ad
+session_id: 75788af4-27b1-4b1c-aa24-b995dfb3e979
 model: claude-opus-5-5
 status: context-exit
-last_updated: 2026-10-28T09:20:00Z
-notion_task_id: 4032300f-2ecb-81e5-8658-fa215ff0c827
+last_updated: 2026-10-28T12:27:00Z
+notion_task_id: 4072300f-2ecb-81f7-a657-c9e35dee1b16
 context_needed:
   files: [/home/shared/jack-market-pulse-feed-contract-v0.1-20261015.md, /home/shared/jack-market-pulse-feed-fixtures-20261015/, /home/shared/jack-ak-p1-recapture-2026-10-15/]
   branches: [konnex-api main (prod = cherry-pick tree, deploy worktree kapi-wt-deploy106 @6b96a97), kdp main]
@@ -14,20 +14,21 @@ context_needed:
 ## Done
 
 ## In Progress (RESUME FIRST)
-- RESUME HERE = SEC #124 DEPLOY: konnex-api PR #124 head e8f9be3d567375e74481596549d0b40b43d89573 (wt /home/jack/projects/kapi-wt-pii410; node_modules symlink untracked, don't commit). 410s 5 record /v2/tools (RECORD_TOOLS_ENABLED=1 rollback) + /api/v1/businesses/:id (V1_BUSINESS_DETAIL_ENABLED=1). Ticket SEC-V2-RECORD-TOOLS-01 4072300f-2ecb-810c-b1c3-e58048e46cd3. Raj QA in progress (old head probed clean). On PASS: merge --match-head-commit, deploy to konnex-api host (77.42.94.228), post-check 410s + aggregate tools + /v2/ask, tell Matt. Matt asked (09:0xZ) for: deploy OK + read-only prod log check (did anyone pull PII?); prod host read was auto-mode DENIED, so need his permission.
+- RESUME HERE = API FIRST RELEASE (Matt ruled via Marcus 0a2dbde9, sig 382bab39: build ALL A+B measures S1,S7a/b,C1,C2,A1/A2,T1,T3,P1,D1 + 4 /data/v1 + account endpoints; excluded per my sec 4; prod-ready, publish go stays Matt step 5). Epic API-SELF-SERVE-01 4072300f-2ecb-8194-afe5-f50ca041e12f; S1 4072300f-2ecb-81f7-a657-c9e35dee1b16 IN PROGRESS (rights sheet + audit unknowns + claim wording; Raj QA before 13 Nov or after 20 Nov); S2 81a3, S3 81b5, S4 Olivia 81a2, S5 81c3. Parked 4 to Backlog (API-TRIAL, MARKET-PULSE, MMR-01, FOUNDING-PARTNER). Fold Marcus claims review in first. S1 evidence pack DONE: /home/shared/jack-api-s1-evidence-pack-2026-10-28.md (see its Unresolved list; checkout 410 confirmed). NEXT: write rights sheet + claim drafts from it; registry fix PR (publication-registry.json:32-34 + RK-F1b golden); C2 base view ask to Grace; A1/P1 state roll-up gap. Rights: Raj per-field check records Matt assertion + free-tier basis.
+- LEGACY-API-RETIRE-01 DONE (www #105 18119ad3). OWED: living-state brief eng review by Thu 29 Oct 03:00Z.
+- #126 rollback: CONTACT_REVEAL_ENABLED=1; backup ~/kapi-prod-pre-pr126-20261028T1147Z.tgz on konnex-api. Olivia CONNECT-REVEAL-HIDE-01 in UAT QA.
 - API BRIEF: proposal DELIVERED 28 Oct (/home/shared/jack-self-serve-api-engineering-proposal-2026-10-28.md; audit /home/shared/jack-api-audit-2026-10-28.md); Matt + Marcus told. Matt decision pending: retire Connect contact-reveal routes. Next mine: measure cost per call type for rate card; later docs PR to konnex-api docs/reports. Follow-up tickets (Marcus, Backlog): SEC-V2-HELD-COUNT-01 813f, SEC-V2-ASK-SUPPLY-01 8173, SEC-STRIPE-DEDUPE-01 8107, SEC-PROFILE-RATELIMIT-01 81b2 (all 4072300f-2ecb-...). Marcus online, owns planning for both briefs (/home/shared/media/1793177239292 + 1793177268188 -matt-to-jack.md).
 - BOARD-RESET-01 triage answered (file /home/shared/jack-board-reset-01-triage-35-ANSWER-20261027.md; KEEP 1,2,17; kdp#375/376 closed superseded). Marcus applies. Then set BOARD_SWEEP_WAKE=1 when he says done.
-- Then confirm tickets PLAN-CADENCE 4032300f-2ecb-8137-bcb8-cd426e05a2e0 + MARCUS-ROLE Done/stamped. MARCUS-ROLE-01 LIVE: #358 merged 1eddef4 (Raj re-PASS 786978e208c9a894 @6dbe09a); claude-md-push global 8/8 = c861d04736bd, marcus personal 797437e3d619, --verify 8 ok; Matt + Raj told. FOLLOW-UP ticket: add marcus/ada to summon-offline-agents KNOWN_AGENTS (Matt reply doesn't wake Marcus). PLAN-CADENCE-01 LIVE: #357 merged fbdc09b, scripts md5 OK, timers enabled (sweep 19:00Z daily, weekly Sun 20:00Z). RAJ LEDGER: Console 07:44Z org bal USD 68.40, agent-runtime 30d $34.23; ledger re-anchored. TODO ticket: agent-settings-deploy reject unknown flags + keep owner. BOARD-RESET-01 = Marcus.
+- Confirm tickets PLAN-CADENCE 4032300f-2ecb-8137-bcb8-cd426e05a2e0 + MARCUS-ROLE Done/stamped (both LIVE: #357 fbdc09b, #358 1eddef4). FOLLOW-UP tickets: add marcus/ada to summon-offline-agents KNOWN_AGENTS; agent-settings-deploy reject unknown flags + keep owner.
 - BOARD-SWEEP-WAKE-01 LIVE OFF (#359). Set BOARD_SWEEP_WAKE=1 when Marcus says BOARD-RESET-01 done.
 - RAJ ALERT LIVE (ops #356 2e294db). Ledger re-anchor pending Matt OK. Follow-up: USD text. Trial ticket 4032300f-...-81e5 stays In Progress. LEAN CLAUDE.md shrink, re-measure 28 Oct. Matt open: 2nd vendor, fleet plan after ~31 Oct invoice.
 - mig 266 DONE (#410 2c50f13; verify /home/shared/jack-mig266-postapply-20261026.txt; SIG B Raj 2190af1b). NEXT (Prod Verified already stamped 14:06Z, ticket Done): live DFS balance >= $12.81 read right before drop-in (needs DFS creds: auto-mode blocked me, operator decides) -> cap-12 drop-in -> re-enable demand timer before 20 Nov; Ada reconciles. Raj budget 100k DEPLOYED 06:30Z (Matt GO 2d745143; settings env, bak .pre-deploy-2026-10-26T06-30-03-209Z); live at his next session (verify agent-stats/rajesh-latest.json context_budget_tokens=100000); re-measure 28 Oct. OneGov replied 26 Oct (GSD-331572): sent Matt reply draft, 10k/mo ask; on approval raise NSW_TRADES_QUOTA_CAP (now 2500). HELD 1: Bondi Junction 9060915 -> Ada amendment PR (new manifest/registry shas) -> Raj QA -> sig B -> I install cap-12 drop-in before 1 Nov 00:00Z. Nothing on me until Ada PR. Node DB URL needs ?uselibpqcompat=true&sslmode=require; demand_runner from konnex-ops hostssl. 5,983 OVERSTATED ~47 (Grace dcd67507: 123 new entrants unscreened by cohort rules). Grace mig (rerun accepted excl rules + post-sweep step) -> Raj QA -> I apply -> manual snapshot_supply_set. Marcus decides note/hold (I rec none, 6e031c7d).
 - APEX DNS (Matt, after his domain-host login fix): set konnexlabs.com single A @ -> 216.150.1.1 (remove 216.198.79.1 + 76.76.21.21); verify with dig on his ping.
 - EXEC-REPORT-01 3ed2300f-2ecb-814f-a15e-d211fe8a7298: TODO IVI freshness flag, exit-4 alert, EXEC_REPORT_HC_URL.
-- AGENT-GH-APP-01 DONE. TELL MATT: main required-reviews; revoke Raj's old qa PAT (asked TG 08:46Z 28 Oct).
 
+- TELL MATT (GH-APP): main required-reviews; revoke Raj old qa PAT.
 - MAPS TIMER 28-day LIVE (next Sun 22 Nov 14:00Z; END 2028-12-17, extend before). konnex-ops OS restart: plan quiet window with Marcus.
 - PIPELINE-STATE-01 parent 3fb2300f-2ecb-81ab-9a65-c615331b5f8f (est 2-3; spec /home/shared/marcus-pipeline-state-01-spec-v0.1-2026-10-16.md; Matt GO e769d579). My gaps G2,G4,G5,G7,G12. SVI-RETIRE done; left: briefing SVI line + /api/v1/search-volume 410 konnex-api PR.
-- MARKET-PULSE-REFRESH-01 (c): Raj checked 28 Oct, no new ABS month (last 2026-08); he rechecks after 1-5 Nov timer. Nothing on me.
 - ONEGOV-NOV1-SWEEP-01: timer next 1 Nov 00:00Z. ON 1 NOV: licence_recheck_run <=1100 onegov calls, 0 WorkClear, Oct batch re-checked; tell Marcus + Grace.
 - PS01 v2 FOLLOW-UP PR (mine, one): full item list in /home/shared/jack-ps01-v2-followups-2026-10-27.md (ticket PIPELINE-STATE-01 3fb2300f-2ecb-81ab-9a65-c615331b5f8f).
 
