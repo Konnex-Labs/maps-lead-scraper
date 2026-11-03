@@ -1,51 +1,35 @@
 ---
-task_id: release-121-127-followups-2026-10-02
+task_id: UAT-PROD-SPLIT-01
 agent: jack
-session_id: ba4c89be-5e7d-4c87-91c6-aae75ca42a12
+session_id: cbc408ad-44f9-4331-818d-f7ba0ffd20be
 model: claude-opus-5-5
-status: context-exit
-last_updated: 2026-10-13T15:36:00Z
-notion_task_id: 3eb2300f-2ecb-81c9-a9a5-d6fbc267c23a
+status: in_progress
+last_updated: 2026-11-03T13:05:00Z
+notion_task_id: none (Telegram request 2b24ef10; 40b2300f-81d6 = LIVING-PROFILE-API-01)
 context_needed:
-  files: [/home/shared/jack-grafana-ro-157/NOTES.md, /home/shared/jack-case5-dry/, /home/shared/ada-plumber-nsw-monthly-run-plan-20261003.md]
-  branches: [konnex-data-pipeline:jack/grafana-ro-role PR #237 (worktree /home/jack/projects/kdp-wt-grafana-ro), konnex-ops:jack/exec-report-01 (merged; worktree /home/jack/projects/ops-wt-exec-report removable)]
-  collaborators: [matt, marcus, rajesh, grace, ada]
+  files: [konnex-api docs/api/2026-10-31-data-v1-getcatalog-build-contract.md, docs/api/openapi-v1.json, docs/api/2026-10-28-s1-rights-sheet.md]
+  branches: [konnex-api main dfe495e (prod = cherry-pick tree), kdp main]
+  collaborators: [matt, marcus, rajesh, grace, ada, olivia]
 ---
-
 ## Done
 
 ## In Progress (RESUME FIRST)
-- NOW 02:55Z: AK #91+#92+#93 LIVE prod 57373f38 (rollback chain 038d4941<-90db7a40<-4f34fb12; deploy = git bundle ff on konnex-api, restart, /api/health). WEBSITE DONE 13 Oct (#40-#48 live+probed). RELEASE STEP: run scripts/www-strip-held-links.js after copy-from-uat. #45 MERGED to uat. #46 class/tier LIVE 05:23Z (f261c80a; Rajesh probe PASS 9e1bb33f). Apex 307->308 = Matt. LISTED-ONLY RENAME DONE 13 Oct (www #48, api #94/#95 prod a32f306c rollback 9905560f, mig 209 + snapshot set 17). ACTIVITY-FLAG-01 DONE 13 Oct (ticket 3f82300f-2ecb-81f1-94d8-f3b743789720 stamped): 210 rev3 + 211 applied, daily snapshot drop-in (konnex-ops, 02:30Z); AK #96 prod 4575564a (rollback a32f306c); Grafana #328 live (backup .bak-pre-pr328). NEXT: (1) install Grace liveness timer /home/shared/grace-monthly-liveness-timer-2026-10-13/ (check SHA256SUMS; ff /home/jack/projects/market-intelligence to main incl #329 b73d5a88; 5-row dry run; then enable; first fire 2 Nov 06:00Z). (2) kdp #330 review-collect/4 IN Rajesh QA -> merge (code only); review top-up timer pack follows. (3) BUILD Grafana panel 31 (Marcus 66ac5432): tiers w/o WorkClear 1,057/2,091/Listed only 2,637 via view 105 verified_without_workclear rows (do NOT change 105; Grace adds ABN-c w/o-WC row if missing), rename Observed->Listed only, internal sub-line 'of which licence-verified via WorkClear only: N (internal; not published)'; check = activity row, sum 5,785.
-- OPEN BUILDS: AK 'off' mode = withhold all Verified (Marcus 9299de21, low pri); ticket api_usage logging broken since 7 Apr; kdp #321 extractor v2 (Rajesh) before Mon 19 Oct 05:00Z; PROFILE_WEBSITE_CHANGES flip after Olivia's uat page; apex 307 -> Matt (Vercel). Use REST, never 'gh pr edit'.
-- ONEGOV-DETAILS: kdp #313 MERGED 9a5b2e4 (Rajesh PASS 051499f8), MI ff. AFTER 1 NOV pin PR: capture first live details response; swap BFS for exact licensee-path allowlist (Rajesh: BFS can return nominee ABN when licensee has none), tighten key regex (cabn), holder_name object guard; flip DETAILS_SHAPE_CONFIRMED.
-- DFS: topped up 10 Oct (~US$50-60). No sweep until 1 Nov. Guard ticket DFS-BALANCE-GUARD-01 3ee2300f-2ecb-81a4-bb32-f367992f6b6d (due 18 Oct; add appendix 6/min per-account limit).
-- PLANNING: konnex-monthly@planning.timer live; watch 5 Nov 03:00Z first real month (2026-10). TODO: MONTHLY_HC_URL in /home/shared/config/konnex-monthly-planning.env. GOV-D1 = Ada.
-- EXEC-REPORT-01 (3ed2300f-2ecb-814f-a15e-d211fe8a7298): live; TODO IVI freshness flag (Marcus b711acc1), exit-4 alert, EXEC_REPORT_HC_URL; Rajesh closes.
-- DEMAND TIMER: DONE + LIVE 14:14Z (kdp #314 157c6aa, mig 202, pg_hba line 152 Matt OK 4b4aede1, ticket Done). WATCH first fire Tue 20 Oct 03:11Z (expect exit 75 if Sep unpublished; quiet <27th; re-read DFS balance 19 Oct, need >= US$10.81, was 37.10). TODO: RESULT line for 27/28 alert (Rajesh note 4); Nov run needs new DEMAND_RUN_APPROVED sig in /home/shared/config/konnex-monthly-demand.env; remove worktree kdp-wt-demand-runner.
-- Agents GitHub PAT (/home/shared/secrets/github-pat-agents.token) = 401. Asked Matt: (a) agents use konnex-agents App (/etc/konnex/github-app.pem root:jack 640) or (b) new PAT. Meanwhile I open agents' PRs. Also hits konnex-qa: Rajesh push fails since fe2a845 (c7eea71e, 3 Oct 16:58Z); same fix.
+- RESUME HERE (13:05Z) = WAIT Matt: he pastes keys into NEW Vercel project (mapping TG sent 13:05Z: Prod KX_API_KEY=kx-prod-www-profile-key, Prod ASK_KONNEX_KX_API_KEY=kx-prod-ask-public-key, Preview KX_API_KEY+KONNEX_API_CATALOG_KEY=kx-uat-qa-key; all /home/shared/config/*-20261103.txt) + RESEND vars, redeploys, sends URL+bypass -> I check profile + Ask on new deployment -> Matt moves apex/www. PROD ENV DONE 13:04Z: backup /home/jack/.env.bak-pre-newwwwkeys-20261103 on konnex-api; ids appended (52f23b0c public+presentation, 1c9fbdc2 presentation); restarted; /api/health 200; Ask key 403 KEY_SCOPE on profile, profile key 200 (Verified). Still owed: log key prefixes+purpose on ticket 40c2300f; AC2 (Matt prod counts + UAT Vercel env); AC6 plan v1.2 row. Every remote write needs Matt terminal approval (auto-mode).
+- 12:56Z UAT KEY DONE: profile 7057b3e6-64c5-42ba-8898-1f13f8868f4a prefix kx_live_29c0313b... file /home/shared/config/kx-uat-qa-key-20261103.txt (0600; revoke when QA closes). UAT catalog 200 obs_dates non-null (req 1793710554225-sjz1yz) -> Raj dca075a3, Olivia cd284610. Matt set AK_VISITOR_SALT (Prod). Raj #192 UAT PASS 932a0bc8. AC4 PASS Raj a854e617 (artifact /home/shared/jack-ac4-uat-4endpoint-probe-20261103.json). Revoke UAT QA key when AC2 closes. Prod read done: only rows daed5ed0=ask-konnex-www (public) + d8537423=ask-konnex-uat (likely current KX_API_KEY, Inferred); both free 100/100 unmarked; prod lacks api_key_prefix col. 13:00Z PROD MINTED (prod stores plaintext api_profiles.api_key): Ask public 52f23b0c-8e24-4c97-8e24-e4da83275b9e kx_live_70d71d1f... + profile 1c9fbdc2-d601-439f-aa7f-0c6180e581a2 kx_live_3a9d459c...; files /home/shared/config/kx-prod-{ask-public,www-profile}-key-20261103.txt. NEXT (env edit DENIED, awaiting Matt approval): backup .env -> append ids to prod env (public->ASK_KONNEX_PUBLIC_KEY_IDS+AK_PRESENTATION; profile->AK_PRESENTATION) + restart -> TG Matt paths.
+- VERCEL facts (Olivia 9cd845c9 env names; uat = branch `uat` Preview; DNS stays Namecheap, never switch NS): overflow 3 Nov 12:22Z.
+- RESUME HERE FIRST = UAT-PROD-SPLIT-01 40c2300f-2ecb-8130-9c3a-d754cce983e2 (In Progress 12:50Z; ACs amended Marcus: AC1 inventory+Supabase is UAT's, AC2 Raj signup+purchase 0 prod rows, AC3 Matt accept read-only via Marcus bundle, AC4 4 endpoints, AC5 G7 concurrent test, AC6 plan v1.2 Phase 1 row, AC7 Raj PASS). AC1 DONE (Verified by address): UAT supaPool peer = 2406:da1a:314:7102:: (ap-south-1); prod auth pool = db.dvdaabdlerqrdezhqwvd.supabase.co = 2600:1f18:: (us-east-1, per P0-runbook). Caveat: supabase-js REST (SUPABASE_URL) host not distinguishable by IP -> AC2 count must include prod auth.users. G7: both units single node process, no cluster/pm2; UAT boot logs B11 single-process; prod tree 36755a0 LACKS lib/process-guard.js (charging off; must ship with charging cutover). Account daily cap = DB FOR UPDATE (cross-process safe); breaker admit() sync = atomic. DONE 13:00Z: kapi PR #191 (br jack/g7-concurrent-caps head 98d6ec4, wt ~/projects/kapi-wt-g7): G7 test 5/5 + mutation check + scope doc in docs/reports. Raj QA req aaafb3d4 (PR + AC2 incl auth.users + AC4 re-probe). Marcus AC3 rec 4ac276b3 (keep read-only). Ticket set In Progress. #191 Raj PASS 8f71cf94 -> MERGED da8bb9b 12:49Z; ticket reset In Progress. AC2 BLOCKED: my prod Supabase COUNT read was refused by the prod-read guard -> asked Matt (TG) to allow it or run /home/shared/jack-ac2-prod-supabase-counts.sql before/after; Olivia asked 340b920c for UAT URL/email-confirm/Stripe test path; Raj told 17281adb. NEXT (AC4) = mint ONE UAT-only QA key under standing grant Matt GO dbff4d8f (ops #363 2daf0ff; NOT yet in live CLAUDE.md, fan-out needs human): mode 600, never print, log prefix+purpose on ticket 40c2300f, revoke when QA closes; probe the 4 /data/v1 endpoints on UAT :3467 (catalog, profiles/{geo}/{trade}, measures/{id}, changes/{id}) -> /home/shared artifact -> Raj. (a7c.json was the living-profile payload, not 4-endpoint.) Matt TG sent re prod counts SQL; AC2 ALSO BLOCKED (Olivia 91694bbf, Observed): uat.konnexlabs.com /portal/sign-up + /portal/billing serve empty kx-api-base -> STATIC preview (no Supabase, no charge). Fix = UAT Vercel env KONNEX_API_BASE=<UAT kapi https origin> + DATA_API_PRICE_IDS={"100","200","500"} Stripe TEST price ids, redeploy (NEVER DATA_API_ENV in Preview). Check if I have Vercel CLI/token; else Matt dashboard. Confirm UAT Stripe keys are test mode (memory: Stripe test products already wired 31 Oct). Then tell Olivia (she drives Playwright to Stripe) + Raj (bypass header VERCEL_AUTOMATION_BYPASS_SECRET; email confirm required, sign up w/ address he controls; 100 pack, card 4242). then AC6 plan v1.2 Phase 1 row (+Raj nits a/b) after AC2.
 
 
-
-- ops #329 pgBackRest repo2 (INCIDENT 3e82300f-2ecb-8133-8af2-f928075eaf9e): head 06cccba (Rajesh PASS abc89b8c on 00fd7c8, nits fixed; re-approve asked; diff Mon..Sat, 4h bound, exact-deb install by sha, archiver fails = box blips). repo1 verify OK 6 Oct. window Sun 11 Oct 03:00Z; merge LAST (closes incident). F2 alert ticket TODO.
-
-
-
-- ONEGOV-NOV1-SWEEP-01 INSTALLED: kdp #299 merged a8dff73 (Rajesh PASS 245aa30c), units == QA head 5aade74, timer enabled, next elapse 2026-11-01 00:00Z. ON 1 NOV: check licence_recheck_run (mode rolling, ~00:00Z) <= 1100 onegov calls, 0 WorkClear, 1 Oct batch re-checked; tell Marcus + Grace. Marcus 4db674e1: KEEP 00:00Z (move only if Grace confirms onegov resets on Sydney time). LATER: WorkClear fallback on the nightly expiring job.
-
-
-- AGENT TOKENS (po #340): alex + jack lack token files (Matt runs save-agent-token; I restart konnex-agent-tmux@<agent>).
-- WATCH/TODO (condensed 13 Oct): GOV-D2 silo timer first real fire 5 Nov; ROUTER next contract touch reword 3f32300f basis (Grace 010d2eb9); kdp #279 Grace docs -> Rajesh light review -> merge + ff MI; SUPPLY-PANELS-02 3f22300f-2ecb-81fa-8d89-c5b6b060c8e4; AK cost Haiku test ~16 Oct if spend >US$100/mo; WorkClear probes w/ Grace; website-facts weekly run check + 131 re-snapshot per Grace/Marcus.
 ## Remaining
-- CARLOS PR: konnex-seo docs/nsw-plumbers-seo-review-2026-10-10 (c9e2615); waits Matt adding konnex-seo to the App; then open (Rajesh light) + merge.
-- ABR sweep: abn-status-sweep-weekly.service --min-days 7->6 (12:26Z, backup .bak-20261010T1226Z); Grace verifies after Tue 13 Oct 21:00Z. TODO: put this /etc unit under source control.
-- TODO: token-cost dashboard weekly "use freely" card + carlos=Sonnet mis-attribution.
-- ENTITY-MAP-TWIN-GUARD-01 3f22300f-2ecb-816a-b80e-d887a45453c8: scope -> PR -> Rajesh.
-- Ada DEMAND-EVIDENCE-01: ~25 Oct (before 1 Nov 03:07Z) 124 dry run -> apply -> merge kdp #191 -> cherry-pick konnex-api #70 onto prod (rollback #70 before 124).
-- Backlog bundle ticket 3ed2300f-2ecb-81f5-9049-dc04e0634c43 (dispatcher false REWORK, disk alert 90%, secret sweep, key hashing #40, etc.). SUPPLY-UNIVERSE-01 follow-ups on its ticket. Vercel bypass secret rotation = Matt.
+- Archiver sweep before 13:00Z daily.
+- TELL MATT: GH req-reviews; revoke Raj old PAT. (12:15Z: live apex = OLD Vercel project; order env->redeploy->I check w/ bypass->Matt moves domains.)
+- ACTIVE-TRADING-SHARE (Grace 4f7d970e): my lane API/AK wiring; spec /home/shared/grace-active-trading-share-spec-2026-10-27.md; wait Grace view + Marcus ACs.
+- MINE: S3a privacy (ticket 4072300f-2ecb-8167-8bae-e0f867153614, Backlog): br draft/s3a-privacy-account-data 399cb3d in ~/projects/konnex-website (worktree removed 30 Oct for disk; re-add with git worktree add); see In Progress line. Prod HELD = sign-up flag-on precondition.
 
 ## Resume notes
-- Standing: stamp Prod Verified At on every migration applied. Docs PRs kdp #261-#263 + #241 still await Rajesh light review.
-- Times to Matt in AEST; Telegram eats underscores (spell them out). Long msgs via file.
-- Migrations: `cat f.sql | ssh konnex-data 'sudo -u postgres psql -X -d market_intelligence -v ON_ERROR_STOP=1'`; dry run = forced rollback; scripts that write temp files: run the WHOLE script as postgres on konnex-data.
+- Overflow (also DATA API LAUNCH, SEGMENT/DESIGN-BUILD, OBS-DATES, living-profile r3/r4; S2 cutover, living-profile r2, UAT-QA-KEYS/#171 AC8/SUBURB-STATS lines moved 2 Nov 09:15Z): /home/shared/jack-progress-overflow-20261101.md
+- S2b W0 facts (UAT schema, SMTP, Caddy bak, prod api_profiles gap): see overflow file.
+- GITHUB: jack SSH key rejected since 30 Oct; push via HTTPS konnex-gh-app-token (x-access-token).
+- Migrations: `cat f.sql | ssh konnex-data 'sudo -u postgres psql -X -d market_intelligence -v ON_ERROR_STOP=1'`; dry run = scripts/prod-dry-run.sh (main a097470; never by hand); scripts that write temp files: run the WHOLE script as postgres on konnex-data.
 - Merges: /home/jack/projects/ops/bin/konnex-gh pr merge --squash --match-head-commit <full sha>; body needs `Ticket: <full uuid>`; request rajesh-konnex-bot. Merging a Ticket-footer PR sets the ticket Done.
 - ops deploys: single-file install from the merge commit (local ops checkout is deliberately behind); back up first.
