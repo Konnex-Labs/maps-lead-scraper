@@ -1,11 +1,11 @@
 ---
-task_id: API-RECON-G8-01
+task_id: API-USAGE-DASH-01
 agent: jack
-session_id: cfe34ada-c360-4b7c-9cac-88326a3997b8
+session_id: 74fa4912-70d4-4f3b-8a8c-177258aceaab
 model: claude-opus-5-5
 status: context-exit
-last_updated: 2026-11-04T12:56:00Z
-notion_task_id: 40e2300f-2ecb-8134-ab36-d0f120dda2ff
+last_updated: 2026-11-04T13:20:10Z
+notion_task_id: 40e2300f-2ecb-8186-ad14-dc9e1e371bd8
 context_needed:
   files: [konnex-api docs/api/2026-10-31-data-v1-getcatalog-build-contract.md, docs/api/openapi-v1.json, docs/api/2026-10-28-s1-rights-sheet.md]
   branches: [konnex-api main dfe495e (prod = cherry-pick tree), kdp main]
@@ -14,12 +14,13 @@ context_needed:
 ## Done
 
 ## In Progress (RESUME FIRST)
-- RESUME HERE (12:56Z) = BUILD API-RECON-G8-01 (40e2300f-2ecb-8134-ab36-d0f120dda2ff, TODO, owner Jack, reviewer Rajesh, est 1; Marcus 40ecb941). Set In Progress + session estimate. Worktree off origin/main in konnex-data-api (wt ~/projects/kapi-wt-recon-g8). ACs (read ticket body): (1) data-v1 measure.js/change.js emit a settled event per charged-path response (request_id, credits_used, held, replay flag); (2) lib/credits-reconcile.js:63 covers both channels (now only 'credits.ask_settled', emitted at server.js:5958); (3) tests: paid data-v1 call reconciles clean, forced mismatch flags, replay not double counted (node test, test/*.test.js); (4) UAT reconcile run clean for a probe day; (5) 3 Nov mismatch cleared or recorded as known false positive. PR footer Ticket: full uuid; Raj QA; UAT deploy then prod later with charging cutover. Must land before Phase 2 sim (G8).
-- RESUME HERE (12:58Z) = UAT-PROD-SPLIT-01 CLOSED (Raj AC7 PASS 319095c4 posted on ticket; #194 merged 6da19e65; ticket Done+Archived; Matt/Raj/Marcus told). OPEN: (1) QA key kx_live_29c0313b revoke HELD: very likely also the UAT Vercel Preview KX_API_KEY/CATALOG key (my 3 Nov key log; Matt e217c671). vercel-jack.env token is EMPTY (deleted). Asked Matt A keep through Phase 2 / B rotate now. (2) RECONCILE GAP (Inferred, code): data-v1 measure/change settle in ledger but emit no credits.ask_settled; credits-reconcile.js:63 counts only that -> every paid data-v1 call = missing_event (3 Nov: 2 = my AC4 probe). Asked Marcus 49f38fe8 for ticket (owner Jack, 4 ACs, before Phase 2 G8); Raj told 8108da69. Build when ticket exists. AC3 Matt decision via Marcus (not mine).
+- RESUME HERE (13:20Z) = BUILD API-USAGE-DASH-01 40e2300f-2ecb-8186-ad14-dc9e1e371bd8 (Marcus a4660dff; owner Jack, reviewer Raj, TODO, est 1). Set In Progress, read ACs on ticket (8 ACs: per-endpoint, per-account+credits [needs AC6 api_key_id on api.request, prod 0 keys/30d], bought vs spent, refusals 402/429/cap, reconcile status [dep RECON-G8], AC7 find source of ~720/day keyless 401s on /api/explorer/profile/au/plumber-nsw = find only, fix separate, AC8 queries in source control). Existing dashboard: kdp grafana/dashboards/service-health.json reads prod api_events (market_intelligence). Contract-first: send Raj the ACs/plan before building. Matt told (5364d5f1 reply).
+- RESUME HERE (13:14Z) = API-RECON-G8-01 (40e2300f-2ecb-8134-ab36-d0f120dda2ff): Raj PASS 1500bd34; #195 MERGED 3c6a1ef; UAT DEPLOYED 13:08Z (bak /opt/konnex-api-uat-bak-pre195-20261104.tar). Ticket In Review (footer had flipped Done). Raj asked raw AC4 (306b52f4): sent /home/shared/jack-api-recon-g8-01-ac4-raw-20261104.txt (sig 01563223): 4 Nov 3/3/3/3 clean, replay 0cr not counted, 3 Nov only 2 FP. Gaps told: UAT measures all held (no paid measure), no refusal run, api_key_id null on data_settled (flag). NEXT: after 01:00Z 5 Nov send Raj the credits.reconcile row for 4 Nov (+ no reconcile_mismatch) from UAT API_EVENTS_DB_URL read-only -> on his close set Done. Prod rides with charging cutover.
+- UAT-PROD-SPLIT-01 CLOSED. Matt 96c584c2 (13:03Z): (a) YES UAT keeps READ-ONLY prod aggregate access (as-built konnex_uat_ro) -> sent Marcus c608798e to log as AC3 decision (he was offline; check it landed). (b) Option A: QA key kx_live_29c0313b stays UAT site key through Phase 2; ROTATE at end of Phase 2 (mine). Reconcile gap -> ticket API-RECON-G8-01 (above).
 
 
 ## Remaining
-- ALERT dbe469d2 CLOSED 12:25Z: deploys green since 11:19Z (13 runs); already resolved when I went to resolve it. TODO later: add deploy.sustained_failure section to REMEDIATION.md.
+- REMEDIATION deploy.sustained_failure section: po PR #179 (br docs/remediation-deploy-sustained-failure 845ab63, wt ~/projects/po-wt-remed-deploy), docs-only, Raj review requested; merge on PASS.
 - After UAT Preview redeploy: attest x-vercel-id+commit (origin/uat 634973f1) -> tell Olivia verify obs-dates 25 Oct/2 Nov (detail in overflow 4 Nov 08:37Z).
 - WEB-CHANGE-02 40d2300f-2ecb-8180-8934-d48bd5908b75 (change view + AK/API route) mine, BLOCKED on Grace: step 1 NOT PASS (Raj 25c9bd9b: added 71%/removed 50% vs 75% bar). Grace fixing matcher + removal stability, fresh blind sample. Do NOT build on current website_fact_change_event service_area rows (Grace f3398e5b).
 - Archiver sweep before 13:00Z daily.
