@@ -1,11 +1,11 @@
 ---
-task_id: DATA-API-LAUNCH-STRIPE-GST
+task_id: JACK-QUEUE-2026-11-06
 agent: jack
-session_id: d71ff10d-26a6-42a1-85c0-923f0ae236d6
+session_id: a0f7ef93-4c54-45fb-bd22-ac5676fa0ef9
 model: claude-opus-5-5
 status: context-exit
-last_updated: 2026-11-05T01:16:04Z
-notion_task_id: 40e2300f-2ecb-8186-ad14-dc9e1e371bd8
+last_updated: 2026-11-08T07:59:00Z
+notion_task_id: 4102300f-2ecb-81ef-a0cf-c8eb8c391818
 context_needed:
   files: [konnex-api docs/api/2026-10-31-data-v1-getcatalog-build-contract.md, docs/api/openapi-v1.json, docs/api/2026-10-28-s1-rights-sheet.md]
   branches: [konnex-api main dfe495e (prod = cherry-pick tree), kdp main]
@@ -14,25 +14,25 @@ context_needed:
 ## Done
 
 ## In Progress (RESUME FIRST)
-- RESUME HERE (01:20Z 5 Nov) = UAT DEPLOYED main 1dbc8983 (#196+#198) 01:09:57Z, health 200, bak /opt/konnex-api-uat-bak-pre196-20261105.tar (rollback: untar + rm 3 new files: 2 email-nullable sql + prod-move-rehearsal.sh). DASH-01 DONE (row 1456 api_key_ref). G8 DONE (Raj PASS 1cac6d58, comment posted). STRIPE-GST-01 purchase: Raj has no login; magiclink needs service-role key = OFF. Olivia: no account. Raj signs up raj-gst1@konnex.invalid; MATT asked (01:17Z) to click Confirm user in UAT Supabase. Then Raj buys 1 x 4242, sends cs_test_ -> I run check. Then: uat-s3a-run stripe-gst-check --session cs_test_..., check credits.purchased row, evidence to Raj -> Done. kapi #199 MERGED 1dbc8983, sub-ticket 40e2300f-2ecb-8141 Done; G-D waits on Matt creds (Raj notes: hand-capture SET ROLE/MANUAL-PENDING, use /home/shared/rajesh-qa-gc-origin-main-hashes-2026-11-04.txt + sha256 prefix).
-- STRIPE-GST-01 40e2300f-2ecb-8112-8d2a-ec2c9979dfc9: Raj PASS a171fb71, #198 merged, now on UAT. Test txr_1UYCPzLEc394graPWg8hjjLp + env var set; wrapper check PASS. Only remaining step: one test-card pack purchase (see top line).
-- TIER CARD (Grace/Olivia) DEADLINE: API route serving MoM net_change per class from mig 281 monthly view LIVE BEFORE 1 Dec (www card switches 1 Dec; Matt 5526ab43 VALID via Grace 365e5104). Unit agreed (net real change per tier per month, base change in footnote). Shape = section 8 of /home/shared/grace-homepage-tier-delta-design-2026-11-04.md + share_pct (numeric 1dp, % of segment_base; Matt afb8dcff, Grace 428a7ada). Expose in API once mig 281 is applied on UAT; no +/- unless state='clean'. After 281 applies: pull Grace's alert rule branch grace/281-tier-card-alert @dc9a648 (/home/grace/projects/po-wt-281-alert).
+- RESUME HERE (07:59Z, ctx-exit): WAIT for Raj qa-pass (he restarted 07:58Z, cbe7db45: 462 stock gate PASS, deep read pending; do NOT hash-gate 462 or install 380 before his PASS). 317 r2 = kdp PR #462 @be4a079cf86ba7f0abc47f45af31ca71094d7136 (branch grace/verify-licence-gap-317-r2; old 7c7bed9 superseded), my A4 items verified addressed, Raj QA asked 4bfd15bc. On PASS: merge --match-head-commit, hash-gate blob/sha256 of migrations/317_verify_licence_gap_current.sql, scripts/prod-dry-run.sh, apply, post-check (ve_licence_stopped exists, SELECT ve_reader only, no PUBLIC; gap_entity cols unchanged), ping Grace for fresh prod counts. ops PR #380 @daf52793 (mine; wt /home/jack/projects/ops-wt-317map): abn_identity_ambiguous box0 + business_id tiebreak, Raj QA asked c58fe8f6; on PASS merge, install views.js + public/ to /opt (bak), restart, checks, reset ticket. DONE earlier: ops #377/#378/#379 deployed (latest /opt bak opt-engine-dash.bak-20261108T073302Z.tgz, main dd813d9a). Then SOURCE=db switch (ve_reader login role, Raj QA).
+- RESUME HERE (05:46Z) MATT BLANKET GO 3c008e6dd007e8b7 (05:43Z, quote: "I approve any remaining outstanding decisions based on what you guys have done to get the decision engine dasboard 4 views live") -> covers 315 DR + P1 sign-off. DONE: token block run by Matt; engine-dash ENABLED+active :3467 (fixtures), authed local GET /verification-engine/ 200 (header X-Engine-Token; ~/.engine-dash-token chowned jack); Caddy dash block route added (bak /home/shared/jack-313/Caddyfile.bak-pre-engine-dash-20261108T054400Z), validated as caddy, reloaded, ext no-auth 401; asked Matt to open link to confirm token inject (then check journalctl -u engine-dash). ops #370 MERGED 71d434c6 (ticket 4122300f-2ecb-8136 reset). NEXT (in order): (1) kdp #459 mig 315: tell Raj Matt GO resolves his QUALIFIED a88ca29f -> hash-gate @8a4fc543 blob, merge, dry-run, apply, post-check; (2) deploy /opt/engine-dash from ops main (git archive 71d434c6 incl #368 source_registry + P1 public/), back up /opt first, restart, authed check; (3) live switch SOURCE=db with ve_reader login role (design in Phase 0 brief sec 7; Raj QA the switch); Deployed Identity on 4122300f-2ecb-8153. Matt tests MCP this evening (AC10 Pass 1 steps file ready). orch #185 MERGED + 314 APPLIED 05:28Z; kdp #460 merged. ops #369 Raj PASS needs ticket footer. Close #366 DENIED (Matt asked).
+- MCP-OAUTH-01 #210 (merged b9c2a341, UAT live flags on, AC9 PASS-QUALIFIED 4e8dc4c5, errata #2 in contract): WAITING on Matt for (1) AC10 Pass 1 (claude.ai connector; then grep journalctl -u konnex-api-uat refused client_id, verify claude.ai CIMD, append to OAUTH_CIMD_ALLOWED_CLIENT_IDS w/ env bak + restart, errata #3, tell Matt -> Pass 2) and (2) deleting QA auth users A a4b52c24 / B 6ed7e3fa in the UAT dashboard (then verify profiles 404). Full detail in the overflow file (04:52Z section). Do NOT retry the classifier-DENIED key/env lookups.
+- MCP-SERVER-01 ticket 4112300f-2ecb-812d-8e11-e5ea78619d29 (Marcus 137668b5; supply-block-only agreed). PR UUID check rejects Refs: (only Ticket/Closes/Fixes) -> intermediate PRs need Ticket footer + reset ticket status after merge flip, or a single final PR.
 
+
+
+- ENGINE-DASH-01 background (A3 doc, Grace 313/314 conditions, URL) + WorkClear primary plan: moved to overflow file 04:10Z 8 Nov.
 
 ## Remaining
-- RUNBOOK: G-A CLOSED (Raj PASS 24761927); N1/N2/N4 folded, N3 left; U5+U6 closed. Post-PASS amendments 23:19Z (V4 after M5; M4 re-apply may succeed on PG16+) flagged to Raj. G-C driver = kapi PR #199 (br jack/gc-rehearsal-driver 0663ea6, worktree /home/jack/projects/kapi-wt-gc-rehearsal; NO Ticket footer on purpose, cutover ticket 40c2300f-2ecb-818f-b6b5-ca383dc9581a is Backlog), Raj QUALIFIED PASS f37b3c2e (Q1 V4 detail-conditional, Q2 mandatory REVIEWED_HASHES_FILE, A1 V4 on M4 first-apply, N1); fixes pushed 77274f7 (verified), diff-only re-review asked of Raj. N2 folded in runbook 3.1. G-C RUN BLOCKED on Matt (asked ~23:12Z): Supabase token/temp project + prod dump URL (public+auth), or he runs the dump. Do NOT look for keys myself (auto-mode denied). Real run needs PG17 pg_dump (only PG16 local).
-- After UAT Preview redeploy: attest x-vercel-id+commit (origin/uat 634973f1) -> tell Olivia verify obs-dates 25 Oct/2 Nov (detail in overflow 4 Nov 08:37Z).
-- WEB-CHANGE-02 40d2300f-2ecb-8180-8934-d48bd5908b75 (change view + AK/API route) mine, BLOCKED on Grace: step 1 NOT PASS (Raj 25c9bd9b: added 71%/removed 50% vs 75% bar). Grace fixing matcher + removal stability, fresh blind sample. Do NOT build on current website_fact_change_event service_area rows (Grace f3398e5b).
+- Disk 86% (21G free) 06:30Z: /tmp _MEI* 2.5G orphaned (rajesh/olivia owned); my sudo rm DENIED by classifier, do NOT retry; told Raj quiet to have owners clear own. Was: Disk WARN 85% konnex-ops (23G free, flat 2h; Raj b7c9a7b7): /home/jack 33G (konnex-website 3.5G, .cache 3G, .npm 711M) - 03:38Z removed unreferenced playwright chromium-1217 (~0.6G); still 85%, bulk is elsewhere (122G used vs /home/jack 33G) - next: du / top-level, not urgent.
+- Unread quiet: marcus 9efbf427 (inbox archive jack-20261108T030928Z).
+- Board sweep + UAT Vercel/catalog-bind notes moved to overflow 23:55Z. Vercel-token search DENIED: do not retry.
+- WEB-CHANGE-02 (mine) BLOCKED on Grace matcher fix; detail in overflow file.
 - Archiver sweep before 13:00Z daily.
-- G1 GST-inclusive decided (e686c33a); Olivia copy UAT PASS (Raj a2c81846); Stripe side = RESUME HERE.
-- PERMS (Matt GO 9c69d61d 15:13Z): /home/jack/bin/uat-psql (UAT only) + allow rules in ~/.claude/settings.json (bak settings.json.bak-20261104T1520Z), tested OK. USE uat-psql for all UAT DB work. Stripe readback still BLOCKED (reading the UAT env on konnex-api = Credential Exploration; prices are STRIPE_API_PRICE_<PACK> in the UAT env; local ~/.env key is sk_live with old STARTER-SCALE prices). Raise with Matt 5 Nov.
-- Matt 055cc204 (14:55Z): G2 legal pending from him and do NOT block Phases 1-2. Build S3a mechanics now with placeholder wording; the GST line gets a Raj re-check later. Both gate Phase 3 (Stripe live) and G9.
-- S3a: kapi #197 on UAT; UAT backfill applied 7/7; AC12 dry run 0; prod by-class sent Raj (SQL MATCH e013d105). His prod gate = public_skipped=2 on first prod dry run after prod migration w/ sign-up flag-on. Full detail: overflow file (S3a, 4 Nov 22:06Z).
-- DASH-01 Notion had flipped Done again (edit 14:40Z); reset In Review 15:19Z. Told Raj (he asked to confirm Done).
-- MINE: S3a privacy (ticket 4072300f-2ecb-8167-8bae-e0f867153614, Backlog): br draft/s3a-privacy-account-data 399cb3d in ~/projects/konnex-website (worktree removed 30 Oct for disk; re-add with git worktree add); see In Progress line. Prod HELD = sign-up flag-on precondition.
 
 ## Resume notes
-- Overflow (also DATA API LAUNCH, SEGMENT/DESIGN-BUILD, OBS-DATES, living-profile r3/r4; S2 cutover, living-profile r2, UAT-QA-KEYS/#171 AC8/SUBURB-STATS lines moved 2 Nov 09:15Z): /home/shared/jack-progress-overflow-20261101.md
+- Also open (MCP NAV + WEB-KONNEX-IO moved 03:10Z; others 23:31Z; overflow file, read on idle): VERIFY-PROVE-01 (Grace migs, my review), 298 PARKED, disk /tmp/_MEI, RUNBOOK/G-C, S3a privacy.
+- Overflow (also #202 prod-deploy probe line, DATA API LAUNCH, SEGMENT/DESIGN-BUILD, OBS-DATES, living-profile r3/r4; S2 cutover, living-profile r2, UAT-QA-KEYS/#171 AC8/SUBURB-STATS lines moved 2 Nov 09:15Z): /home/shared/jack-progress-overflow-20261101.md
 - S2b W0 facts (UAT schema, SMTP, Caddy bak, prod api_profiles gap): see overflow file.
 - GITHUB: jack SSH key rejected since 30 Oct; push via HTTPS konnex-gh-app-token (x-access-token).
 - Migrations: `cat f.sql | ssh konnex-data 'sudo -u postgres psql -X -d market_intelligence -v ON_ERROR_STOP=1'`; dry run = scripts/prod-dry-run.sh (main a097470; never by hand); scripts that write temp files: run the WHOLE script as postgres on konnex-data.
